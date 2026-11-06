@@ -35,7 +35,9 @@ type Config struct {
 	// LabExe is the lab binary, which the server starts as the fake agent.
 	LabExe string
 	// StaticDir is the web client build the server serves.
-	StaticDir      string
+	StaticDir string
+	// Node is the node binary that runs the server.
+	Node           string
 	CharsPerSecond int
 	SoakParts      int
 }
@@ -79,7 +81,7 @@ func Start(ctx context.Context, cfg Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	cmd := u.Command(ctx, cfg.NS, s.env(), s.work, "node", s.bin(),
+	cmd := u.Command(ctx, cfg.NS, s.env(), s.work, cfg.Node, s.bin(),
 		"serve", "--base-dir", s.baseDir, "--port", strconv.Itoa(Port), "--host", "127.0.0.1")
 	out, err := cmd.StdoutPipe()
 	if err != nil {
@@ -129,11 +131,12 @@ func (s *Server) Wait() error {
 func (s *Server) bin() string { return filepath.Join(s.cfg.T3Code, "apps", "server", "src", "bin.ts") }
 
 // env keeps the provider CLIs of this host out of reach: no PATH entry for
-// them and a home dir of the server's own.
+// them and a home dir of the server's own. PATH has node's directory for the
+// server's own child processes.
 func (s *Server) env() []string {
 	return []string{
 		"HOME=" + s.home,
-		"PATH=/usr/bin:/bin",
+		"PATH=" + filepath.Dir(s.cfg.Node) + ":/usr/bin:/bin",
 		"LANG=C.UTF-8",
 		"T3CODE_STATIC_DIR=" + s.cfg.StaticDir,
 		"T3CODE_NO_BROWSER=true",
@@ -171,7 +174,7 @@ func (s *Server) settings() ([]byte, error) {
 func (s *Server) cli(ctx context.Context, args ...string) (string, error) {
 	args = append([]string{s.bin()}, args...)
 	var stdout, stderr strings.Builder
-	cmd := s.cfg.User.Command(ctx, s.cfg.NS, s.env(), s.work, "node", args...)
+	cmd := s.cfg.User.Command(ctx, s.cfg.NS, s.env(), s.work, s.cfg.Node, args...)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {

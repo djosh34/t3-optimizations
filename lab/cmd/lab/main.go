@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"syscall"
@@ -81,6 +82,7 @@ func runCmd(ctx context.Context, args []string) error {
 	kind := fs.String("kind", "warm", "warm: start connected, then switch to the profile; cold: open the app under the profile")
 	deadline := fs.Duration("deadline", 0, "override the profile's deadline (15m, 60m for the soak)")
 	out := fs.String("out", "", "directory for the run's report and raw data (default lab/reports/runs)")
+	node := fs.String("node", "", "node binary for the t3 server (default: node on root's PATH)")
 	runName := fs.String("name", "", "the run's directory under --out (default: time, profile, client, kind, seed)")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -88,6 +90,11 @@ func runCmd(ctx context.Context, args []string) error {
 	p, err := profile.Get(*name)
 	if err != nil {
 		return err
+	}
+	if *node == "" {
+		if *node, err = exec.LookPath("node"); err != nil {
+			return fmt.Errorf("no node on PATH; pass --node: %w", err)
+		}
 	}
 	exe, err := os.Executable()
 	if err != nil {
@@ -107,6 +114,7 @@ func runCmd(ctx context.Context, args []string) error {
 		Name:     *runName,
 		LabDir:   labDir,
 		LabExe:   exe,
+		Node:     *node,
 	})
 	if err != nil {
 		return err

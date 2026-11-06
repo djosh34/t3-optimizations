@@ -49,6 +49,8 @@ type Options struct {
 	Name   string
 	LabDir string
 	LabExe string
+	// Node runs the t3 server.
+	Node string
 }
 
 const frontPort = "8443"
@@ -182,7 +184,7 @@ func (s *scenario) execute(ctx context.Context, repo, staticDir, phoneDir string
 	}
 	server, err := t3server.Start(procs, t3server.Config{
 		User: u, NS: lab.ServerNS, T3Code: filepath.Join(repo, "t3code"), RunDir: s.runDir,
-		LabExe: o.LabExe, StaticDir: staticDir, CharsPerSecond: CharsPerSecond, SoakParts: soak,
+		LabExe: o.LabExe, StaticDir: staticDir, Node: o.Node, CharsPerSecond: CharsPerSecond, SoakParts: soak,
 	})
 	if err != nil {
 		return report.Input{}, err
