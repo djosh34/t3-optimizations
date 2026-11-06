@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  rust:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: crates
+    steps:
+      - uses: actions/checkout@v6
+      # Installs what crates/rust-toolchain.toml names: stable with clippy,
+      # rustfmt and the wasm32 target.
+      - run: rustup toolchain install
+      - run: cargo fmt --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace
+      - run: cargo build -p sync-core --target wasm32-unknown-unknown
+
+  go:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: lab/go.mod
+          cache-dependency-path: lab/go.mod
+      - name: gofmt
+        run: |
+          files="$(gofmt -l lab)"
+          if [ -n "$files" ]; then
+            echo "gofmt needed:"
+            echo "$files"
+            exit 1
+          fi
+      - run: go vet ./...
+        working-directory: lab
+      - run: go test ./...
+        working-directory: lab
+
+  t3code:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: t3code
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: t3code/package.json
+      - run: npm i -g vite-plus@1.4.0
+      - run: vp install
+      # t3code tasks must use the vp of t3code's own install, not the global one.
+      - run: echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+      - run: vp check
+      - run: vp run -r typecheck
+      # The web and server tests drive headless Chromium.
+      - run: node apps/web/node_modules/playwright/cli.js install --with-deps --only-shell chromium
+      - run: vp run --filter @t3tools/web test
+      - run: vp run --filter t3 test
+
+  # Outcome 2 (#42) replaces this with a short chaos lab run.
+  lab-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - run: echo "No lab yet."

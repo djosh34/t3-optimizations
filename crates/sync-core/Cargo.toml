@@ -1,0 +1,8 @@
+[package]
+name = "sync-core"
+version = "0.1.0"
+description = "Sync protocol core, shared by the sidecar and the web app (WASM)."
+edition = "2024"
+publish = false
+
+[dependencies]
