@@ -3,6 +3,6 @@ Tag:    v0.1.7
 Commit: 322f6544dfad0a3c8a0c8cbecf2c7f7874b14268
 
 Copied as plain files, without the .repos/ folder (read-only reference
-repos that upstream keeps outside its pnpm workspace). Everything else
-matched the tag file for file when it was copied. Changes made in this
-repo since then show in its git history.
+repos that upstream keeps outside its pnpm workspace). To see what this
+repo changed, diff this folder against a checkout of that commit with
+.repos/ removed.
