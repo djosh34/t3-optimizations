@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="T3 probe">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon.png">
+<title>Transport probe</title>
+<style>
+  :root { color-scheme: light dark; --ok:#1a7f37; --bad:#cf222e; --warn:#9a6700; }
+  body { font: 15px/1.4 -apple-system, system-ui, sans-serif; margin: 0; padding: 16px; padding-top: max(16px, env(safe-area-inset-top)); }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  #status { font-size: 22px; font-weight: 700; margin: 12px 0; }
+  .ok { color: var(--ok); } .fail { color: var(--bad); } .partial, .skip { color: var(--warn); }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  td { border-top: 1px solid #8884; padding: 6px 4px; vertical-align: top; word-break: break-word; }
+  td:first-child { white-space: nowrap; font-weight: 600; }
+  .tags button { font-size: 15px; padding: 8px 12px; margin: 4px 4px 0 0; border-radius: 8px; border: 1px solid #8888; background: none; color: inherit; }
+  .tags button.on { background: #0969da; color: #fff; border-color: #0969da; }
+  #env, #post { font-size: 13px; opacity: .8; }
+</style>
+</head>
+<body>
+<h1>Transport probe (#22)</h1>
+<div id="env"></div>
+<div class="tags">Optional, tap while it runs: this run is on
+  <button data-net="Wi-Fi">Wi-Fi</button><button data-net="cellular">Cellular</button>
+</div>
+<div id="status">starting…</div>
+<table id="results"></table>
+<div id="post"></div>
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+const params = new URLSearchParams(location.search);
+const rid = () => Math.random().toString(36).slice(2, 10);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const withTimeout = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(what + " timed out after " + ms + " ms")), ms))]);
+const median = (a) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
+const rttText = (a) => a.length ? `RTT min/median/max ${Math.round(Math.min(...a))}/${Math.round(median(a))}/${Math.round(Math.max(...a))} ms` : "no RTT samples";
+
+const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+let netTag = params.get("net") || "";
+document.querySelectorAll(".tags button").forEach((b) => {
+  if (b.dataset.net === netTag) b.classList.add("on");
+  b.onclick = () => { netTag = b.dataset.net; document.querySelectorAll(".tags button").forEach((x) => x.classList.toggle("on", x === b)); };
+});
+
+function osText() {
+  const ua = navigator.userAgent;
+  const os = (ua.match(/(iPhone|iPad|CPU) OS ([\d_]+)/) || [])[2];
+  const ver = (ua.match(/Version\/([\d.]+)/) || [])[1];
+  const parts = [];
+  if (/iPhone|iPad/.test(ua)) parts.push("iOS (UA OS token " + (os || "?").replace(/_/g, ".") + ", frozen on iOS 26+)");
+  else if (/Linux/.test(ua)) parts.push("Linux");
+  else if (/Mac OS X/.test(ua)) parts.push("macOS");
+  if (ver) parts.push("Safari/WebKit Version " + ver);
+  else parts.push("no Version/ token in UA");
+  return parts.join(", ");
+}
+
+const run = {
+  runId: rid() + "-" + Date.now().toString(36),
+  label: params.get("label") || "",
+  dryRun: params.get("dry") === "1",
+  env: {
+    ua: navigator.userAgent,
+    os: osText(),
+    mode: standalone ? "home-screen app (standalone)" : "browser tab",
+    pageProto: (performance.getEntriesByType("navigation")[0] || {}).nextHopProtocol || "unknown",
+    swControlled: !!(navigator.serviceWorker && navigator.serviceWorker.controller),
+    startedAt: new Date().toISOString(),
+  },
+  tests: [],
+  rtcIds: {}, wtIds: {}, wsIds: {},
+};
+$("#env").textContent = `${run.env.os} · ${run.env.mode} · page over ${run.env.pageProto}`;
+
+function addRow(name, status, summary) {
+  run.tests.push({ name, status, summary });
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td></td><td class="${status}"></td><td></td>`;
+  tr.children[0].textContent = name; tr.children[1].textContent = status; tr.children[2].textContent = summary;
+  $("#results").appendChild(tr);
+}
+
+async function test(name, fn) {
+  $("#status").textContent = "running: " + name + "…";
+  const t0 = performance.now();
+  try {
+    const r = await fn();
+    addRow(name, r.status, r.summary);
+    Object.assign(run.tests[run.tests.length - 1], { detail: r.detail, ms: Math.round(performance.now() - t0) });
+  } catch (e) {
+    addRow(name, "fail", String(e && e.message || e));
+  }
+}
+
+// ---------- offline / connectivity ----------
+async function online() {
+  try {
+    const r = await withTimeout(fetch("/ping?" + Date.now(), { cache: "no-store" }), 5000, "ping");
+    return r.ok;
+  } catch { return false; }
+}
+
+// ---------- 0: HTTP/3 for fetch ----------
+async function testH3Fetch() {
+  const protos = [], server = [];
+  for (let i = 0; i < 4; i++) {
+    const url = location.origin + "/ping?h3=" + i + "-" + Date.now();
+    const r = await fetch(url, { cache: "no-store" });
+    const j = await r.json();
+    server.push(j.proto);
+    const e = performance.getEntriesByName(url).pop();
+    protos.push(e ? e.nextHopProtocol || "?" : "?");
+    await sleep(300);
+  }
+  const h3 = server.includes("HTTP/3.0");
+  return { status: h3 ? "ok" : "partial", summary: `server saw: ${server.join(", ")}; nextHopProtocol: ${protos.join(", ")}`, detail: { server, protos } };
+}
+
+// ---------- 1, 2: WebRTC data channel ----------
+function parseCand(c) {
+  const p = c.split(" ");
+  return { addr: p[4], port: p[5], proto: p[2], type: p[7], raw: c };
+}
+
+async function testRTC(name, dcOpts) {
+  const id = rid();
+  run.rtcIds[name] = id;
+  const t0 = performance.now();
+  const at = () => Math.round(performance.now() - t0);
+  const events = [], cands = [];
+  const pc = new RTCPeerConnection({ iceServers: [] });
+  try {
+    pc.oniceconnectionstatechange = () => events.push(`+${at()}ms ice ${pc.iceConnectionState}`);
+    pc.onconnectionstatechange = () => events.push(`+${at()}ms pc ${pc.connectionState}`);
+    pc.onicegatheringstatechange = () => events.push(`+${at()}ms gathering ${pc.iceGatheringState}`);
+    const gathered = new Promise((res) => {
+      pc.onicecandidate = (e) => { if (e.candidate && e.candidate.candidate) cands.push(e.candidate.candidate); else res(); };
+    });
+    const dc = pc.createDataChannel("probe", dcOpts);
+    const opened = new Promise((res, rej) => { dc.onopen = res; dc.onerror = (e) => rej(new Error("datachannel error " + (e.error && e.error.message || ""))); });
+    await pc.setLocalDescription(await pc.createOffer());
+    await Promise.race([gathered, sleep(3000)]);
+    const parsed = cands.map(parseCand);
+    const resp = await fetch("/rtc/offer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, test: name, sdp: pc.localDescription.sdp }) });
+    if (!resp.ok) throw new Error("signaling: " + resp.status + " " + await resp.text());
+    const ans = await resp.json();
+    const serverCands = ans.sdp.split(/\r?\n/).filter((l) => l.startsWith("a=candidate:")).map((l) => parseCand(l.slice(2)));
+    await pc.setRemoteDescription({ type: "answer", sdp: ans.sdp });
+    let openMs = null, openErr = null;
+    try { await withTimeout(opened, 15000, "data channel open"); openMs = at(); } catch (e) { openErr = e.message; }
+
+    const rtts = [];
+    let sent = 0;
+    if (!openErr) {
+      dc.onmessage = (e) => { try { const m = JSON.parse(e.data); rtts.push(performance.now() - m.t); } catch {} };
+      for (let i = 0; i < 50; i++) { dc.send(JSON.stringify({ s: i, t: performance.now() })); sent++; await sleep(20); }
+      await sleep(1500);
+    }
+    let pair = null;
+    try {
+      const stats = await pc.getStats();
+      let selId = null;
+      stats.forEach((s) => { if (s.type === "transport" && s.selectedCandidatePairId) selId = s.selectedCandidatePairId; });
+      let cp = selId && stats.get(selId);
+      if (!cp) stats.forEach((s) => { if (s.type === "candidate-pair" && s.state === "succeeded" && (s.nominated || s.selected)) cp = cp || s; });
+      if (cp) {
+        const l = stats.get(cp.localCandidateId) || {}, r = stats.get(cp.remoteCandidateId) || {};
+        pair = {
+          local: `${l.candidateType} ${l.protocol} ${l.address || l.ip || "(addr hidden)"}:${l.port} ${l.networkType || ""}`.trim(),
+          remote: `${r.candidateType} ${r.protocol} ${r.address || r.ip || "(addr hidden)"}:${r.port}`,
+          rttMs: cp.currentRoundTripTime != null ? Math.round(cp.currentRoundTripTime * 1000) : null,
+        };
+      }
+    } catch (e) { pair = { error: e.message }; }
+    const maxMsg = pc.sctp ? pc.sctp.maxMessageSize : null;
+    const types = {};
+    parsed.forEach((c) => { const k = c.type + (c.addr && c.addr.endsWith(".local") ? "(mDNS)" : "") + "/" + c.proto; types[k] = (types[k] || 0) + 1; });
+    const candText = parsed.length ? Object.entries(types).map(([k, v]) => `${v}× ${k}`).join(", ") : "none gathered";
+    const detail = { dcOpts, events, candidates: cands, serverCandidates: serverCands.map((c) => c.raw), selectedPair: pair, sent, received: rtts.length, rtts: rtts.map(Math.round).join(" "), maxMessageSize: maxMsg, openMs, openErr, finalIce: pc.iceConnectionState };
+    if (openErr) return { status: "fail", summary: `${openErr}; ICE ${pc.iceConnectionState}; browser candidates: ${candText}; events: ${events.join(", ")}`, detail };
+    const lossy = rtts.length < sent;
+    return {
+      status: lossy ? "partial" : "ok",
+      summary: `open in ${openMs} ms; ${rtts.length}/${sent} echoed; ${rttText(rtts)}; pair local [${pair && pair.local}] → remote [${pair && pair.remote}]; browser candidates: ${candText}; sctp.maxMessageSize ${maxMsg}`,
+      detail,
+    };
+  } finally { pc.close(); }
+}
+
+// ---------- 3: WebTransport ----------
+async function testWT() {
+  if (typeof WebTransport === "undefined") return { status: "skip", summary: "WebTransport not defined in this browser" };
+  const id = rid();
+  run.wtIds["WebTransport"] = id;
+  const url = `${location.origin}/wt?id=${id}`;
+  const t0 = performance.now();
+  const wt = new WebTransport(url);
+  const d = {};
+  try {
+    await withTimeout(wt.ready, 10000, "ready");
+    d.readyMs = Math.round(performance.now() - t0);
+    d.reliability = wt.reliability;
+    d.congestionControl = wt.congestionControl;
+    const dg = wt.datagrams;
+    d.datagrams = dg === undefined ? "undefined" : dg === null ? "null" : "present";
+    if (dg) {
+      d.datagramsCreateWritable = typeof dg.createWritable;
+      d.datagramsWritable = typeof dg.writable;
+      d.datagramsReadable = typeof dg.readable;
+      d.maxDatagramSize = dg.maxDatagramSize;
+    }
+    // one bidirectional stream per message
+    const srtts = [];
+    for (let i = 0; i < 10; i++) {
+      const s0 = performance.now();
+      const bs = await withTimeout(wt.createBidirectionalStream(), 5000, "createBidirectionalStream");
+      const w = bs.writable.getWriter();
+      await w.write(new TextEncoder().encode("msg " + i));
+      await w.close();
+      const reader = bs.readable.getReader();
+      let got = "";
+      for (;;) { const { value, done } = await withTimeout(reader.read(), 5000, "stream read"); if (done) break; got += new TextDecoder().decode(value); }
+      if (got !== "msg " + i) throw new Error("stream echo mismatch: " + got);
+      srtts.push(performance.now() - s0);
+    }
+    d.streamRtts = srtts.map(Math.round).join(" ");
+    // datagrams, if exposed
+    let dgText = "datagrams " + d.datagrams;
+    if (dg && dg.readable && (dg.createWritable || dg.writable)) {
+      const w = dg.createWritable ? dg.createWritable().getWriter() : dg.writable.getWriter();
+      const r = dg.readable.getReader();
+      const drtts = [];
+      const reading = (async () => { for (;;) { const { value, done } = await r.read(); if (done) return; const t = Number(new TextDecoder().decode(value)); drtts.push(performance.now() - t); } })();
+      reading.catch(() => {});
+      for (let i = 0; i < 20; i++) { await w.write(new TextEncoder().encode(String(performance.now()))); await sleep(20); }
+      await sleep(1500);
+      d.datagramRtts = drtts.map(Math.round).join(" "); d.datagramsEchoed = drtts.length;
+      dgText = `datagrams ${drtts.length}/20 echoed, ${rttText(drtts)} (via ${dg.createWritable ? "createWritable" : "writable"})`;
+    }
+    wt.close();
+    // requireUnreliable: does Safari accept a session that must support datagrams?
+    try {
+      const wt2 = new WebTransport(`${location.origin}/wt?id=${id}-ru`, { requireUnreliable: true });
+      await withTimeout(wt2.ready, 8000, "ready");
+      d.requireUnreliable = "ready, reliability " + wt2.reliability;
+      wt2.close();
+    } catch (e) { d.requireUnreliable = "failed: " + e.message; }
+    const status = d.datagrams === "present" && d.datagramsEchoed ? "ok" : "partial";
+    return { status, summary: `ready in ${d.readyMs} ms, reliability ${d.reliability}; streams 10/10, ${rttText(srtts)}; ${dgText}; requireUnreliable: ${d.requireUnreliable}`, detail: d };
+  } catch (e) {
+    try { wt.close(); } catch {}
+    d.error = String(e && e.message || e);
+    return { status: "fail", summary: d.error + (d.readyMs ? "" : " (session never became ready)"), detail: d };
+  }
+}
+
+// ---------- 4: WebSocket (H3 if the browser picks it) ----------
+async function testWS() {
+  const id = rid();
+  run.wsIds["WebSocket"] = id;
+  const t0 = performance.now();
+  const ws = new WebSocket(`wss://${location.host}/ws?id=${id}`);
+  try {
+    await withTimeout(new Promise((res, rej) => { ws.onopen = res; ws.onerror = () => rej(new Error("WebSocket error")); }), 10000, "open");
+    const openMs = Math.round(performance.now() - t0);
+    const rtts = [];
+    ws.onmessage = (e) => rtts.push(performance.now() - Number(e.data));
+    for (let i = 0; i < 20; i++) { ws.send(String(performance.now())); await sleep(20); }
+    await sleep(1000);
+    ws.close();
+    return { status: "ok", summary: `open in ${openMs} ms; ${rtts.length}/20 echoed; ${rttText(rtts)}; transport: see server column`, detail: { openMs, rtts: rtts.map(Math.round).join(" "), protocol: ws.protocol, extensions: ws.extensions } };
+  } catch (e) { try { ws.close(); } catch {} throw e; }
+}
+
+// ---------- 5: service worker ----------
+async function testSW() {
+  if (!("serviceWorker" in navigator)) return { status: "fail", summary: "navigator.serviceWorker missing" };
+  const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  await withTimeout(navigator.serviceWorker.ready, 10000, "serviceWorker.ready");
+  await sleep(500);
+  const cache = await caches.open("probe-v1");
+  const cached = await cache.match("/");
+  let persisted = null;
+  try { persisted = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : null; } catch {}
+  const ok = !!cached;
+  return {
+    status: ok ? "ok" : "partial",
+    summary: `registered (scope ${reg.scope}); page cached: ${ok}; page already controlled by SW: ${run.env.swControlled}; storage.persisted(): ${persisted}. Offline check needs the owner: open again with Wi-Fi and cellular off.`,
+    detail: { scope: reg.scope, cached: ok, controlled: run.env.swControlled, persisted },
+  };
+}
+
+// ---------- results ----------
+const PENDING = "probe-pending";
+function loadPending() { try { return JSON.parse(localStorage.getItem(PENDING) || "[]"); } catch { return []; } }
+function savePending(list) { try { localStorage.setItem(PENDING, JSON.stringify(list)); } catch {} }
+
+async function postResult(r) {
+  const resp = await withTimeout(fetch("/result", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(r) }), 30000, "post result");
+  if (!resp.ok) throw new Error("HTTP " + resp.status);
+  return (await resp.json()).status;
+}
+
+async function flushPending() {
+  const list = loadPending();
+  if (!list.length) return;
+  const left = [];
+  for (const r of list) { try { await postResult(r); } catch { left.push(r); } }
+  savePending(left);
+  $("#post").textContent += ` Earlier queued result(s) sent: ${list.length - left.length}.`;
+}
+
+async function main() {
+  if (!(await online())) {
+    run.env.network = "offline (no network)";
+    addRow("5b. offline launch", "ok", `The page loaded with no network (service worker controlling: ${run.env.swControlled}). Transport tests skipped. This result is queued and posts next time the page opens online.`);
+    run.tests[0].detail = { swControlled: run.env.swControlled, onLine: navigator.onLine };
+    savePending([...loadPending(), run]);
+    $("#status").textContent = "done (offline: page shown from cache)";
+    $("#status").className = "ok";
+    return;
+  }
+  await flushPending();
+  await test("0. fetch over HTTP/3", testH3Fetch);
+  await test("1. WebRTC DC unordered, maxRetransmits 0", () => testRTC("rtc-maxRetransmits0", { ordered: false, maxRetransmits: 0 }));
+  await test("2. WebRTC DC unordered, maxPacketLifeTime 500", () => testRTC("rtc-maxPacketLifeTime500", { ordered: false, maxPacketLifeTime: 500 }));
+  await test("3. WebTransport", testWT);
+  await test("4. WebSocket (H3 if offered)", testWS);
+  await test("5. service worker install", testSW);
+  run.env.network = netTag || "";
+  run.env.finishedAt = new Date().toISOString();
+  $("#status").textContent = "sending results…";
+  try {
+    const st = await postResult(run);
+    $("#post").textContent = "Result: " + st + "." + $("#post").textContent;
+  } catch (e) {
+    savePending([...loadPending(), run]);
+    $("#post").textContent = "Could not send results (" + e.message + "); queued, they send next time the page opens online.";
+  }
+  $("#status").textContent = "done";
+  $("#status").className = "ok";
+}
+main().catch((e) => { $("#status").textContent = "error: " + e.message; $("#status").className = "fail"; });
+</script>
+</body>
+</html>

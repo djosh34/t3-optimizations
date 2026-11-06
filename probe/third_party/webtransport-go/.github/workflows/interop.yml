@@ -1,0 +1,39 @@
+name: Chrome Interop
+permissions:
+  contents: read
+on: [push, pull_request]
+
+jobs:
+  interop:
+    runs-on: "ubuntu-latest"
+    env:
+      CHROME_VERSION: '151.0.7922.47'
+    strategy:
+      fail-fast: false
+      matrix:
+        go: [ "1.26.x", "1.27.x" ]
+    steps:
+    - uses: actions/checkout@v7
+    - uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
+      id: setup-chrome
+      with:
+        chrome-version: ${{ env.CHROME_VERSION }}
+    - uses: nanasess/setup-chromedriver@e913548694400f275b4070efcd90f47dbbc8914c # v3.0.0
+      with:
+        chromedriver-version: ${{ env.CHROME_VERSION }}
+    - uses: actions/setup-go@v7
+      with:
+        go-version: ${{ matrix.go }}
+    - name: Build interop server
+      run: go build -o interopserver interop_chrome/main.go
+    - uses: actions/setup-python@v7
+      with:
+        python-version: '3.10'
+    - name: Install Python dependencies
+      run: pip install -r interop_chrome/requirements.txt
+    - name: Run interop tests
+      env:
+        CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+      run: |
+        ./interopserver &
+        timeout 120 python interop_chrome/interop.py
