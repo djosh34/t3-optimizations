@@ -36,7 +36,10 @@ for pkg in $packages; do
     continue
   fi
   echo "t3code/$pkg: running tests"
-  vp run --filter "./$pkg" test
+  # Run as CI does: no T3CODE_* settings from this shell (T3CODE_HOME may name
+  # the official ~/.t3) and no global git config (URL rewrites break tests).
+  env $(compgen -e | grep '^T3CODE_' | sed 's/^/-u /') GIT_CONFIG_GLOBAL=/dev/null \
+    vp run --filter "./$pkg" test
   ran=$((ran + 1))
 done
 echo "t3code: ran the tests of $ran changed package(s) against $base_ref"
