@@ -104,6 +104,10 @@ func runCmd(ctx context.Context, args []string) error {
 	if *out == "" {
 		*out = filepath.Join(labDir, "reports", "runs")
 	}
+	// docker takes a relative path for a volume name, not a directory.
+	if *out, err = filepath.Abs(*out); err != nil {
+		return err
+	}
 	r, err := run.Run(ctx, run.Options{
 		Profile:  p,
 		Seed:     *seed,
