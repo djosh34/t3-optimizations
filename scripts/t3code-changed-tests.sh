@@ -9,7 +9,8 @@ cd "$(git rev-parse --show-toplevel)"
 
 base="$(git merge-base "$base_ref" HEAD)"
 changed="$(
-  git diff --name-only "$base" -- t3code
+  # Without renames, a moved file counts for both its old and new package.
+  git diff --no-renames --name-only "$base" -- t3code
   git ls-files --others --exclude-standard -- t3code
 )"
 

@@ -31,4 +31,4 @@ t3code:
 # install registers for the whole repo.
 setup:
 	cd t3code && vp install
-	git config --unset core.hooksPath || true
+	scripts/unset-hooks-path.sh
