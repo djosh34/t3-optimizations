@@ -99,8 +99,10 @@ jobs:
           curl -fsSL https://mirrors.edge.kernel.org/pub/linux/utils/net/iproute2/iproute2-6.14.0.tar.xz | tar -xJ -C "$RUNNER_TEMP"
           cd "$RUNNER_TEMP/iproute2-6.14.0"
           ./configure
-          make -j4 SUBDIRS="lib tc"
+          make -j4 SUBDIRS="lib tc netem"
           sudo install tc/tc /usr/local/sbin/tc
+          # This tc reads netem's delay distributions from /usr/lib/tc.
+          sudo install -D -m 644 -t /usr/lib/tc netem/*.dist
           sudo tc -V
       - run: npm i -g vite-plus@1.4.0
       - run: vp install
