@@ -119,7 +119,7 @@ Each run writes `report.json` and `report.md`, plus the raw `phone.jsonl` (the d
 - **Status**: `done` (the phone shows the whole reply), `not done by deadline`, or for cold runs `app never loaded by deadline` / `prompt never sent by deadline`.
 - **Prompt confirmation**: from pressing Enter to the server's success reply for the command that carries the prompt reaching the page.
 - **Time to first text**: from pressing Enter to the first reply text on screen.
-- **Newest-text lag**: every second, how old the oldest text is that the agent produced and the phone does not show yet; 0 when the phone shows everything produced. Reported as a series and as max, median and p95.
+- **Newest-text lag**: every second, how old the oldest text is that the agent produced and the phone does not show yet; 0 when the phone shows everything produced. Reported as a series and as max, median and p95. When the prompt never reached the agent, nothing was produced and the lag stays 0: check the produced count.
 - **Longest silence**: the longest time the phone showed nothing new while there was text it had not shown.
 - **Bytes on the wire**: what crossed the server's end of the link after the switch, down and up, with TCP, TLS and every other request the page makes (the web client also posts its traces to the server).
 - **Bytes the app received / sent**: WebSocket payloads after decompression.

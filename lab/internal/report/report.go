@@ -394,13 +394,13 @@ func Summary(dir string) error {
 	slices.SortStableFunc(reports, func(a, b Report) int {
 		return cmp.Or(order(a.Profile)-order(b.Profile), strings.Compare(b.Kind, a.Kind), strings.Compare(a.Client, b.Client))
 	})
-	fmt.Println("| Profile | Grade | Client | Start | Status | Prompt confirmed | First text | Max lag | Longest silence | Shown/total | Wire down/up (B) | Duplicate reply bytes |")
+	fmt.Println("| Profile | Grade | Client | Start | Status | Prompt confirmed | First text | Max lag | Longest silence | Shown/produced/total | Wire down/up (B) | Duplicate reply bytes |")
 	fmt.Println("|---|---|---|---|---|---|---|---|---|---|---|---|")
 	for _, r := range reports {
-		fmt.Printf("| [%s](%s/report.md) | %s | %s | %s | %s | %s | %s | %.1f s | %.1f s | %d/%d | %d/%d | %d |\n",
+		fmt.Printf("| [%s](%s/report.md) | %s | %s | %s | %s | %s | %s | %.1f s | %.1f s | %d/%d/%d | %d/%d | %d |\n",
 			r.Profile, r.Name(), r.Grade, r.Client, r.Kind, r.Status,
 			fmtSecs(r.PromptConfirmationS), fmtSecs(r.TimeToFirstTextS), r.MaxLagS, r.LongestSilenceS,
-			r.ShownChars, r.ReplyChars, r.WireDownBytes, r.WireUpBytes, r.DuplicateReplyBytes)
+			r.ShownChars, r.ProducedChars, r.ReplyChars, r.WireDownBytes, r.WireUpBytes, r.DuplicateReplyBytes)
 	}
 	return nil
 }
