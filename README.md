@@ -32,7 +32,7 @@ make setup                 # vp install in t3code/, then unsets core.hooksPath
 `vp install` registers t3code's git hooks for the whole repo (`core.hooksPath`), and every worktree shares that setting. Always unset it after `vp install`, as `make setup` does:
 
 ```sh
-git config --unset core.hooksPath
+scripts/unset-hooks-path.sh
 ```
 
 Before every push, run:
