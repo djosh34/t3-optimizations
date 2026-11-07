@@ -6,9 +6,13 @@ import type { Pairing } from "./store";
 
 /** With nothing from the sidecar for this long, restart ICE, and again each time it passes. */
 const RESTART_AFTER_MS = 8_000;
-/** ICE is up again but no data for this long: the sidecar lost the connection. */
+/**
+ * Silent this long although ICE connected during the silence: the path works
+ * but the connection does not (the sidecar restarted). An outage never
+ * connects ICE, so it is recovered on the same connection.
+ */
 const DEAD_AFTER_MS = 30_000;
-/** A first WebRTC connection that has not opened by then falls back to the WebSocket. */
+/** A first WebRTC connection whose ICE has not connected by then falls back to the WebSocket. */
 const FALLBACK_AFTER_MS = 20_000;
 /** WebRTC is tried again this often while it failed to connect. */
 const RTC_RETRY_MS = 10_000;
@@ -100,6 +104,10 @@ interface Rtc {
   restart: number;
   readonly createdAt: number;
   iceUpSince: number | null;
+  /** ICE connected once: UDP gets through, a slow handshake is loss, not a block. */
+  iceEverUp: boolean;
+  /** ICE connected while the sidecar was silent. */
+  iceUpInSilence: boolean;
   lastRestartAt: number | null;
 }
 
@@ -222,7 +230,10 @@ export class Link {
     }
     this.lastDataAt = now;
     this.lastDataOn = on;
-    if (this.rtc) this.rtc.iceUpSince = null;
+    if (this.rtc) {
+      this.rtc.iceUpSince = null;
+      this.rtc.iceUpInSilence = false;
+    }
     if (this.trying !== `${this.transport} live`) this.set(`${this.transport} live`);
     this.hooks.onPacket(new Uint8Array(data));
   }
@@ -279,6 +290,8 @@ export class Link {
       restart: 0,
       createdAt: Date.now(),
       iceUpSince: null,
+      iceEverUp: false,
+      iceUpInSilence: false,
       lastRestartAt: null,
     };
     this.rtc = rtc;
@@ -306,8 +319,15 @@ export class Link {
     pc.oniceconnectionstatechange = () => {
       if (this.rtc !== rtc) return;
       const state = pc.iceConnectionState;
-      if (state === "connected" || state === "completed") rtc.iceUpSince ??= Date.now();
-      else rtc.iceUpSince = null;
+      if (state === "connected" || state === "completed") {
+        rtc.iceUpSince ??= Date.now();
+        rtc.iceEverUp = true;
+        if (this.lastDataAt !== null && Date.now() - this.lastDataAt >= RESTART_AFTER_MS) {
+          rtc.iceUpInSilence = true;
+        }
+      } else {
+        rtc.iceUpSince = null;
+      }
       this.hooks.onChange();
     };
     const offer = await pc.createOffer();
@@ -392,6 +412,7 @@ export class Link {
       if (
         probe !== null &&
         probe.dc.readyState !== "open" &&
+        !probe.iceEverUp &&
         now - probe.createdAt > FALLBACK_AFTER_MS
       ) {
         probe.pc.close();
@@ -402,9 +423,11 @@ export class Link {
       }
       return;
     }
-    if (!this.opened && now - this.startedAt > FALLBACK_AFTER_MS) {
-      // Nothing opened on this page: the network may block WebRTC. The
+    if (!this.opened && !this.rtc?.iceEverUp && now - this.startedAt > FALLBACK_AFTER_MS) {
+      // ICE never got through on this page: the network blocks UDP. The
       // WebSocket carries packets; WebRTC is tried again from time to time.
+      // When ICE did connect, the handshake is only slow (it takes minutes
+      // at 70% loss), and TCP would do worse on such a link.
       this.rtc?.pc.close();
       this.rtc = null;
       this.lastRtcTry = now;
@@ -420,14 +443,15 @@ export class Link {
     // connection failed when ICE checks are lost, while data still arrives;
     // an ICE restart below handles that, a new connection would need a DTLS
     // handshake that takes minutes at 70% loss.
-    if (rtc.dc.readyState === "closed") {
+    if (rtc.dc.readyState === "closed" || rtc.dc.readyState === "closing") {
       this.tryRtc();
       return;
     }
+    // A new connection's handshake can take minutes at heavy loss.
     if (rtc.dc.readyState !== "open") return;
     const silentFor = now - (this.lastDataAt ?? rtc.createdAt);
     if (silentFor < RESTART_AFTER_MS) return;
-    if (rtc.iceUpSince !== null && now - rtc.iceUpSince >= DEAD_AFTER_MS) {
+    if (rtc.iceUpInSilence && silentFor >= DEAD_AFTER_MS) {
       this.tryRtc();
       return;
     }

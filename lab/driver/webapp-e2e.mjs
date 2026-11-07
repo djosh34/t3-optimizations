@@ -296,8 +296,7 @@ await step("outage-recovered-on-the-same-connection", async () => {
 await step("history-and-images-without-http", async () => {
   await ask("block https on");
   try {
-    await reload();
-    await appReady();
+    // A fresh load: the service worker serves the app, the sync link the rest.
     await openThread(cfg.threadId);
     await waitText("The lab thread is set up", 60_000);
     await waitText("I received the image", 60_000);

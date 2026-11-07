@@ -132,6 +132,7 @@ type e2e struct {
 	server                      *t3server.Server
 	sidecarStop                 context.CancelFunc
 	sidecarExited               <-chan error
+	sidecarStarts               int
 }
 
 type stepResult struct {
@@ -140,7 +141,13 @@ type stepResult struct {
 
 func (e *e2e) startSidecar(ctx context.Context) error {
 	sctx, cancel := context.WithCancel(ctx)
-	exited, err := e.startProcess(sctx, e.lab.ServerNS, "sidecar.log", e.sidecarBin,
+	// Each start logs on its own, so a restart keeps the log before it.
+	e.sidecarStarts++
+	logName := "sidecar.log"
+	if e.sidecarStarts > 1 {
+		logName = fmt.Sprintf("sidecar-%d.log", e.sidecarStarts)
+	}
+	exited, err := e.startProcess(sctx, e.lab.ServerNS, logName, e.sidecarBin,
 		"--t3-url", "http://127.0.0.1:"+strconv.Itoa(t3server.Port),
 		"--t3-base-dir", e.server.BaseDir(),
 		"--t3-command", strings.Join(e.server.CLI(), " "),

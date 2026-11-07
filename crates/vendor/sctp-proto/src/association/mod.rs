@@ -429,7 +429,12 @@ impl Default for Association {
             ack_state: AckState::default(),
 
             // for testing
-            ack_mode: AckMode::default(),
+            // t3-optimizations patch: a SACK for every DATA packet, at once.
+            // The phone's SCTP (the browser's) shrinks its window and backs
+            // off on every SACK it misses; at 70% loss each way, a SACK
+            // held back for a second packet or 200 ms is often the one that
+            // would have arrived (issue #45).
+            ack_mode: AckMode::NoDelay,
         }
     }
 }

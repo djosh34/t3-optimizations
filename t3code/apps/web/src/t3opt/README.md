@@ -40,8 +40,10 @@ Fetches to the page's own `/api`, `/oauth` and `/.well-known` paths:
 WebRTC data channel first (unordered, no retransmits), the sidecar's WebSocket when WebRTC does not open:
 
 - One `RTCPeerConnection` lives as long as the page and is never closed on purpose. ICE credentials are derived from the token (`pipe::creds`), so nothing but the first connection needs signaling: later connections and ICE restarts use the kept answer and the certificate in IndexedDB.
-- With nothing from the sidecar for 8 s the app restarts ICE on the same connection, and again every 8 s. Only when ICE is up again and still nothing arrives for 30 s, or the channel closes, does it make a new connection (the next generation). A reload is a new generation too; the old page's connection may still be alive.
-- If no channel opened within 20 s, the WebSocket carries the packets and WebRTC is tried again every minute; when it opens, it takes over. `?transport=websocket` uses only the WebSocket.
+- With nothing from the sidecar for 8 s the app restarts ICE on the same connection, and again every 8 s. Only when the channel closes, or ICE connected during a silence of 30 s (the path works, the connection does not: the sidecar restarted), does it make a new connection (the next generation). An outage never connects ICE, so it is recovered on the same connection. A reload is a new generation too; the old page's connection may still be alive.
+- At heavy loss WebKit calls the connection failed while data still arrives; only a closed channel counts as gone.
+- If ICE did not connect within 20 s of the page opening, UDP is blocked: the WebSocket carries the packets and WebRTC is tried again every minute; when it opens, it takes over. A connection whose ICE connected but whose handshake is slow is waited for: it takes minutes at 70% loss, and TCP does worse there. `?transport=websocket` uses only the WebSocket.
+- The app makes its next packet only when WebKit's send buffer is nearly empty, so packets do not get old in WebKit's SCTP queue while its window is small.
 
 Every minute, and when the page is hidden, the app posts its link statistics to the sidecar's `/api/link-report`.
 

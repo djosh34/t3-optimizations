@@ -3909,6 +3909,9 @@ fn test_handle_forward_tsn_forward_3unreceived_chunks() -> Result<()> {
         ..Default::default()
     };
 
+    // t3-optimizations patch: this tests the delayed SACK of the normal mode.
+    a.ack_mode = AckMode::Normal;
+
     let prev_tsn = a.peer_last_tsn;
 
     let fwdtsn = ChunkForwardTsn {
@@ -3944,6 +3947,9 @@ fn test_handle_forward_tsn_forward_1for1_missing() -> Result<()> {
         use_forward_tsn: true,
         ..Default::default()
     };
+
+    // t3-optimizations patch: this tests the delayed SACK of the normal mode.
+    a.ack_mode = AckMode::Normal;
 
     let prev_tsn = a.peer_last_tsn;
 

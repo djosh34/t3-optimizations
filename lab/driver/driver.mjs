@@ -213,7 +213,16 @@ async function focusComposer(page, timeout) {
 // The sidecar's web app has no WebSocket to watch: its sync shim says where
 // the prompt is, and its engine counts the bytes.
 let lastPromptState = "";
+let lastSummary = 0;
 async function watchWebapp(page) {
+  if (Date.now() - lastSummary >= 10_000) {
+    lastSummary = Date.now();
+    const summary = await page.evaluate(
+      (id) => ({ objects: window.t3opt?.summary?.(id), link: window.t3opt?.engine?.status().link }),
+      cfg.threadId,
+    );
+    emit("note", { text: `webapp ${JSON.stringify(summary)}` });
+  }
   const p = await page.evaluate(() => window.t3opt?.prompt?.() ?? null);
   if (p === null || promptSentAt === undefined || p.at < promptSentAt - 1_000) return;
   if (p.state !== lastPromptState) {

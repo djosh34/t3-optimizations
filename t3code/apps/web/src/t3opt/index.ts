@@ -25,6 +25,8 @@ declare global {
       trace: string[];
       /** The newest prompt's state, its sequence number as a string. */
       prompt: () => { seq: string; state: string; at: number } | null;
+      /** What the phone has of a thread's objects, by collection or text kind. */
+      summary: (threadId: string) => Record<string, string>;
     };
   }
 }
@@ -103,6 +105,15 @@ export async function startT3opt(): Promise<void> {
     prompt: () => {
       const p = shimEvents.prompt;
       return p === null ? null : { seq: String(p.seq), state: p.state, at: p.at };
+    },
+    summary: (threadId) => {
+      const out: Record<string, string> = {};
+      for (const o of started?.objects.ofThread(threadId) ?? []) {
+        const name = o.metaJson.k ?? o.metaJson.c ?? "?";
+        const have = o.ranges.reduce((n, [a, b]) => n + (b - a), 0);
+        out[name] = `${out[name] ? `${out[name]} ` : ""}${have}/${o.len}`;
+      }
+      return out;
     },
   };
   mountStatusLine(started);
