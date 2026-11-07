@@ -148,6 +148,7 @@ export function threadSnapshot(objects: Objects, threadId: string): ThreadSnapsh
   }
   if (thread === null) return null;
   const turnItems = lists.get("turnItems") ?? [];
+  turnItems.push(...standIns(objs, turnItems, lists.get("runs") ?? []));
   turnItems.sort((a, b) => Number(a.ordinal ?? 0) - Number(b.ordinal ?? 0));
   const projection: Json = { thread, ...Object.fromEntries(lists) };
   projection.visibleTurnItems = visibleRows(threadId, frame ?? {}, projection);
@@ -160,6 +161,58 @@ export function threadSnapshot(objects: Objects, threadId: string): ThreadSnapsh
     latestLocalTurnOrdinal:
       typeof frame?.latestLocalTurnOrdinal === "number" ? frame.latestLocalTurnOrdinal : null,
   };
+}
+
+const standInCache = new WeakMap<Obj, Json>();
+
+/**
+ * Turn items for assistant texts whose own turn item has not arrived. The
+ * newest text goes first (the tail class) and its item, a kilobyte of JSON,
+ * waits behind the thread's status; without an item the client has no row
+ * to show the text in. A stand-in is a copy of the thread's newest complete
+ * assistant item with this text, in the newest run, after every other item.
+ * The real item has the same id and takes its place when it comes.
+ */
+function standIns(
+  objs: ReadonlyArray<Obj>,
+  items: ReadonlyArray<Json>,
+  runs: ReadonlyArray<Json>,
+): Json[] {
+  const shown = new Set(items.map((i) => i.messageId ?? i.id));
+  const assistant = items.filter((i) => i.type === "assistant_message");
+  const template = assistant.reduce<Json | null>(
+    (best, i) => (best === null || Number(i.ordinal) > Number(best.ordinal) ? i : best),
+    null,
+  );
+  if (template === null) return [];
+  const run = runs.reduce<Json | null>(
+    (best, r) => (best === null || Number(r.ordinal) > Number(best.ordinal) ? r : best),
+    null,
+  );
+  let ordinal = Math.max(0, ...items.map((i) => Number(i.ordinal ?? 0)));
+  const out: Json[] = [];
+  for (const o of objs) {
+    const m = o.metaJson.m;
+    if (o.metaJson.k !== "assistant" || m === undefined || shown.has(m)) continue;
+    let item = standInCache.get(o);
+    if (!item) {
+      ordinal += 1;
+      item = {
+        ...template,
+        id: `turn-item:message:${m}`,
+        messageId: m,
+        ordinal,
+        text: textOf(o),
+        streaming: true,
+        status: "running",
+        completedAt: null,
+        ...(run ? { runId: run.id } : {}),
+      };
+      standInCache.set(o, item);
+    }
+    out.push(item);
+  }
+  return out;
 }
 
 const rowCache = new WeakMap<object, WeakMap<object, Json>>();

@@ -37,7 +37,7 @@ function thread(objects: Objects) {
 }
 
 function item(id: string, type: string, ordinal: number, messageId: string) {
-  return { id, type, ordinal, messageId, runId: "r1", nodeId: null, text: "" };
+  return { id, type, ordinal, messageId, runId: "r1", nodeId: null, text: "", streaming: true };
 }
 
 describe("threadSnapshot", () => {
@@ -57,6 +57,37 @@ describe("threadSnapshot", () => {
       item: { text: string };
     }>;
     expect(rows.map((r) => r.item.text)).toEqual(["…Bye."]);
+  });
+
+  it("shows a newest text whose turn item has not arrived, in a stand-in", () => {
+    const objects = new Objects();
+    thread(objects);
+    put(objects, 3, { t: "t1", c: "turnItems", i: "a" }, item("a", "assistant_message", 2, "m-a"));
+    put(objects, 4, { t: "t1", m: "m-a", k: "assistant" }, "Older reply.");
+    put(objects, 5, { t: "t1", m: "m-b", k: "assistant" }, "Newest text", [[7, 11]]);
+    const rows = threadSnapshot(objects, "t1")?.projection.visibleTurnItems as Array<{
+      sourceItemId: string;
+      item: { text: string; streaming: boolean; messageId: string };
+    }>;
+    expect(rows.map((r) => [r.sourceItemId, r.item.text, r.item.streaming])).toEqual([
+      ["a", "Older reply.", true],
+      ["turn-item:message:m-b", "…text", true],
+    ]);
+    // The real item takes its place.
+    put(
+      objects,
+      6,
+      { t: "t1", c: "turnItems", i: "turn-item:message:m-b" },
+      {
+        ...item("turn-item:message:m-b", "assistant_message", 3, "m-b"),
+        streaming: false,
+      },
+    );
+    const after = threadSnapshot(objects, "t1")?.projection.visibleTurnItems as Array<{
+      item: { streaming: boolean };
+    }>;
+    expect(after).toHaveLength(2);
+    expect(after[1]?.item.streaming).toBe(false);
   });
 
   it("holds a user message back until its text is complete", () => {
