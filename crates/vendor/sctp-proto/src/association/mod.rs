@@ -3268,10 +3268,12 @@ impl Association {
                             // 2)  If not in Fast Recovery, adjust the ssthresh and cwnd of the
                             //     destination address(es) to which the missing DATA chunks were
                             //     last sent, according to the formula described in Section 7.2.3.
+                            //
+                            //     t3-optimizations patch: cwnd and ssthresh stay as they
+                            //     are. Loss is not a congestion signal on the links this
+                            //     runs on; the application paces what it sends.
                             self.in_fast_recovery = true;
                             self.fast_recover_exit_point = htna;
-                            self.ssthresh = core::cmp::max(self.cwnd / 2, 4 * self.mtu);
-                            self.cwnd = self.ssthresh;
                             self.partial_bytes_acked = 0;
                             self.will_retransmit_fast = true;
 
@@ -4351,16 +4353,10 @@ impl Association {
                 //   start by:
                 //      ssthresh = max(cwnd/2, 4*MTU)
                 //      cwnd = 1*MTU
-
-                self.ssthresh = core::cmp::max(self.cwnd / 2, 4 * self.mtu);
-                self.cwnd = self.mtu;
-                trace!(
-                    "[{}] updated cwnd={} ssthresh={} inflight={} (RTO)",
-                    self.side,
-                    self.cwnd,
-                    self.ssthresh,
-                    self.outbound_queue.inflight_bytes()
-                );
+                //
+                // t3-optimizations patch: cwnd and ssthresh stay as they are.
+                // Loss is not a congestion signal on the links this runs on;
+                // the application paces what it sends.
 
                 // RFC 3758 sec 3.5
                 //  A5) Any time the T3-rtx timer expires, on any destination, the sender

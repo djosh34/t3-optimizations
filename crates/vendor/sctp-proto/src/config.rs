@@ -14,10 +14,13 @@ pub(crate) const COMMON_HEADER_SIZE: u32 = 12;
 pub(crate) const DATA_CHUNK_HEADER_SIZE: u32 = 16;
 pub(crate) const DEFAULT_MAX_MESSAGE_SIZE: u32 = 65536;
 
-// Default RTO values in milliseconds (RFC 4960)
-pub(crate) const RTO_INITIAL: u64 = 3000;
+// Default RTO values in milliseconds. RFC 4960 has 3000, 1000 and 60000.
+// t3-optimizations patch: the retransmit timeout never exceeds 2 s, so a
+// lossy link is probed again at least every 2 s instead of backing off to a
+// minute.
+pub(crate) const RTO_INITIAL: u64 = 2000;
 pub(crate) const RTO_MIN: u64 = 1000;
-pub(crate) const RTO_MAX: u64 = 60000;
+pub(crate) const RTO_MAX: u64 = 2000;
 
 // Default max retransmit value (RFC 4960 Section 15)
 const DEFAULT_MAX_INIT_RETRANS: usize = 8;
@@ -49,7 +52,7 @@ pub struct TransportConfig {
     max_data_retransmits: Option<usize>,
 
     /// Initial retransmission timeout in milliseconds.
-    /// Default: 3000
+    /// Default: 2000 (t3-optimizations patch; RFC 4960 has 3000)
     rto_initial_ms: u64,
 
     /// Minimum retransmission timeout in milliseconds.
@@ -57,7 +60,7 @@ pub struct TransportConfig {
     rto_min_ms: u64,
 
     /// Maximum retransmission timeout in milliseconds.
-    /// Default: 60000
+    /// Default: 2000 (t3-optimizations patch; RFC 4960 has 60000)
     rto_max_ms: u64,
 
     /// SCTP source port when this endpoint initiates the association.
