@@ -31,7 +31,7 @@ pub use outbox::Class;
 pub use phone::{EntryKind, EntryState, Phone, Received, Reply};
 pub use ranges::RangeSet;
 pub use rate::RateConfig;
-pub use server::{Error, Incoming, Server};
+pub use server::{Error, Incoming, MAX_META, Server};
 pub use wire::{DecodeError, Key};
 
 /// Milliseconds on a clock the caller chooses; only differences matter.

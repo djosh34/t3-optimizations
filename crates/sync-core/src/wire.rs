@@ -36,6 +36,9 @@ pub const MAX_OBJECT_LEN: u64 = 256 << 20;
 pub const MAX_RAW_CHUNK: u64 = 16 << 10;
 const MAX_ACK_RANGES: u64 = 64;
 
+/// The largest packet number. Ranges of packet numbers end one above it, so
+/// it must stay well below `u64::MAX`; a connection never gets near it.
+pub const MAX_SEQ: u64 = 1 << 62;
 /// The largest id a [`Key`] can carry: two bits of the varint name the kind.
 pub const MAX_ID: u64 = (1 << 62) - 1;
 
@@ -275,6 +278,9 @@ impl Packet {
             seq: r.varint()?,
             ..Packet::default()
         };
+        if p.seq > MAX_SEQ {
+            return Err(DecodeError::Invalid("packet number"));
+        }
         if head & HAS_HELLO != 0 {
             let token: [u8; 16] = r
                 .bytes(16)?

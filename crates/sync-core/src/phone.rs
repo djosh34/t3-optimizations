@@ -8,7 +8,7 @@ use crate::endpoint::{Config, Endpoint, Stats, decode};
 use crate::inbox::{Delivered, InObject};
 use crate::outbox::Class;
 use crate::store;
-use crate::wire::{DecodeError, Hello, Key, Reader, put_varint};
+use crate::wire::{DecodeError, Hello, Key, MAX_ID, Reader, put_varint};
 
 /// What a log entry is. The server answers each with one reply.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -80,6 +80,11 @@ pub struct Phone {
     epoch: u64,
     next_entry: u64,
     log: BTreeMap<u64, EntryKind>,
+    /// Entries whose reply came in a batch not stored yet, by batch. They
+    /// left the log, but until storage commits they still count for the
+    /// lowest entry the phone tells the server about: a page killed before
+    /// the commit sends them again, and the server must still know them.
+    retiring: Vec<(u64, u64)>,
     /// Hello goes in every packet until the server's first packet on this
     /// connection.
     hello: bool,
@@ -95,6 +100,7 @@ impl Phone {
             epoch,
             next_entry: 1,
             log: BTreeMap::new(),
+            retiring: Vec::new(),
             hello: true,
         }
     }
@@ -172,7 +178,13 @@ impl Phone {
     }
 
     fn log_low(&self) -> u64 {
-        self.log.keys().next().copied().unwrap_or(self.next_entry)
+        let retiring = self.retiring.iter().map(|&(_, seq)| seq).min();
+        let logged = self.log.keys().next().copied();
+        [retiring, logged]
+            .into_iter()
+            .flatten()
+            .min()
+            .unwrap_or(self.next_entry)
     }
 
     pub fn receive(&mut self, now: Millis, bytes: &[u8]) -> Result<Received, DecodeError> {
@@ -212,6 +224,7 @@ impl Phone {
                         .map(|o| o.data)
                         .unwrap_or_default();
                     self.log.remove(&seq);
+                    self.retiring.push((batch, seq));
                     self.ep.out.remove(Key::Entry(seq));
                     r.changed.retain(|k| *k != key);
                     r.removed.push(key);
@@ -229,6 +242,7 @@ impl Phone {
     /// Everything of `batch` and earlier is stored; their packets get acked.
     pub fn committed(&mut self, batch: u64) {
         self.ep.inbox.commit(batch);
+        self.retiring.retain(|&(b, _)| b > batch);
     }
 
     /// The next packet to send, if one should go out now.
@@ -317,7 +331,7 @@ impl Phone {
             let seq = r.varint()?;
             let kind = EntryKind::from_u8(r.u8()?).ok_or(DecodeError::Invalid("entry kind"))?;
             let payload = store::bytes(&mut r)?;
-            if seq >= phone.next_entry {
+            if seq >= phone.next_entry || phone.next_entry > MAX_ID {
                 return Err(DecodeError::Invalid("entry number"));
             }
             let next = phone.next_entry;

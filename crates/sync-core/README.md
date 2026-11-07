@@ -33,7 +33,7 @@ let seq = phone.command(dispatch_command_json);  // stays in the log until its r
 
 ## Objects and revisions
 
-An object is bytes with an id, a class, an order within the class, a revision, and `meta`: what the phone needs to show it alone, such as thread and message ids. `Server::set` compares new content with the old:
+An object is bytes with an id, a class, an order within the class, a revision, and `meta` of at most 512 bytes: what the phone needs to show it alone, such as thread and message ids. `Server::set` compares new content with the old:
 
 - Content that only grows keeps its revision. The phone gets the new bytes.
 - Any other change (an edit in the middle, a shorter text, new meta) is a new revision. Its chunks say how many leading bytes of an older revision stay valid (`keep`). The phone cuts its copy to those bytes and fills in the rest.
@@ -75,7 +75,7 @@ The sender paces packets at a send rate in wire bytes per second, counting 93 by
 
 ## Commands and calls
 
-The phone keeps a log. A command (`orchestration.dispatchCommand`) or call gets a number and is sent until the server has it; the server hands it to the sidecar once, and commands in the order they were made. The entry leaves the log when its reply is stored on the phone. `Phone::entry_state` gives queued, sent, or "server has it" for the status line.
+The phone keeps a log. A command (`orchestration.dispatchCommand`) or call gets a number and is sent until the server has it; the server hands it to the sidecar once, and commands in the order they were made. The entry leaves the log when its reply is stored on the phone; until storage commits, the phone still reports it as the lowest entry it keeps, so the server keeps the reply for a page that dies before the commit. `Phone::entry_state` gives queued, sent, or "server has it" for the status line.
 
 ## Connections
 

@@ -29,10 +29,16 @@ pub enum Incoming {
     },
 }
 
+/// The most meta bytes an object can have: with the chunk header and the
+/// largest packet header, a chunk with its meta still fits a packet.
+pub const MAX_META: usize = 512;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
     /// Object ids go up to [`MAX_ID`].
     IdTooLarge(u64),
+    /// Meta goes up to [`MAX_META`] bytes, so a chunk with it fits a packet.
+    MetaTooLarge(usize),
     /// No command or call with this number is waiting for a reply.
     NoEntry(u64),
 }
@@ -41,6 +47,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::IdTooLarge(id) => write!(f, "object id {id} is above {MAX_ID}"),
+            Error::MetaTooLarge(n) => write!(f, "meta of {n} bytes is above {MAX_META}"),
             Error::NoEntry(seq) => write!(f, "no command or call {seq} waits for a reply"),
         }
     }
@@ -104,6 +111,9 @@ impl Server {
     ) -> Result<(), Error> {
         if id > MAX_ID {
             return Err(Error::IdTooLarge(id));
+        }
+        if meta.len() > MAX_META {
+            return Err(Error::MetaTooLarge(meta.len()));
         }
         self.ep
             .out

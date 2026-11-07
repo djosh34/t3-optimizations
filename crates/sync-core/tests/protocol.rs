@@ -436,3 +436,95 @@ fn chunks_on_the_wire_are_compressed_or_raw() {
     // Decoding hands over raw bytes.
     assert!(matches!(c.body, Body::Raw(_)));
 }
+
+#[test]
+fn a_reply_lost_before_storage_comes_again_after_a_reload() {
+    let mut p = Pair::new();
+    p.phone.command(b"prompt".to_vec());
+    while p
+        .incoming
+        .iter()
+        .all(|i| !matches!(i, Incoming::Command { .. }))
+    {
+        p.run(1);
+    }
+    // Saved with the command still in the log.
+    let saved = p.phone.save_state();
+    p.reply_to_commands();
+    // The reply arrives, but the page dies before storage commits it. The
+    // phone's packets in between must not let the server forget it.
+    let mut got_reply = false;
+    while !got_reply {
+        if let Some(b) = p.server.poll(p.now) {
+            let r = p.phone.receive(p.now, &b).expect("decodes");
+            got_reply = !r.replies.is_empty();
+        }
+        p.now += 1;
+    }
+    // Past the phone's alive interval, so it sends at least one packet.
+    let mut sent = 0;
+    for _ in 0..3_000 {
+        while let Some(b) = p.phone.poll(p.now) {
+            p.deliver_to_server(&b);
+            sent += 1;
+        }
+        p.now += 1;
+    }
+    assert!(sent > 0);
+    p.phone = Phone::load(&saved, [], Config::phone(), p.now).expect("loads");
+    p.phone.connected();
+    p.server.connected();
+    p.run(3_000);
+    assert_eq!(p.phone.pending().count(), 0, "the reply never came again");
+    assert!(
+        p.incoming.is_empty(),
+        "the command ran twice: {:?}",
+        p.incoming
+    );
+}
+
+#[test]
+fn an_object_with_the_largest_meta_still_goes_out() {
+    let mut p = Pair::new();
+    let meta = vec![b'm'; sync_core::MAX_META];
+    p.server
+        .set(TAIL, Class::Tail, 0, meta.clone(), b"hello".to_vec())
+        .expect("set");
+    p.run(3_000);
+    assert!(
+        p.phone
+            .object(TAIL)
+            .is_some_and(|o| o.complete() && o.meta == meta)
+    );
+    let too_big = vec![b'm'; sync_core::MAX_META + 1];
+    assert_eq!(
+        p.server.set(TAIL, Class::Tail, 0, too_big, Vec::new()),
+        Err(sync_core::Error::MetaTooLarge(sync_core::MAX_META + 1))
+    );
+}
+
+#[test]
+fn a_packet_number_beyond_the_limit_is_refused() {
+    use sync_core::wire::{Chunk, MAX_SEQ};
+    let packet = |seq| {
+        Packet {
+            seq,
+            chunks: vec![Chunk {
+                key: Key::Entry(1),
+                rev: 1,
+                total_len: 0,
+                offset: 0,
+                keep: None,
+                meta: Some(vec![0, 0]),
+                body: Body::Raw(Vec::new()),
+            }],
+            ..Packet::default()
+        }
+        .encode()
+    };
+    let mut s = Server::new(TOKEN, Config::server(), 0);
+    assert!(s.receive(0, &packet(u64::MAX)).is_err());
+    assert!(s.receive(0, &packet(MAX_SEQ + 1)).is_err());
+    assert!(s.receive(0, &packet(MAX_SEQ)).is_ok());
+    assert!(s.poll(0).is_some());
+}
