@@ -98,13 +98,11 @@ export interface ThreadSnapshot {
   readonly historyCursor: null;
   readonly hasMoreHistory: false;
   readonly latestLocalTurnOrdinal: number | null;
-  readonly turnItemsOmitLocalVisible: true;
 }
 
 /**
  * A thread as a `subscribeThread` snapshot item without its kind; null until
- * its thread body and frame are here. Visible rows of local items carry no
- * item: the client restores them from `turnItems` (`turnItemsOmitLocalVisible`).
+ * its thread body and frame are here.
  */
 export function threadSnapshot(objects: Objects, threadId: string): ThreadSnapshot | null {
   const objs = objects.ofThread(threadId);
@@ -144,32 +142,49 @@ export function threadSnapshot(objects: Objects, threadId: string): ThreadSnapsh
     hasMoreHistory: false,
     latestLocalTurnOrdinal:
       typeof frame.latestLocalTurnOrdinal === "number" ? frame.latestLocalTurnOrdinal : null,
-    turnItemsOmitLocalVisible: true,
   };
 }
 
+const rowCache = new WeakMap<object, WeakMap<object, Json>>();
+
+/** A frame row with its turn item, keeping its identity while neither changes. */
+function rowWithItem(row: Json, item: Json, position: number): Json {
+  let byItem = rowCache.get(row);
+  if (!byItem) rowCache.set(row, (byItem = new WeakMap()));
+  const cached = byItem.get(item);
+  if (cached?.position === position) return cached;
+  const value = { ...row, item, position };
+  byItem.set(item, value);
+  return value;
+}
+
 /**
- * The frame's rows, plus rows for local items older than its first local row:
- * a frame from a live subscription covers only the newest turns, and the
- * phone has the older ones, so it shows all of them and never asks for more.
+ * The frame's rows with their items. The sidecar leaves the item out of a
+ * local row (it is a turn item of its own); a row whose item has not arrived
+ * yet is left out until it has. Local items older than the frame's first
+ * local row get rows too: a frame from a live subscription covers only the
+ * newest turns, and the phone has the older ones, so it shows all of them.
  */
 function visibleRows(threadId: string, frame: Json, turnItems: ReadonlyArray<Json>): Json[] {
-  const rows = Array.isArray(frame.visibleTurnItems)
-    ? frame.visibleTurnItems.filter(isJson)
-    : [];
+  const rows = Array.isArray(frame.visibleTurnItems) ? frame.visibleTurnItems.filter(isJson) : [];
+  const byId = new Map(turnItems.map((t) => [t.id, t]));
   const shown = new Set(rows.map((r) => r.sourceItemId));
   const firstLocal = rows.find((r) => r.visibility === "local");
-  const firstOrdinal = turnItems.find((t) => t.id === firstLocal?.sourceItemId)?.ordinal;
-  if (frame.hasMoreHistory !== true || typeof firstOrdinal !== "number") return rows;
-  const older = turnItems
-    .filter((t) => typeof t.ordinal === "number" && t.ordinal < firstOrdinal && !shown.has(t.id))
-    .map((t) => ({
-      position: 0,
-      visibility: "local",
-      sourceThreadId: threadId,
-      sourceItemId: t.id,
-    }));
-  return [...older, ...rows].map((r, position) => ({ ...r, position }));
+  const firstOrdinal = byId.get(firstLocal?.sourceItemId)?.ordinal;
+  const older =
+    frame.hasMoreHistory === true && typeof firstOrdinal === "number"
+      ? turnItems
+          .filter(
+            (t) => typeof t.ordinal === "number" && t.ordinal < firstOrdinal && !shown.has(t.id),
+          )
+          .map((t) => ({ visibility: "local", sourceThreadId: threadId, sourceItemId: t.id }))
+      : [];
+  const out: Json[] = [];
+  for (const row of [...older, ...rows]) {
+    const item = isJson(row.item) ? row.item : byId.get(row.sourceItemId);
+    if (item !== undefined) out.push(rowWithItem(row, item, out.length));
+  }
+  return out;
 }
 
 /** An image object's bytes as a blob, by attachment id. */

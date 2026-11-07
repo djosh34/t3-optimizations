@@ -39,9 +39,26 @@ export async function registerServiceWorker(): Promise<void> {
   if (reg.waiting && navigator.serviceWorker.controller) setWaiting(reg.waiting);
   watch(reg.installing);
   reg.addEventListener("updatefound", () => watch(reg.installing));
+  void dropOldShells(reg).catch(() => {});
   const check = () => void reg.update().catch(() => {});
   setInterval(check, 15 * 60_000);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") check();
   });
+}
+
+/**
+ * Deletes the shells of older versions. The worker does it when it activates,
+ * but WebKit can activate a waiting worker as the app starts without that
+ * running to the end; with no update on its way, every other shell is unused.
+ */
+async function dropOldShells(reg: ServiceWorkerRegistration): Promise<void> {
+  if (reg.waiting || reg.installing || !navigator.serviceWorker.controller) return;
+  const r = await fetch("/__sw");
+  if (!r.ok) return;
+  const { shell } = (await r.json()) as { shell?: string };
+  if (!shell) return;
+  for (const name of await caches.keys()) {
+    if (name.startsWith("t3opt-shell-") && name !== shell) await caches.delete(name);
+  }
 }

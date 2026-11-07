@@ -8,6 +8,7 @@
 // - Other files: from a cache, or fetched and kept when they are hashed
 //   build assets.
 // - A new version waits until the page asks it to take over.
+// - `/__sw` answers with the version in control.
 
 /* global VERSION, PRECACHE */
 const SHELL = `t3opt-shell-${VERSION}`;
@@ -49,6 +50,11 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
+  // Which version serves this page, for the status details and the lab.
+  if (url.pathname === "/__sw") {
+    event.respondWith(Response.json({ version: VERSION, shell: SHELL }));
+    return;
+  }
   // The sidecar's API and the sync WebSocket never come from a cache.
   if (url.pathname.startsWith("/api/") || url.pathname === "/sync" || url.pathname === "/sw.js") {
     return;

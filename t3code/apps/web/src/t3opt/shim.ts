@@ -468,13 +468,11 @@ async function handleFetch(ctx: FetchContext, request: Request): Promise<Respons
   if (path === "/api/orchestration/shell" && request.method === "GET") {
     return json(200, await whenReady(engine, () => shellSnapshot(objects)));
   }
-  const thread = /^\/api\/orchestration\/threads\/([^/]+)(\/bounded)?$/.exec(path);
+  const thread = /^\/api\/orchestration\/threads\/([^/]+)(?:\/bounded)?$/.exec(path);
   if (thread && request.method === "GET") {
     const threadId = decodeURIComponent(thread[1] ?? "");
-    const snapshot = await whenReady(engine, () => threadSnapshot(objects, threadId));
-    if (thread[2] !== undefined) return json(200, snapshot);
-    const { turnItemsOmitLocalVisible: _, ...rest } = snapshot;
-    return json(200, rest);
+    // The bounded snapshot's fields are the full one's and more.
+    return json(200, await whenReady(engine, () => threadSnapshot(objects, threadId)));
   }
   // Everything else goes to the forked server through the sidecar.
   const bytes = new Uint8Array(await request.arrayBuffer());
