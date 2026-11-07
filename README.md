@@ -16,7 +16,9 @@ Every `t3` command started from this copy (serve, pair, dev, tests) passes `--ba
 
 A Cargo workspace (Rust stable, see `crates/rust-toolchain.toml`). `sync-core` holds the sync protocol and builds both natively and for `wasm32-unknown-unknown`, so the sidecar and the web app share it. [crates/sync-core/README.md](crates/sync-core/README.md) describes the protocol and its simulator.
 
-`pipe` is the server side of the WebRTC data channel to the phone, on str0m: ICE-lite on one UDP port, DTLS server role without the cookie exchange, new ICE credentials for every connection. Its SCTP layer is a patched copy of sctp-proto in `vendor/` (2 s retransmit cap, no congestion-window cut on loss), described in [crates/vendor/README.md](crates/vendor/README.md). Its `pipe-lab` binary is the server end of the lab's pipe runs.
+`pipe` is the server side of the WebRTC data channel to the phone, on str0m: ICE-lite on one UDP port, DTLS server role without the cookie exchange, ICE credentials derived from the phone's token so new connections and ICE restarts need no signaling. Its SCTP layer is a patched copy of sctp-proto in `vendor/` (2 s retransmit cap, no congestion-window cut on loss), described in [crates/vendor/README.md](crates/vendor/README.md). Its `pipe-lab` binary is the server end of the lab's pipe runs.
+
+`sidecar` connects the forked t3 server to phones over the sync protocol on that data channel, with a WebSocket fallback; see [crates/sidecar/README.md](crates/sidecar/README.md). `native-phone` is a phone without a browser, the sync protocol over the real data channel, for the sidecar's tests and the lab's `--client sidecar-native`.
 
 ### `lab/`
 
@@ -50,4 +52,4 @@ CI (`.github/workflows/ci.yml`) runs on every PR and on `main`, with four jobs t
 - `rust`: the Rust checks.
 - `go`: the Go checks.
 - `t3code`: `vp install`, `vp check`, `vp run -r typecheck`, and the web and server unit tests.
-- `lab-smoke`: three short chaos lab runs of the baseline client.
+- `lab-smoke`: three short chaos lab runs of the baseline client, one of the pipe, one of the sidecar (`--client sidecar-native`), and the sidecar's integration and WebKit tests.
