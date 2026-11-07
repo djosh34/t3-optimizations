@@ -1,0 +1,14 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794066969547 device 5hymq2n8 paired
+sidecar: 1794066969600 device 5hymq2n8: generation 1 signaled
+sidecar: 1794066969602 data channel 1: ICE Checking
+sidecar: 1794066969603 data channel 1: ICE Completed
+sidecar: 1794066969603 data channel 1 open
+sidecar: 1794066969687 device 5hymq2n8: now on Rtc(PeerId(1))
+sidecar: 1794066969687 device 5hymq2n8: lost its cache, syncing everything
+sidecar: 1794066970476 connected to t3
+sidecar: 1794066979529 device 5hymq2n8 stats: send 788 B/s, delivered 1555 B/s, loss 24%, srtt 614 ms, unsynced 21862 B, in flight 15 packets, sent 52 received 30 packets, SCTP queue 567 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066989536 device 5hymq2n8 stats: send 3175 B/s, delivered 1154 B/s, loss 45%, srtt 644 ms, unsynced 20834 B, in flight 48 packets, sent 107 received 48 packets, SCTP queue 2596 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066999547 device 5hymq2n8 stats: send 6082 B/s, delivered 2256 B/s, loss 46%, srtt 646 ms, unsynced 21598 B, in flight 104 packets, sent 224 received 72 packets, SCTP queue 5100 B, 0 dropped by a full SCTP buffer
+sidecar: 1794067009547 device 5hymq2n8 stats: send 13053 B/s, delivered 4168 B/s, loss 52%, srtt 679 ms, unsynced 15531 B, in flight 204 packets, sent 405 received 100 packets, SCTP queue 10034 B, 0 dropped by a full SCTP buffer
+sidecar: 1794067019557 device 5hymq2n8 stats: send 21727 B/s, delivered 7977 B/s, loss 51%, srtt 754 ms, unsynced 3104 B, in flight 465 packets, sent 794 received 119 packets, SCTP queue 18659 B, 0 dropped by a full SCTP buffer

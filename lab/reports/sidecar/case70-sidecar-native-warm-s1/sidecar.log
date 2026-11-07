@@ -1,0 +1,15 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794066807531 device 6ugi1u3m paired
+sidecar: 1794066807581 device 6ugi1u3m: generation 1 signaled
+sidecar: 1794066807582 data channel 1: ICE Checking
+sidecar: 1794066807583 data channel 1: ICE Completed
+sidecar: 1794066807584 data channel 1 open
+sidecar: 1794066807657 device 6ugi1u3m: now on Rtc(PeerId(1))
+sidecar: 1794066807657 device 6ugi1u3m: lost its cache, syncing everything
+sidecar: 1794066808596 connected to t3
+sidecar: 1794066817496 device 6ugi1u3m stats: send 1506 B/s, delivered 1191 B/s, loss 40%, srtt 628 ms, unsynced 24010 B, in flight 43 packets, sent 67 received 15 packets, SCTP queue 1840 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066827516 device 6ugi1u3m stats: send 847 B/s, delivered 591 B/s, loss 66%, srtt 823 ms, unsynced 24248 B, in flight 72 packets, sent 103 received 24 packets, SCTP queue 179 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066837526 device 6ugi1u3m stats: send 2301 B/s, delivered 378 B/s, loss 76%, srtt 987 ms, unsynced 31594 B, in flight 107 packets, sent 148 received 38 packets, SCTP queue 582 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066847556 device 6ugi1u3m stats: send 2985 B/s, delivered 602 B/s, loss 74%, srtt 1086 ms, unsynced 29012 B, in flight 152 packets, sent 209 received 53 packets, SCTP queue 1619 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066857557 device 6ugi1u3m stats: send 4651 B/s, delivered 932 B/s, loss 68%, srtt 1532 ms, unsynced 31033 B, in flight 249 packets, sent 333 received 67 packets, SCTP queue 2367 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066867587 device 6ugi1u3m stats: send 2501 B/s, delivered 981 B/s, loss 63%, srtt 3972 ms, unsynced 30769 B, in flight 300 packets, sent 408 received 86 packets, SCTP queue 1267 B, 0 dropped by a full SCTP buffer

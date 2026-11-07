@@ -157,7 +157,7 @@ lab/scripts/build-sidecar.sh            # once, as yourself: lab/bin/sidecar and
 sudo ./bin/lab run --profile case70 --seed 1 --client sidecar-native
 ```
 
-The sidecar listens on 10.231.0.1:8480 (HTTP) and UDP 12444 in the server namespace; its log is `sidecar.log` in the run directory. Profiles that carry the link in a TCP tunnel (`derp`) are not supported for this client yet.
+The sidecar listens on 10.231.0.1:8480 (HTTP) and UDP 12444 in the server namespace; its log is `sidecar.log` in the run directory. The results of the graded cases are in [reports/sidecar](reports/sidecar/README.md). Profiles that carry the link in a TCP tunnel (`derp`) are not supported for this client yet.
 
 ## CI
 
