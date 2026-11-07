@@ -13,7 +13,8 @@ html.t3opt #root {
   padding-top: var(--t3opt-bar);
 }
 
-html.t3opt .h-dvh {
+html.t3opt .h-dvh,
+html.t3opt .h-dvh\! {
   height: calc(100dvh - var(--t3opt-bar)) !important;
 }
 

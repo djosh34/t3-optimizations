@@ -92,16 +92,27 @@ async function waitText(text, timeout = 120_000) {
   await page.getByText(text, { exact: false }).first().waitFor({ state: "visible", timeout });
 }
 
+// The app can navigate by itself while the test does (it reloads after a
+// chunk failed to load, or when a new version takes control; the page logs
+// why). Either way the page that loads is the one the test asked for.
+async function navigate(go) {
+  try {
+    await go();
+  } catch (error) {
+    if (!/interrupted/i.test(String(error))) throw error;
+    console.error(`webapp-e2e: the app navigated during the test's own: ${String(error).split("\n")[0]}`);
+    await page.waitForLoadState("domcontentloaded", { timeout: 60_000 });
+  }
+}
+
 async function openThread(threadId) {
-  await page.goto(`${cfg.origin}/${cfg.environmentId}/${encodeURIComponent(threadId)}`, {
-    waitUntil: "commit",
-    timeout: 60_000,
-  });
+  const url = `${cfg.origin}/${cfg.environmentId}/${encodeURIComponent(threadId)}`;
+  await navigate(() => page.goto(url, { waitUntil: "commit", timeout: 60_000 }));
   await appReady();
 }
 
 async function reload() {
-  await page.reload({ waitUntil: "commit", timeout: 60_000 });
+  await navigate(() => page.reload({ waitUntil: "commit", timeout: 60_000 }));
 }
 
 const link = () => page.evaluate(() => window.t3opt?.engine?.status().link ?? null);

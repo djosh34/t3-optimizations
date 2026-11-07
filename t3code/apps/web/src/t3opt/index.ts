@@ -71,6 +71,10 @@ function mountStatusLine(engine: Engine | null) {
 
 export async function startT3opt(): Promise<void> {
   const realFetch = window.fetch.bind(window);
+  // The client reloads once when a lazy chunk fails; the lab's driver logs this.
+  window.addEventListener("vite:preloadError", (event) => {
+    console.warn("t3opt: a chunk failed to load", (event as Event & { payload?: unknown }).payload);
+  });
   void registerServiceWorker().catch((error: unknown) =>
     console.warn("t3opt: no service worker", error),
   );

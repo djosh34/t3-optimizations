@@ -26,6 +26,7 @@ export async function registerServiceWorker(): Promise<void> {
     }
     if (reloading) return;
     reloading = true;
+    console.warn("t3opt: a new version took control, reloading");
     location.reload();
   });
   const reg = await navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" });
