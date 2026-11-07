@@ -24,7 +24,7 @@ scripts/run-baseline.sh 3               # every baseline run, 3 at a time, into 
 
 `run` flags:
 
-- `--client`: `websocket` (the web client as Safari runs it, with WebSocket compression) or `websocket-nodeflate` (no compression, like the unchanged iOS app, which never negotiates it; issue #7). `sidecar-native` is the sync protocol through the sidecar on the data channel, with a native phone in the web app's place; see [Sidecar runs](#sidecar-runs). The pipe clients `pipe`, `pipe-unpatched` and `udp` run ticks instead of the t3 web client; see [Pipe runs](#pipe-runs).
+- `--client`: `websocket` (the web client as Safari runs it, with WebSocket compression) or `websocket-nodeflate` (no compression, like the unchanged iOS app, which never negotiates it; issue #7). `sidecar-native` is the sync protocol through the sidecar on the data channel, with a native phone in the web app's place; `webapp` is the home-screen web app in WebKit through the sidecar; see [Sidecar runs](#sidecar-runs). The pipe clients `pipe`, `pipe-unpatched` and `udp` run ticks instead of the t3 web client; see [Pipe runs](#pipe-runs).
 - `--kind`: `warm` (default) starts connected on a clean link and then switches to the profile. `cold` sets everything up on the clean link, closes the page, switches to the profile, and then opens the app again.
 - `--seed`: seeds netem. The same seed gives the same fault sequence. Timings still differ from run to run, because the browser and the server do not run in lockstep.
 - `--deadline`: overrides the run's deadline (15 minutes, 60 for `soak`). A run that is not done by then reports "not done by deadline" instead of waiting.
@@ -159,9 +159,32 @@ sudo ./bin/lab run --profile case70 --seed 1 --client sidecar-native
 
 The sidecar listens on 10.231.0.1:8480 (HTTP) and UDP 12444 in the server namespace; its log is `sidecar.log` in the run directory. The results of the graded cases are in [reports/sidecar](reports/sidecar/README.md). Profiles that carry the link in a TCP tunnel (`derp`) are not supported for this client yet.
 
+## Web app runs
+
+`--client webapp` runs the same scenario with the home-screen web app ([issue #45](https://github.com/djosh34/t3-optimizations/issues/45), `t3code/apps/web/src/t3opt`) in WebKit: the sidecar serves the app's build, the lab front gives it HTTPS (the app needs a secure context), and the app talks to the sidecar on the data channel. The driver is `driver.mjs` as for the WebSocket client; it reads the prompt's state from the app's sync shim, and the byte counts from its sync engine.
+
+```sh
+lab/scripts/build-sidecar.sh                        # once, as yourself
+lab/scripts/build-webapp.sh                         # lab/bin/webapp
+sudo ./bin/lab run --profile case70 --seed 1 --client webapp
+```
+
+### End to end
+
+`lab webapp-e2e` walks the app through everything a phone does, in WebKit at the iPhone 17 Pro's size (`driver/webapp-e2e.mjs`), with a screenshot of each state as the Safari tab and as the home-screen app. The link is profile A between the steps that shape it.
+
+```sh
+lab/scripts/build-webapp.sh lab/bin/webapp-next next   # once: the build the app updates to
+sudo ./bin/lab webapp-e2e                              # --outage 60m for the long outage
+```
+
+The steps: pair with a code from `t3 pair`; the service worker takes over; add a project and start a thread from the app; stream a reply and answer its approval; interrupt a reply; attach an image to a prompt (the upload goes through the sidecar); send a prompt on case 70 (a screenshot of each prompt state, the status line and the details panel); a thread fills in newest first after the phone lost its cache; reload with the old connection alive; recover from an outage on the same connection (ICE restart, no new connection); reopen history and images with HTTPS to the server blocked; open the app with the link down; fall back to the WebSocket with UDP blocked; update to a new build; a thread deleted while the sidecar was down leaves the phone; the cache lost with the token kept; the token lost, which pairs again.
+
+The driver asks the lab for what it cannot do itself (`shape case70`, `outage on`, `block udp on`, `block https on`, `swap build`, `delete-offline <thread>`, `mint-code`); the lab answers on its stdin. `lab/scripts/t3-command.mjs` deletes the thread through the forked server's own RPC while the sidecar is down. The run directory has `e2e.md` with each step's result, `phone.jsonl` and the screenshots in `phone/`.
+
 ## CI
 
-The `lab-smoke` job runs profiles A, outage10 and case70 for 3 minutes each with the same setup: namespaces, the forked server, WebKit in the same image. A must finish; the other two must produce a report. It then runs `--client pipe` on case50 for 30 s, which must carry ticks both ways, and `--client sidecar-native` on case70 for 3 minutes, which must get the prompt confirmed. The reports are uploaded as an artifact.
+The `lab-smoke` job runs profiles A, outage10 and case70 for 3 minutes each with the same setup: namespaces, the forked server, WebKit in the same image. A must finish; the other two must produce a report. It then runs `--client pipe` on case50 for 30 s, which must carry ticks both ways, `--client sidecar-native` on case70 for 3 minutes, which must get the prompt confirmed, and `--client webapp` on case70 for 3 minutes, which must too. The reports are uploaded as an artifact.
 
 ## Code
 

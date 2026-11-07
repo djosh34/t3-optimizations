@@ -18,7 +18,7 @@ rust:
 	cd crates && cargo test --workspace
 	cd crates && cargo test --manifest-path vendor/sctp-proto/Cargo.toml
 	cd crates && cargo test --manifest-path vendor/is/Cargo.toml
-	cd crates && cargo build -p sync-core --target wasm32-unknown-unknown
+	cd crates && cargo build -p sync-core -p phone-wasm --target wasm32-unknown-unknown
 
 go:
 	@files="$$(gofmt -l lab)"; if [ -n "$$files" ]; then echo "gofmt needed:"; echo "$$files"; exit 1; fi

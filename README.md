@@ -18,7 +18,11 @@ A Cargo workspace (Rust stable, see `crates/rust-toolchain.toml`). `sync-core` h
 
 `pipe` is the server side of the WebRTC data channel to the phone, on str0m: ICE-lite on one UDP port, DTLS server role without the cookie exchange, ICE credentials derived from the phone's token so new connections and ICE restarts need no signaling. Its SCTP layer is a patched copy of sctp-proto in `vendor/` (2 s retransmit cap, no congestion-window cut on loss), and its ICE agent a patched copy of `is` (the server keeps its path when the phone's checks are lost), both described in [crates/vendor/README.md](crates/vendor/README.md). Its `pipe-lab` binary is the server end of the lab's pipe runs.
 
-`sidecar` connects the forked t3 server to phones over the sync protocol on that data channel, with a WebSocket fallback; see [crates/sidecar/README.md](crates/sidecar/README.md). `native-phone` is a phone without a browser, the sync protocol over the real data channel, for the sidecar's tests and the lab's `--client sidecar-native`.
+`sidecar` connects the forked t3 server to phones over the sync protocol on that data channel, with a WebSocket fallback, and serves the home-screen web app; see [crates/sidecar/README.md](crates/sidecar/README.md). `phone-wasm` is sync-core's phone side as a WebAssembly module with a plain C ABI, for the web app. `native-phone` is a phone without a browser, the sync protocol over the real data channel, for the sidecar's tests and the lab's `--client sidecar-native`.
+
+### The home-screen web app
+
+The t3code web client with a sync shim in front of its RPC and HTTP, built with `lab/scripts/build-webapp.sh` and served by the sidecar; see [t3code/apps/web/src/t3opt/README.md](t3code/apps/web/src/t3opt/README.md).
 
 ### `lab/`
 
@@ -52,4 +56,4 @@ CI (`.github/workflows/ci.yml`) runs on every PR and on `main`, with four jobs t
 - `rust`: the Rust checks.
 - `go`: the Go checks.
 - `t3code`: `vp install`, `vp check`, `vp run -r typecheck`, and the web and server unit tests.
-- `lab-smoke`: three short chaos lab runs of the baseline client, one of the pipe, one of the sidecar (`--client sidecar-native`), and the sidecar's integration and WebKit tests.
+- `lab-smoke`: three short chaos lab runs of the baseline client, one of the pipe, one of the sidecar (`--client sidecar-native`), one of the web app (`--client webapp`), and the sidecar's integration and WebKit tests.
