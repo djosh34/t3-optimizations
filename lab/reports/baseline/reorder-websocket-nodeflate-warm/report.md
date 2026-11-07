@@ -1,6 +1,6 @@
 # reorder, websocket-nodeflate, warm start, seed 1
 
-Profile reorder (fault): 25% of packets reordered, 10% loss, 100 kbit/s. Commit 95709024129b.
+Profile reorder (fault): 25% of packets reordered, 10% loss, 100 kbit/s. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | 55.2s |
 | Reply shown / produced / total (chars) | 1596 / 1596 / 1596 |
 | Newest-text lag: max / median / p95 | 17.0s / 6.0s / 14.0s |
-| Longest silence | 16.4 s |
+| Longest silence | 16.4s |
 | Approval shown after it was asked | 2.8s |
 | Bytes on the wire down / up | 129532 / 147475 |
 | Bytes the app received / sent | 93305 / 8032 |

@@ -1,6 +1,6 @@
 # C, websocket-nodeflate, cold start, seed 1
 
-Profile C (graded): historical EDGE-like. Commit ac9de0f9fa93.
+Profile C (graded): historical EDGE-like. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -15,7 +15,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | 46.5s |
 | Reply shown / produced / total (chars) | 1596 / 1596 / 1596 |
 | Newest-text lag: max / median / p95 | 17.0s / 6.0s / 14.0s |
-| Longest silence | 14.4 s |
+| Longest silence | 14.4s |
 | Approval shown after it was asked | 2.3s |
 | Bytes on the wire down / up | 3247450 / 408767 |
 | Bytes the app received / sent | 186090 / 13244 |

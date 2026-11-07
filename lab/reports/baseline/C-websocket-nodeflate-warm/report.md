@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | 46.1s |
 | Reply shown / produced / total (chars) | 1596 / 1596 / 1596 |
 | Newest-text lag: max / median / p95 | 17.4s / 5.4s / 14.4s |
-| Longest silence | 17.0 s |
+| Longest silence | 17.0s |
 | Approval shown after it was asked | 2.2s |
 | Bytes on the wire down / up | 124912 / 161784 |
 | Bytes the app received / sent | 89134 / 6947 |

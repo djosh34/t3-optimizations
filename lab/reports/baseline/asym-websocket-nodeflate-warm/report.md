@@ -1,6 +1,6 @@
 # asym, websocket-nodeflate, warm start, seed 1
 
-Profile asym (fault): uplink 2 kbit/s with 50% loss, downlink 200 kbit/s. Commit 95709024129b.
+Profile asym (fault): uplink 2 kbit/s with 50% loss, downlink 200 kbit/s. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | never |
 | Reply shown / produced / total (chars) | 1077 / 1596 / 1596 |
 | Newest-text lag: max / median / p95 | 844.2s / 394.2s / 799.2s |
-| Longest silence | 860.7 s |
+| Longest silence | 860.7s |
 | Approval shown after it was asked | 8.6s |
 | Bytes on the wire down / up | 136891 / 87029 |
 | Bytes the app received / sent | 72845 / 6814 |

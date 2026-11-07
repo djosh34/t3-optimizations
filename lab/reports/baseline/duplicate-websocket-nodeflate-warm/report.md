@@ -1,6 +1,6 @@
 # duplicate, websocket-nodeflate, warm start, seed 1
 
-Profile duplicate (fault): 20% of packets duplicated, 5% loss, 100 kbit/s. Commit 95709024129b.
+Profile duplicate (fault): 20% of packets duplicated, 5% loss, 100 kbit/s. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | 48.5s |
 | Reply shown / produced / total (chars) | 1596 / 1596 / 1596 |
 | Newest-text lag: max / median / p95 | 21.2s / 6.2s / 18.2s |
-| Longest silence | 20.8 s |
+| Longest silence | 20.8s |
 | Approval shown after it was asked | 4.7s |
 | Bytes on the wire down / up | 167042 / 200015 |
 | Bytes the app received / sent | 97625 / 7658 |

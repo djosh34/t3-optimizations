@@ -83,10 +83,11 @@ type Report struct {
 	AgentGotPromptS *float64 `json:"agentGotPromptS"`
 	// The lag fields are nil when the agent produced no text: there was
 	// nothing to fall behind on, which is not the same as no lag.
-	MaxLagS             *float64 `json:"maxLagS"`
-	MedianLagS          *float64 `json:"medianLagS"`
-	P95LagS             *float64 `json:"p95LagS"`
-	LongestSilenceS     float64  `json:"longestSilenceS"`
+	MaxLagS    *float64 `json:"maxLagS"`
+	MedianLagS *float64 `json:"medianLagS"`
+	P95LagS    *float64 `json:"p95LagS"`
+	// LongestSilenceS is nil when no prompt was sent.
+	LongestSilenceS     *float64 `json:"longestSilenceS"`
 	ShownChars          int      `json:"shownChars"`
 	ProducedChars       int      `json:"producedChars"`
 	ReplyChars          int      `json:"replyChars"`
@@ -205,7 +206,7 @@ func Build(in Input) Report {
 	if r.CompleteS != nil {
 		end = sent.Add(time.Duration(*r.CompleteS * float64(time.Second)))
 	}
-	r.LongestSilenceS = longestSilence(sent, end, shown)
+	r.LongestSilenceS = ptr(longestSilence(sent, end, shown))
 	return r
 }
 
@@ -305,15 +306,23 @@ func quantiles(values []float64) (maxV, median, p95 float64) {
 
 // Headline is a one-line summary.
 func (r Report) Headline() string {
-	return fmt.Sprintf("%s %s %s seed %d: %s, first text %s, prompt confirmed %s, max lag %s, longest silence %.1fs",
+	return fmt.Sprintf("%s %s %s seed %d: %s, first text %s, prompt confirmed %s, max lag %s, longest silence %s",
 		r.Profile, r.Client, r.Kind, r.Seed, r.Status,
-		fmtSecs(r.TimeToFirstTextS), fmtSecs(r.PromptConfirmationS), fmtLag(r.MaxLagS), r.LongestSilenceS)
+		fmtSecs(r.TimeToFirstTextS), fmtSecs(r.PromptConfirmationS), fmtLag(r.MaxLagS), fmtSilence(r.LongestSilenceS))
 }
 
 // fmtLag shows a lag, or that the agent produced nothing to lag behind.
 func fmtLag(v *float64) string {
 	if v == nil {
 		return "no text produced"
+	}
+	return fmt.Sprintf("%.1fs", *v)
+}
+
+// fmtSilence shows a silence, or that no prompt was sent to wait on.
+func fmtSilence(v *float64) string {
+	if v == nil {
+		return "n/a, no prompt sent"
 	}
 	return fmt.Sprintf("%.1fs", *v)
 }
@@ -360,7 +369,7 @@ func (r Report) Markdown() string {
 	row("Whole reply shown", fmtSecs(r.CompleteS))
 	row("Reply shown / produced / total (chars)", fmt.Sprintf("%d / %d / %d", r.ShownChars, r.ProducedChars, r.ReplyChars))
 	row("Newest-text lag: max / median / p95", fmt.Sprintf("%s / %s / %s", fmtLag(r.MaxLagS), fmtLag(r.MedianLagS), fmtLag(r.P95LagS)))
-	row("Longest silence", fmt.Sprintf("%.1f s", r.LongestSilenceS))
+	row("Longest silence", fmtSilence(r.LongestSilenceS))
 	row("Approval shown after it was asked", fmtSecs(r.ApprovalShownAfterS))
 	row("Bytes on the wire down / up", fmt.Sprintf("%d / %d", r.WireDownBytes, r.WireUpBytes))
 	row("Bytes the app received / sent", fmt.Sprintf("%d / %d", r.AppReceivedBytes, r.AppSentBytes))
@@ -407,14 +416,40 @@ func Summary(dir string) error {
 	slices.SortStableFunc(reports, func(a, b Report) int {
 		return cmp.Or(order(a.Profile)-order(b.Profile), strings.Compare(b.Kind, a.Kind), strings.Compare(a.Client, b.Client))
 	})
+	var commits []string
+	for _, r := range reports {
+		if !slices.Contains(commits, r.Commit) {
+			commits = append(commits, r.Commit)
+		}
+	}
+	slices.Sort(commits)
+	fmt.Printf("Lab commit of these runs: %s.\n\n", strings.Join(commits, ", "))
 	fmt.Println("| Profile | Grade | Client | Start | Status | Prompt confirmed | Prompt reached agent | First text | Max lag | Longest silence | Shown/produced/total | Wire down/up (B) | Reply received/duplicates (B) |")
 	fmt.Println("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
 	for _, r := range reports {
-		fmt.Printf("| [%s](%s/report.md) | %s | %s | %s | %s | %s | %s | %s | %s | %.1fs | %d/%d/%d | %d/%d | %d/%d |\n",
+		fmt.Printf("| [%s](%s/report.md) | %s | %s | %s | %s | %s | %s | %s | %s | %s | %d/%d/%d | %d/%d | %d/%d |\n",
 			r.Profile, r.Name(), r.Grade, r.Client, r.Kind, r.Status,
 			fmtSecs(r.PromptConfirmationS), fmtSecs(r.AgentGotPromptS), fmtSecs(r.TimeToFirstTextS),
-			fmtLag(r.MaxLagS), r.LongestSilenceS, r.ShownChars, r.ProducedChars, r.ReplyChars,
+			fmtLag(r.MaxLagS), fmtSilence(r.LongestSilenceS), r.ShownChars, r.ProducedChars, r.ReplyChars,
 			r.WireDownBytes, r.WireUpBytes, r.ReplyBytesReceived, r.DuplicateReplyBytes)
+	}
+	return nil
+}
+
+// Render rewrites report.md from report.json in each run dir.
+func Render(dirs []string) error {
+	for _, dir := range dirs {
+		data, err := os.ReadFile(filepath.Join(dir, "report.json"))
+		if err != nil {
+			return err
+		}
+		var r Report
+		if err := json.Unmarshal(data, &r); err != nil {
+			return fmt.Errorf("%s: %w", dir, err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "report.md"), []byte(r.Markdown()), 0o644); err != nil {
+			return err
+		}
 	}
 	return nil
 }

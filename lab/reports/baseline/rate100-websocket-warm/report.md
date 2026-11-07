@@ -1,6 +1,6 @@
 # rate100, websocket, warm start, seed 1
 
-Profile rate100 (fault): 100 bytes/s, no random loss. Commit 55faa86ace18.
+Profile rate100 (fault): 100 bytes/s, no random loss. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | never |
 | Reply shown / produced / total (chars) | 0 / 1077 / 1596 |
 | Newest-text lag: max / median / p95 | 877.9s / 427.9s / 832.9s |
-| Longest silence | 899.3 s |
+| Longest silence | 899.3s |
 | Approval shown after it was asked | never |
 | Bytes on the wire down / up | 24360 / 68911 |
 | Bytes the app received / sent | 7088 / 2886 |

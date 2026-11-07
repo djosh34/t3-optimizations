@@ -1,6 +1,6 @@
 # rtt3000, websocket, warm start, seed 1
 
-Profile rtt3000 (fault): 3 s round trip with 300 ms jitter, 200 kbit/s. Commit 95709024129b.
+Profile rtt3000 (fault): 3 s round trip with 300 ms jitter, 200 kbit/s. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | 58.7s |
 | Reply shown / produced / total (chars) | 1596 / 1596 / 1596 |
 | Newest-text lag: max / median / p95 | 18.8s / 5.4s / 15.8s |
-| Longest silence | 22.2 s |
+| Longest silence | 22.2s |
 | Approval shown after it was asked | 2.1s |
 | Bytes on the wire down / up | 25101 / 93435 |
 | Bytes the app received / sent | 86765 / 6639 |

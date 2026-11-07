@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"syscall"
@@ -81,7 +82,7 @@ func Run(ctx context.Context, o Options) (report.Report, error) {
 	if _, err := os.Stat(filepath.Join(staticDir, "index.html")); err != nil {
 		return report.Report{}, fmt.Errorf("no baseline client build at %s; run lab/scripts/build-baseline-client.sh as yourself first", staticDir)
 	}
-	commit := describeCommit(ctx, u, repo)
+	commit := buildCommit()
 
 	if err := netlab.Cleanup(ctx); err != nil {
 		return report.Report{}, fmt.Errorf("cleanup of old labs: %w", err)
@@ -235,7 +236,7 @@ func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir str
 		Prompt: agent.MeasuredPrompt, ImagePrompt: agent.ImagePrompt,
 		Image: base64.StdEncoding.EncodeToString(agent.Picture()),
 		Reply: reply, Kind: o.Kind,
-	}, filepath.Join(s.runDir, "driver.log"))
+	}, phoneDir, filepath.Join(s.runDir, "driver.log"))
 	if err != nil {
 		return report.Input{}, err
 	}
@@ -467,13 +468,21 @@ func readAgentLog(path string) ([]agent.LogEvent, error) {
 	return out, nil
 }
 
-// describeCommit names the commit the lab runs from, as the user, since git
-// refuses a repo that root does not own.
-func describeCommit(ctx context.Context, u userproc.User, repo string) string {
-	out, err := u.Command(ctx, "", []string{"PATH=/usr/bin:/bin", "HOME=" + u.Home}, repo,
-		"git", "describe", "--always", "--dirty", "--abbrev=12").Output()
-	if err != nil {
+// buildCommit names the commit this lab binary was built from, with
+// "-dirty" when the checkout had uncommitted changes.
+func buildCommit() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
 		return "unknown"
 	}
-	return strings.TrimSpace(string(out))
+	revision, dirty := "unknown", ""
+	for _, setting := range info.Settings {
+		switch {
+		case setting.Key == "vcs.revision":
+			revision = setting.Value[:min(12, len(setting.Value))]
+		case setting.Key == "vcs.modified" && setting.Value == "true":
+			dirty = "-dirty"
+		}
+	}
+	return revision + dirty
 }

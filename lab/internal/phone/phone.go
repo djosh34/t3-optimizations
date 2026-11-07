@@ -13,6 +13,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -23,7 +24,7 @@ import (
 // Image is the driver image, built from lab/driver/Dockerfile.
 const Image = "t3lab-phone:1.64.1"
 
-// Config is what the driver gets as its argument.
+// Config is the driver's config.
 type Config struct {
 	Origin      string `json:"origin"`
 	PairURL     string `json:"pairUrl"`
@@ -94,17 +95,22 @@ type Driver struct {
 	done   chan error
 }
 
-// StartDriver runs the driver in the container. Its stderr goes to logPath.
-func StartDriver(ctx context.Context, lab *netlab.Lab, u userproc.User, cfg Config, logPath string) (*Driver, error) {
-	arg, err := json.Marshal(cfg)
+// StartDriver runs the driver in the container. Its config goes to
+// driver-config.json in outDir, the container's /out: the soak reply is too
+// long for one command-line argument. Its stderr goes to logPath.
+func StartDriver(ctx context.Context, lab *netlab.Lab, u userproc.User, cfg Config, outDir, logPath string) (*Driver, error) {
+	data, err := json.Marshal(cfg)
 	if err != nil {
+		return nil, err
+	}
+	if err := u.WriteFile(filepath.Join(outDir, "driver-config.json"), data); err != nil {
 		return nil, err
 	}
 	log, err := u.Create(logPath)
 	if err != nil {
 		return nil, err
 	}
-	cmd := exec.CommandContext(ctx, "docker", "exec", "-i", lab.Container, "node", "/lab/driver.mjs", string(arg))
+	cmd := exec.CommandContext(ctx, "docker", "exec", "-i", lab.Container, "node", "/lab/driver.mjs", "/out/driver-config.json")
 	cmd.Stderr = log
 	stdin, err := cmd.StdinPipe()
 	if err != nil {

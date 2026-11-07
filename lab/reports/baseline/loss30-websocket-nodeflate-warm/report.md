@@ -1,6 +1,6 @@
 # loss30, websocket-nodeflate, warm start, seed 1
 
-Profile loss30 (fault): 30% random loss, 100 kbit/s. Commit 55faa86ace18.
+Profile loss30 (fault): 30% random loss, 100 kbit/s. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | never |
 | Reply shown / produced / total (chars) | 0 / 1077 / 1596 |
 | Newest-text lag: max / median / p95 | 896.9s / 446.9s / 851.9s |
-| Longest silence | 899.3 s |
+| Longest silence | 899.3s |
 | Approval shown after it was asked | never |
 | Bytes on the wire down / up | 186614 / 454974 |
 | Bytes the app received / sent | 51281 / 8092 |

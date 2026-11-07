@@ -1,6 +1,6 @@
 # F, websocket, warm start, seed 1
 
-Profile F (diagnostic): 64 bit/s, 75% bursty loss, down 20 s of every 30 s. Commit 3e5d09c36a45.
+Profile F (diagnostic): 64 bit/s, 75% bursty loss, down 20 s of every 30 s. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | never |
 | Reply shown / produced / total (chars) | 0 / 0 / 1596 |
 | Newest-text lag: max / median / p95 | no text produced / no text produced / no text produced |
-| Longest silence | 899.4 s |
+| Longest silence | 899.4s |
 | Approval shown after it was asked | never |
 | Bytes on the wire down / up | 1612 / 824 |
 | Bytes the app received / sent | 0 / 664 |

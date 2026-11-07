@@ -1,6 +1,6 @@
 # outage60, websocket-nodeflate, warm start, seed 1
 
-Profile outage60 (fault): one 60 s outage on a weak link. Commit 95709024129b.
+Profile outage60 (fault): one 60 s outage on a weak link. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | 98.0s |
 | Reply shown / produced / total (chars) | 1596 / 1596 / 1596 |
 | Newest-text lag: max / median / p95 | 80.5s / 31.5s / 75.5s |
-| Longest silence | 81.8 s |
+| Longest silence | 81.8s |
 | Approval shown after it was asked | 54.4s |
 | Bytes on the wire down / up | 208712 / 314638 |
 | Bytes the app received / sent | 135889 / 12356 |

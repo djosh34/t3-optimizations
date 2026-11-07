@@ -1,6 +1,6 @@
 # derp, websocket-nodeflate, warm start, seed 1
 
-Profile derp (fault): all traffic in one TCP connection over a 10% loss link, like a DERP relay. Commit 95709024129b.
+Profile derp (fault): all traffic in one TCP connection over a 10% loss link, like a DERP relay. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | 46.9s |
 | Reply shown / produced / total (chars) | 1596 / 1596 / 1596 |
 | Newest-text lag: max / median / p95 | 17.7s / 4.9s / 14.7s |
-| Longest silence | 17.7 s |
+| Longest silence | 17.7s |
 | Approval shown after it was asked | 3.5s |
 | Bytes on the wire down / up | 161780 / 199897 |
 | Bytes the app received / sent | 94142 / 6961 |

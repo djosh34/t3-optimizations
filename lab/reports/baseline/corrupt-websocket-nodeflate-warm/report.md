@@ -1,6 +1,6 @@
 # corrupt, websocket-nodeflate, warm start, seed 1
 
-Profile corrupt (fault): 10% of packets corrupted, 100 kbit/s. Commit 95709024129b.
+Profile corrupt (fault): 10% of packets corrupted, 100 kbit/s. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | 47.9s |
 | Reply shown / produced / total (chars) | 1596 / 1596 / 1596 |
 | Newest-text lag: max / median / p95 | 17.2s / 5.2s / 14.2s |
-| Longest silence | 17.1 s |
+| Longest silence | 17.1s |
 | Approval shown after it was asked | 2.5s |
 | Bytes on the wire down / up | 135249 / 167251 |
 | Bytes the app received / sent | 93402 / 7049 |

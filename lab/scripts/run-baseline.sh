@@ -66,7 +66,7 @@ printf '%s\n' "${runs[@]}" | xargs -P "$jobs" -L 1 bash -c 'one "$@"' _ || statu
   echo
   echo "The untouched t3code v0.1.7 web client over WebSocket, with compression (\`websocket\`) and"
   echo "without it like the unchanged iOS app (\`websocket-nodeflate\`). Seed 1. See [lab/README.md](../../README.md)"
-  echo "for the profiles and what each measure means. All runs ran at commit $(git describe --always --dirty --abbrev=12)."
+  echo "for the profiles and what each measure means."
   echo
   echo "Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's"
   echo "userspace stack (issue #7), so production numbers differ."

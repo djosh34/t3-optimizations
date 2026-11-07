@@ -1,6 +1,6 @@
 # addrchange, websocket, warm start, seed 1
 
-Profile addrchange (fault): the phone's address changes once, on a weak link. Commit 95709024129b.
+Profile addrchange (fault): the phone's address changes once, on a weak link. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | 52.1s |
 | Reply shown / produced / total (chars) | 1596 / 1596 / 1596 |
 | Newest-text lag: max / median / p95 | 26.4s / 6.4s / 23.4s |
-| Longest silence | 26.3 s |
+| Longest silence | 26.3s |
 | Approval shown after it was asked | 9.8s |
 | Bytes on the wire down / up | 77575 / 233337 |
 | Bytes the app received / sent | 155043 / 12092 |

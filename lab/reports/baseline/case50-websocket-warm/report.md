@@ -1,6 +1,6 @@
 # case50, websocket, warm start, seed 1
 
-Profile case50 (graded): graded: 50% loss, 100 kbit/s. Commit 3e5d09c36a45.
+Profile case50 (graded): graded: 50% loss, 100 kbit/s. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | never |
 | Reply shown / produced / total (chars) | 397 / 1077 / 1596 |
 | Newest-text lag: max / median / p95 | 888.2s / 438.2s / 843.2s |
-| Longest silence | 883.5 s |
+| Longest silence | 883.5s |
 | Approval shown after it was asked | never |
 | Bytes on the wire down / up | 11180 / 33014 |
 | Bytes the app received / sent | 29311 / 2895 |

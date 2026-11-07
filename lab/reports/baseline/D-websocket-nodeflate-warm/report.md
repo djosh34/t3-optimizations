@@ -1,6 +1,6 @@
 # D, websocket-nodeflate, warm start, seed 1
 
-Profile D (graded): worst observed EDGE, inspired envelope. Commit ac9de0f9fa93.
+Profile D (graded): worst observed EDGE, inspired envelope. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | never |
 | Reply shown / produced / total (chars) | 0 / 1077 / 1596 |
 | Newest-text lag: max / median / p95 | 892.8s / 442.8s / 847.8s |
-| Longest silence | 899.2 s |
+| Longest silence | 899.2s |
 | Approval shown after it was asked | never |
 | Bytes on the wire down / up | 60239 / 363523 |
 | Bytes the app received / sent | 3699 / 2780 |

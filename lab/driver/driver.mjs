@@ -1,13 +1,14 @@
 // The phone side of a lab run. Runs inside the t3lab-phone container with
 // `docker exec`, so its own control traffic never crosses the shaped link.
 //
-// Argument: a JSON config (see Config in internal/phone/phone.go).
+// Argument: the path of a JSON config (see Config in internal/phone/phone.go).
 // stdout: one JSON event per line, each with `t` (Unix ms) and `ev`.
 // stdin: "go" once the lab applied the profile, "stop" at the deadline.
+import { readFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 import { devices, webkit } from "/opt/driver/node_modules/playwright/index.mjs";
 
-const cfg = JSON.parse(process.argv[2]);
+const cfg = JSON.parse(readFileSync(process.argv[2], "utf8"));
 const reply = cfg.reply;
 
 function emit(ev, data = {}) {

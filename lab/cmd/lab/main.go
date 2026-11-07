@@ -26,6 +26,7 @@ const usage = `usage:
   sudo ./bin/lab cleanup
   ./bin/lab profiles
   ./bin/lab summary <reports dir>
+  ./bin/lab render <run dir>...   rewrite report.md from report.json
 
 The lab runs these itself:
   lab fakeagent   the scripted ACP agent the t3 server starts
@@ -59,6 +60,8 @@ func dispatch(ctx context.Context, cmd string, args []string) error {
 			fmt.Printf("%-10s %-10s %s\n", p.Name, p.Grade(), p.About)
 		}
 		return nil
+	case "render":
+		return report.Render(args)
 	case "summary":
 		if len(args) != 1 {
 			return errors.New("usage: lab summary <reports dir>")

@@ -1,6 +1,6 @@
 # flap, websocket-nodeflate, warm start, seed 1
 
-Profile flap (fault): down 5 s of every 15 s on a weak link. Commit 95709024129b.
+Profile flap (fault): down 5 s of every 15 s on a weak link. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | 47.8s |
 | Reply shown / produced / total (chars) | 1596 / 1596 / 1596 |
 | Newest-text lag: max / median / p95 | 19.5s / 7.7s / 16.5s |
-| Longest silence | 16.8 s |
+| Longest silence | 16.8s |
 | Approval shown after it was asked | 5.6s |
 | Bytes on the wire down / up | 150943 / 174936 |
 | Bytes the app received / sent | 95469 / 7656 |

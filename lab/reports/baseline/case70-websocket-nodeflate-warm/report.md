@@ -1,6 +1,6 @@
 # case70, websocket-nodeflate, warm start, seed 1
 
-Profile case70 (graded): graded: 70% loss, 10 kbit/s. Commit 3e5d09c36a45.
+Profile case70 (graded): graded: 70% loss, 10 kbit/s. Commit cc6b9676f812.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -14,7 +14,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Whole reply shown | never |
 | Reply shown / produced / total (chars) | 0 / 1077 / 1596 |
 | Newest-text lag: max / median / p95 | 884.5s / 434.5s / 839.5s |
-| Longest silence | 899.4 s |
+| Longest silence | 899.4s |
 | Approval shown after it was asked | never |
 | Bytes on the wire down / up | 11167 / 21773 |
 | Bytes the app received / sent | 2187 / 2745 |
