@@ -91,7 +91,7 @@ impl Device {
 /// The class of an object for a phone that has `focus` open (issue #16):
 /// the newest assistant text first, then approvals and status, then older
 /// messages, then the thread list, other threads, images. The server's
-/// config goes first among the older messages.
+/// config and the thread list's header go first among the older messages.
 pub fn class_of(world: &World, id: u64, obj: &Obj, focus: Option<&str>) -> Class {
     match obj.kind {
         Kind::Shell => return Class::ThreadList,
@@ -112,5 +112,31 @@ pub fn class_of(world: &World, id: u64, obj: &Obj, focus: Option<&str>) -> Class
         Class::Status
     } else {
         Class::History
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::*;
+    use crate::world::object_id;
+
+    #[test]
+    fn what_the_web_app_needs_first_goes_before_the_open_threads_older_messages() {
+        let mut w = World::default();
+        w.set_shell(&json!({"kind": "snapshot", "snapshot": {"schemaVersion": 2,
+            "snapshotSequence": 1, "projects": [], "threads": [{"id": "t1"}], "archivedThreads": []}}));
+        w.set_config(&json!({"environment": {}}));
+        let class = |id: u64| {
+            let o = w.get(id).expect("object");
+            (class_of(&w, id, o, Some("t1")), o.order)
+        };
+        assert_eq!(class(object_id(&["shell"])), (Class::History, u64::MAX));
+        assert_eq!(class(object_id(&["config"])), (Class::History, u64::MAX));
+        assert_eq!(
+            class(object_id(&["thread", "active", "t1"])).0,
+            Class::ThreadList
+        );
     }
 }

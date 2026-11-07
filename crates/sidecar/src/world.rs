@@ -310,7 +310,8 @@ impl World {
             object_id(&["shell"]),
             Obj {
                 thread: None,
-                kind: Kind::Shell,
+                // The web app shows nothing before it has the header.
+                kind: Kind::Config,
                 status: false,
                 order: u64::MAX,
                 meta: compact(&json!({"c": "shell"})),

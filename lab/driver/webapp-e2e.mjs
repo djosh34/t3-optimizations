@@ -85,6 +85,12 @@ async function step(name, run, { takeover = false } = {}) {
   } catch (error) {
     results.push({ name, ok: false });
     emit("step", { name, text: `failed: ${String(error.message ?? error).split("\n")[0]}` });
+    // What the shim saw last, to tell a client that did not ask from a reply that did not come.
+    const state = await page
+      .evaluate(() => ({ trace: window.t3opt?.trace?.slice(-40) ?? [], link: window.t3opt?.engine?.status().link ?? null }))
+      .catch((e) => ({ trace: [`no state: ${e.message}`], link: null }));
+    for (const line of state.trace) log(`trace ${line}`);
+    log(`link ${JSON.stringify(state.link)}`);
     await shot(`failed-${name}`);
   }
 }
