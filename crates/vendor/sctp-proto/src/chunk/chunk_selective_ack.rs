@@ -45,7 +45,8 @@ impl fmt::Display for GapAckBlock {
     }
 }
 
-#[derive(Default, Debug)]
+// t3-optimizations patch: Clone, for the SACK that rides in DATA packets.
+#[derive(Default, Debug, Clone)]
 pub(crate) struct ChunkSelectiveAck {
     pub(crate) cumulative_tsn_ack: u32,
     pub(crate) advertised_receiver_window_credit: u32,

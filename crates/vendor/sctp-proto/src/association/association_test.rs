@@ -3468,9 +3468,19 @@ fn association_with_inflight_data(cumulative_tsn_ack_point: u32, now: Instant) -
     a
 }
 
+// t3-optimizations patch: DATA packets also carry a SACK; only DATA counts.
+fn data_chunks(packet: &Packet) -> Vec<&Box<dyn Chunk + Send + Sync>> {
+    packet
+        .chunks
+        .iter()
+        .filter(|c| c.as_any().downcast_ref::<ChunkPayloadData>().is_some())
+        .collect()
+}
+
 fn assert_retransmitted_packet(packet: &Packet, expected_tsns: &[u32]) {
-    assert_eq!(packet.chunks.len(), expected_tsns.len());
-    for (chunk, expected_tsn) in packet.chunks.iter().zip(expected_tsns) {
+    let chunks = data_chunks(packet);
+    assert_eq!(chunks.len(), expected_tsns.len());
+    for (chunk, expected_tsn) in chunks.into_iter().zip(expected_tsns) {
         let data = chunk.as_any().downcast_ref::<ChunkPayloadData>().unwrap();
         assert_eq!(data.tsn, *expected_tsn);
         assert_eq!(data.user_data, Bytes::from_static(b"payload"));
@@ -5788,8 +5798,8 @@ fn cancelled_retry_batch_reuses_window_for_unrelated_message() {
         1,
         "cancelled siblings must release this batch's window"
     );
-    assert_eq!(packets[0].chunks.len(), 1);
-    let data = packets[0].chunks[0]
+    assert_eq!(data_chunks(&packets[0]).len(), 1);
+    let data = data_chunks(&packets[0])[0]
         .as_any()
         .downcast_ref::<ChunkPayloadData>()
         .unwrap();

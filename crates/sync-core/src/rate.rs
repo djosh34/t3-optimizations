@@ -57,11 +57,12 @@ const PROBE_INCREASE: f64 = 1.25;
 /// initial rate: what it knew about the link may be stale.
 const IDLE_RESTART: Millis = 2_000;
 /// Sending with no packet from the other side for this many smoothed RTTs,
-/// and at least `SILENCE_MIN`, lowers the rate like RTT growth does. While
-/// data flows the other side acks several times a second, so at 70% loss
-/// 4 s without a packet is a link that carries nothing back.
+/// and at least `SILENCE_MIN`, lowers the rate like RTT growth does. An idle
+/// side still sends a packet a second, so at 70% loss 15 s without one
+/// happens by chance in 0.5% of such spells; a link that carries nothing
+/// back is silent for minutes.
 const SILENCE_RTTS: f64 = 4.0;
-const SILENCE_MIN: Millis = 4_000;
+const SILENCE_MIN: Millis = 15_000;
 /// Reports at least this far apart, and this many packets sent, give one
 /// sample of delivery rate and loss.
 const REPORT_SPAN: Millis = 1_000;
@@ -530,8 +531,8 @@ mod tests {
         }
         let fast = rc.rate();
         assert!(fast > 10_000.0, "rate {fast} did not grow on a clean link");
-        // Nothing comes back for 10 s while data waits.
-        for _ in 0..33 {
+        // Nothing comes back for 25 s while data waits.
+        for _ in 0..83 {
             t += 300;
             rc.note_limited(t);
             rc.decide(t);
