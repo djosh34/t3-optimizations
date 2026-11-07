@@ -548,7 +548,11 @@ mod tests {
             rc.note_limited(t);
             rc.decide(t);
         }
-        assert!(rc.rate() > 2.0 * slow, "rate {} did not grow from {slow}", rc.rate());
+        assert!(
+            rc.rate() > 2.0 * slow,
+            "rate {} did not grow from {slow}",
+            rc.rate()
+        );
     }
 
     #[test]
