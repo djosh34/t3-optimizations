@@ -8,6 +8,8 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
+use base64::Engine;
+use base64::engine::general_purpose::STANDARD;
 use pipe::creds::{self, Side, Ufrag};
 use pipe::{Direct, Pipe, PipeEvent};
 use serde_json::{Value, json};
@@ -18,7 +20,7 @@ use crate::config::Config;
 use crate::device::{Device, Link};
 use crate::http::{self, Api, ApiError, HttpConfig, WsEvent};
 use crate::store::{DataDir, DeviceRecord, append_line, hex, new_device_id, parse_token, random};
-use crate::t3::{self, Auth, In, Out, T3Config, percent_encode};
+use crate::t3::{self, Auth, HttpRequest, HttpResponse, In, Out, T3Config, percent_encode};
 use crate::world::{After, World};
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -35,6 +37,13 @@ pub enum Fetched {
         mime: String,
         result: Result<Vec<u8>, String>,
     },
+    Descriptor(Result<Value, String>),
+    /// A phone's `sidecar.http` request.
+    Http {
+        device: String,
+        seq: u64,
+        result: Result<HttpResponse, String>,
+    },
 }
 
 enum Job {
@@ -44,6 +53,12 @@ enum Job {
         mime: String,
         url: String,
     },
+    Descriptor,
+    Http {
+        device: String,
+        seq: u64,
+        req: HttpRequest,
+    },
 }
 
 /// What a t3 request is for.
@@ -52,6 +67,8 @@ enum Pending {
     Shell,
     Thread(String),
     Live,
+    ConfigStream,
+    Config,
     Call { device: String, seq: u64 },
     Command { device: String, seq: u64 },
     AssetUrl { id: String, mime: String },
@@ -91,6 +108,11 @@ pub struct App {
     last_stats: Instant,
     /// Packets SCTP dropped for a full send buffer since the last stats line.
     dropped: u64,
+    /// A `server.getConfig` request is out.
+    config_pending: bool,
+    /// Objects phones kept from before a restart that the forked server no
+    /// longer has were deleted.
+    pruned: bool,
 }
 
 /// Runs the sidecar until a fatal error.
@@ -143,6 +165,8 @@ pub fn run(cfg: Config) -> Result<(), Error> {
         last_save: Instant::now(),
         last_stats: Instant::now(),
         dropped: 0,
+        config_pending: false,
+        pruned: false,
     };
     app.load_devices()?;
     app.update_subscriptions();
@@ -504,6 +528,19 @@ impl App {
                     );
                     return;
                 };
+                if tag == "sidecar.http" {
+                    match http_request(&args) {
+                        Ok(req) => {
+                            let _ = self.jobs.send(Job::Http {
+                                device: device.to_owned(),
+                                seq,
+                                req,
+                            });
+                        }
+                        Err(e) => self.reply(device, seq, &json!({ "error": e })),
+                    }
+                    return;
+                }
                 if tag == "sidecar.focus" {
                     let thread = args["threadId"].as_str().map(str::to_owned);
                     if let Some(d) = self.devices.get_mut(device) {
@@ -677,6 +714,12 @@ impl App {
                     self.subscribed = true;
                     self.request("orchestration.subscribeShell", json!({}), Pending::Shell);
                     self.request("orchestration.subscribeLiveText", json!({}), Pending::Live);
+                    self.request(
+                        "subscribeServerConfig",
+                        json!({"workspaceSnapshotsOnDemand": true}),
+                        Pending::ConfigStream,
+                    );
+                    let _ = self.jobs.send(Job::Descriptor);
                 }
             }
             In::Down(why) => log(format!("t3 connection down: {why}")),
@@ -737,7 +780,16 @@ impl App {
                 let _ = self.t3.send(Out::Interrupt(id));
                 self.reply(&device, seq, &json!({"chunk": values}));
             }
-            Pending::Command { .. } | Pending::AssetUrl { .. } => {}
+            // Any change of the config: fetch it whole again.
+            Pending::ConfigStream => self.fetch_config(),
+            Pending::Command { .. } | Pending::AssetUrl { .. } | Pending::Config => {}
+        }
+    }
+
+    fn fetch_config(&mut self) {
+        if !self.config_pending {
+            self.config_pending = true;
+            self.request("server.getConfig", json!({}), Pending::Config);
         }
     }
 
@@ -775,6 +827,22 @@ impl App {
             Pending::Live => {
                 log(format!("live text subscription ended: {exit}"));
                 self.request("orchestration.subscribeLiveText", json!({}), Pending::Live);
+            }
+            Pending::Config => {
+                self.config_pending = false;
+                if success {
+                    self.world.set_config(&exit["value"]);
+                } else {
+                    log(format!("server config: {exit}"));
+                }
+            }
+            Pending::ConfigStream => {
+                log(format!("config subscription ended: {exit}"));
+                self.request(
+                    "subscribeServerConfig",
+                    json!({"workspaceSnapshotsOnDemand": true}),
+                    Pending::ConfigStream,
+                );
             }
         }
     }
@@ -850,6 +918,25 @@ impl App {
                     Err(e) => log(format!("thread {thread}: fetch failed: {e}")),
                 }
             }
+            Fetched::Descriptor(result) => match result {
+                Ok(v) => self.world.set_descriptor(&v),
+                Err(e) => log(format!("environment descriptor: {e}")),
+            },
+            Fetched::Http {
+                device,
+                seq,
+                result,
+            } => {
+                let reply = match result {
+                    Ok(r) => json!({"http": {
+                        "status": r.status,
+                        "contentType": r.content_type,
+                        "body": STANDARD.encode(&r.body),
+                    }}),
+                    Err(e) => json!({ "error": e }),
+                };
+                self.reply(&device, seq, &reply);
+            }
             Fetched::Image { id, mime, result } => match result {
                 Ok(bytes) => self.world.set_image(&id, &mime, bytes),
                 Err(e) => {
@@ -872,6 +959,7 @@ impl App {
         for meta in std::mem::take(&mut self.world.skipped) {
             log(format!("object left out, its meta is too long: {meta}"));
         }
+        self.prune_once();
         let changed = self.world.take_changed();
         if changed.is_empty() {
             return;
@@ -880,6 +968,68 @@ impl App {
             d.sync(&self.world, changed.iter().copied());
         }
     }
+}
+
+impl App {
+    /// Once the world has everything the forked server has, deletes what
+    /// phones kept from before a sidecar restart that is no longer there,
+    /// such as a thread deleted while the sidecar was down.
+    fn prune_once(&mut self) {
+        if self.pruned || !self.world.complete() {
+            return;
+        }
+        self.pruned = true;
+        let known = self.world.known_ids();
+        for d in self.devices.values_mut() {
+            let gone: Vec<u64> = d
+                .server
+                .object_ids()
+                .into_iter()
+                .filter(|id| !known.contains(id))
+                .collect();
+            if gone.is_empty() {
+                continue;
+            }
+            log(format!(
+                "device {}: {} objects the server no longer has, deleted",
+                d.record.id,
+                gone.len()
+            ));
+            for id in gone {
+                d.server.delete(id);
+            }
+            d.dirty = true;
+        }
+    }
+}
+
+/// Reads a `sidecar.http` payload: `{"method", "path", "contentType",
+/// "body"}`, the body in base64.
+fn http_request(args: &Value) -> Result<HttpRequest, String> {
+    let method = args["method"]
+        .as_str()
+        .unwrap_or("GET")
+        .to_ascii_uppercase();
+    if !matches!(method.as_str(), "GET" | "POST" | "PUT" | "DELETE" | "PATCH") {
+        return Err(format!("method {method} is not relayed"));
+    }
+    let path = args["path"].as_str().ok_or("no path")?;
+    // A path on the forked server, never another host.
+    if !path.starts_with('/') || path.starts_with("//") || path.contains("://") {
+        return Err(format!("{path} is not a path on the server"));
+    }
+    let body = match args["body"].as_str() {
+        Some(b) => STANDARD
+            .decode(b)
+            .map_err(|e| format!("body is not base64: {e}"))?,
+        None => Vec::new(),
+    };
+    Ok(HttpRequest {
+        method,
+        path: path.to_owned(),
+        content_type: args["contentType"].as_str().map(str::to_owned),
+        body,
+    })
 }
 
 fn unix_ms() -> u64 {
@@ -903,6 +1053,26 @@ fn spawn_fetcher(auth: Arc<Auth>, jobs: Receiver<Job>, to_main: Sender<Msg>) {
                 Job::Image { id, mime, url } => {
                     let result = auth.get(&url).map_err(|e| e.to_string());
                     Fetched::Image { id, mime, result }
+                }
+                Job::Descriptor => Fetched::Descriptor(
+                    auth.get("/.well-known/t3/environment")
+                        .and_then(|b| Ok(serde_json::from_slice::<Value>(&b)?))
+                        .map_err(|e| e.to_string()),
+                ),
+                // A phone's request may be slow (an upload on a bad link
+                // took long to arrive, the reply takes long too); it gets
+                // its own thread, so fetches do not wait for it.
+                Job::Http { device, seq, req } => {
+                    let (auth, to_main) = (auth.clone(), to_main.clone());
+                    thread::spawn(move || {
+                        let result = auth.request(&req).map_err(|e| e.to_string());
+                        let _ = to_main.send(Msg::Fetched(Fetched::Http {
+                            device,
+                            seq,
+                            result,
+                        }));
+                    });
+                    continue;
                 }
             };
             if to_main.send(Msg::Fetched(msg)).is_err() {

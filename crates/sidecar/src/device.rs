@@ -90,10 +90,11 @@ impl Device {
 
 /// The class of an object for a phone that has `focus` open (issue #16):
 /// the newest assistant text first, then approvals and status, then older
-/// messages, then the thread list, other threads, images.
+/// messages, then the thread list (with the server's config), other
+/// threads, images.
 pub fn class_of(world: &World, id: u64, obj: &Obj, focus: Option<&str>) -> Class {
     match obj.kind {
-        Kind::Shell => return Class::ThreadList,
+        Kind::Shell | Kind::Config => return Class::ThreadList,
         Kind::Image => return Class::Image,
         Kind::Body | Kind::Text | Kind::Frame => {}
     }

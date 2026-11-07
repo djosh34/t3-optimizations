@@ -668,3 +668,33 @@ fn a_large_meta_does_not_make_every_packet_full_size() {
     // what the meta costs.
     assert!(largest <= 200 + 200 + 48, "packets up to {largest} bytes");
 }
+
+/// A restarted sidecar lists what the phone has and deletes what the
+/// forked server no longer has; a saved and loaded server keeps the list.
+#[test]
+fn deleting_an_object_the_phone_has() {
+    let mut p = Pair::new();
+    for id in [10, 11] {
+        p.server
+            .set(id, Class::History, id, b"{}".to_vec(), text(300))
+            .expect("set");
+    }
+    p.run(2_000);
+    assert!(p.phone.object(10).is_some_and(|o| o.complete()));
+    let saved = p.server.save();
+    p.server = Server::load(&saved, Config::server(), p.now).expect("loads");
+    let mut ids = p.server.object_ids();
+    ids.sort();
+    assert_eq!(ids, vec![10, 11]);
+    p.server.delete(11);
+    assert_eq!(p.server.object_ids(), vec![10]);
+    p.run(2_000);
+    // Empty content is a deleted object.
+    assert!(
+        p.phone
+            .object(11)
+            .is_some_and(|o| o.complete() && o.len == 0),
+        "the phone kept a deleted object"
+    );
+    assert!(p.phone.object(10).is_some_and(|o| o.complete()));
+}

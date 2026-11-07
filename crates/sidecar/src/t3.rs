@@ -122,30 +122,79 @@ impl Auth {
     /// GETs a path of the server with the bearer token, pairing again once
     /// if the server rejects it.
     pub fn get(&self, path: &str) -> Result<Vec<u8>, Error> {
-        let url = format!("{}{path}", self.cfg.url);
+        let r = self.request(&HttpRequest {
+            method: "GET".into(),
+            path: path.into(),
+            content_type: None,
+            body: Vec::new(),
+        })?;
+        if r.status != 200 {
+            return Err(format!("GET {path}: HTTP {}", r.status).into());
+        }
+        Ok(r.body)
+    }
+
+    /// Sends a request to the server with the bearer token, pairing again
+    /// once if the server rejects it. Any status is a response.
+    pub fn request(&self, req: &HttpRequest) -> Result<HttpResponse, Error> {
+        let url = format!("{}{}", self.cfg.url, req.path);
         for _ in 0..2 {
             let token = self.bearer()?;
-            let response = ureq::get(&url)
-                .header("authorization", &format!("Bearer {token}"))
-                .header("x-t3-orchestration-protocol", PROTOCOL)
-                .config()
+            let request = ureq::http::Request::builder()
+                .method(req.method.as_str())
+                .uri(&url)
+                .header("authorization", format!("Bearer {token}"))
+                .header("x-t3-orchestration-protocol", PROTOCOL);
+            let request = match &req.content_type {
+                Some(t) => request.header("content-type", t),
+                None => request,
+            };
+            let agent: ureq::Agent = ureq::Agent::config_builder()
                 .http_status_as_error(false)
                 .build()
-                .call()?;
+                .into();
+            let response = agent.run(request.body(req.body.clone())?)?;
             let status = response.status().as_u16();
             if status == 401 {
                 self.rejected(&token);
                 continue;
             }
+            let content_type = response
+                .headers()
+                .get("content-type")
+                .and_then(|v| v.to_str().ok())
+                .map(str::to_owned);
             let mut body = response.into_body();
-            let bytes = body.with_config().limit(64 << 20).read_to_vec()?;
-            if status != 200 {
-                return Err(format!("GET {path}: HTTP {status}").into());
-            }
-            return Ok(bytes);
+            let body = body.with_config().limit(64 << 20).read_to_vec()?;
+            return Ok(HttpResponse {
+                status,
+                content_type,
+                body,
+            });
         }
-        Err(format!("GET {path}: the server rejected a fresh token").into())
+        Err(format!(
+            "{} {}: the server rejected a fresh token",
+            req.method, req.path
+        )
+        .into())
     }
+}
+
+/// An HTTP request to the forked server, for a phone (`sidecar.http`).
+#[derive(Debug, Clone)]
+pub struct HttpRequest {
+    pub method: String,
+    /// The path and query, starting with `/`.
+    pub path: String,
+    pub content_type: Option<String>,
+    pub body: Vec<u8>,
+}
+
+#[derive(Debug, Clone)]
+pub struct HttpResponse {
+    pub status: u16,
+    pub content_type: Option<String>,
+    pub body: Vec<u8>,
 }
 
 /// Mints a one-time pairing code with the server's own CLI, `t3 pair
