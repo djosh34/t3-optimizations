@@ -114,7 +114,11 @@ export class PhoneWasm {
   }
 
   private out(): Bytes {
-    return new Uint8Array(this.x.memory.buffer, this.x.phone_out_ptr(), this.x.phone_out_len()).slice();
+    return new Uint8Array(
+      this.x.memory.buffer,
+      this.x.phone_out_ptr(),
+      this.x.phone_out_len(),
+    ).slice();
   }
 
   private check(status: number): Bytes {

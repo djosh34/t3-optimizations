@@ -1,15 +1,6 @@
-// The in-page server the web client talks to (issue #32). The client keeps
-// its own RPC and HTTP code; the shim takes the place of the forked server
-// behind it:
-// - a WebSocket to `/ws` is a `ShimSocket` that speaks the same Effect RPC
-//   JSON. Subscriptions to the thread list, a thread and the server config
-//   are answered from synced state; `orchestration.dispatchCommand` goes out
-//   as a sync-core command; every other call goes to the sidecar as one call
-//   and one reply.
-// - fetch to the page's own `/api`, `/oauth` and `/.well-known` paths:
-//   pairing and the session are answered here, the snapshot loaders from
-//   synced state, and every other request goes through the sidecar
-//   (`sidecar.http`), uploads at the background class.
+// The in-page server the web client talks to (issue #32): a WebSocket to /ws
+// and fetches to the page's own API paths are answered here, from synced state
+// or through the sidecar. See README.md in this folder.
 
 import type { Engine } from "./engine";
 import { configOf, imageBlob, shellSnapshot, threadSnapshot } from "./snapshots";
@@ -153,7 +144,8 @@ class RpcServer {
   }
 
   handle(frame: Json) {
-    if (frame._tag !== "Request") trace(`in ${String(frame._tag)} ${String(frame.requestId ?? "")}`);
+    if (frame._tag !== "Request")
+      trace(`in ${String(frame._tag)} ${String(frame.requestId ?? "")}`);
     switch (frame._tag) {
       case "Ping":
         this.send({ _tag: "Pong" });
@@ -293,7 +285,12 @@ class RpcServer {
     // Everything else: one call to the sidecar, one reply.
     const stream = BACKGROUND_STREAMS.has(tag);
     if (stream) {
-      this.streams.set(String(id), { pending: null, awaitingAck: false, replaces: false, stop() {} });
+      this.streams.set(String(id), {
+        pending: null,
+        awaitingAck: false,
+        replaces: false,
+        stop() {},
+      });
     }
     const { reply } = await this.engine.request("call", { tag, payload }, stream);
     const r = readReply(await reply);
@@ -454,7 +451,8 @@ async function handleFetch(ctx: FetchContext, request: Request): Promise<Respons
       expiresAt: new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString(),
     });
   }
-  if (ctx.engine === null) return json(401, { _tag: "EnvironmentAuthInvalidError", reason: "unpaired" });
+  if (ctx.engine === null)
+    return json(401, { _tag: "EnvironmentAuthInvalidError", reason: "unpaired" });
   const engine = await ctx.engine;
   const objects = engine.objects;
   if (path === "/.well-known/t3/environment") {

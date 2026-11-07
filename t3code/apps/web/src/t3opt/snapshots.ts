@@ -170,10 +170,13 @@ function visibleRows(threadId: string, frame: Json, projection: Json): Json[] {
     attempts: (projection.attempts ?? []) as never,
     items: turnItems as never,
   });
-  const frameRows = Array.isArray(frame.visibleTurnItems) ? frame.visibleTurnItems.filter(isJson) : [];
+  const frameRows = Array.isArray(frame.visibleTurnItems)
+    ? frame.visibleTurnItems.filter(isJson)
+    : [];
   const out: Json[] = [];
   for (const row of frameRows) {
-    if (row.visibility !== "local" && isJson(row.item)) out.push(rowWithItem(row, row.item, out.length));
+    if (row.visibility !== "local" && isJson(row.item))
+      out.push(rowWithItem(row, row.item, out.length));
   }
   for (const item of turnItems) {
     if (!isVisible(item as never)) continue;

@@ -10,7 +10,7 @@ export const updateEvents = {
 
 function setWaiting(worker: ServiceWorker) {
   updateEvents.waiting = true;
-  updateEvents.apply = () => worker.postMessage("skip-waiting");
+  updateEvents.apply = () => worker.postMessage("skip-waiting", []);
   for (const l of updateEvents.listeners) l();
 }
 

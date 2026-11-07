@@ -1,12 +1,10 @@
-// The link status (issue #33): one line above the app with live or last
-// heard, sync progress, the prompt's state, up and down kB/s and the
-// transport; a tap opens the details.
+// The link status (issue #33): one line above the app; a tap opens the details.
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 
-import type { Engine, EngineStatus } from "./engine";
-import { type PromptState, shimEvents } from "./shim";
+import type { Engine } from "./engine";
 import { updateEvents } from "./serviceWorker";
+import { type PromptInfo, type PromptState, shimEvents } from "./shim";
 
 const PROMPT_LABELS: Record<PromptState, string> = {
   queued: "prompt queued",
@@ -15,6 +13,9 @@ const PROMPT_LABELS: Record<PromptState, string> = {
   confirmed: "prompt confirmed",
   failed: "prompt failed",
 };
+
+const BAR =
+  "fixed inset-x-0 top-0 z-(--t3opt-z) box-border flex h-(--t3opt-bar) w-full items-center gap-2.5 overflow-hidden whitespace-nowrap border-0 border-b border-border bg-popover px-2.5 pt-(--t3opt-safe-top) text-left font-medium text-popover-foreground text-2xs leading-none";
 
 function kb(bytesPerSecond: number) {
   return `${(bytesPerSecond / 1000).toFixed(bytesPerSecond < 10_000 ? 1 : 0)} kB/s`;
@@ -38,40 +39,39 @@ function progress(engine: Engine) {
   return { have, total };
 }
 
-interface Rates {
+interface Sample {
+  readonly at: number;
   readonly up: number;
   readonly down: number;
+  /** Wire bytes per second since the sample before. */
+  readonly upRate: number;
+  readonly downRate: number;
 }
 
-function useTicker(ms: number) {
-  const [, setTick] = useState(0);
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- a clock: "last heard" and rates change with time, not with React state
+/** Once a second: the time and the byte rates. */
+function useSample(engine: Engine | null): Sample {
+  const [sample, setSample] = useState<Sample>(() => ({
+    at: Date.now(),
+    up: 0,
+    down: 0,
+    upRate: 0,
+    downRate: 0,
+  }));
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- a clock: "last heard" and the rates change with time, not with React state
   useEffect(() => {
-    const t = setInterval(() => setTick((n) => n + 1), ms);
-    return () => clearInterval(t);
-  }, [ms]);
-}
-
-function useRates(status: () => EngineStatus): Rates {
-  const [rates, setRates] = useState<Rates>({ up: 0, down: 0 });
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- samples the engine's byte counters once a second
-  useEffect(() => {
-    let last = status().stats;
-    let lastAt = performance.now();
     const t = setInterval(() => {
-      const now = performance.now();
-      const s = status().stats;
-      const dt = (now - lastAt) / 1000;
-      setRates({
-        up: (s.sentWireBytes - last.sentWireBytes) / dt,
-        down: (s.receivedWireBytes - last.receivedWireBytes) / dt,
+      setSample((last) => {
+        const at = Date.now();
+        const s = engine?.status().stats;
+        const up = s?.sentWireBytes ?? 0;
+        const down = s?.receivedWireBytes ?? 0;
+        const dt = Math.max(0.001, (at - last.at) / 1000);
+        return { at, up, down, upRate: (up - last.up) / dt, downRate: (down - last.down) / dt };
       });
-      last = s;
-      lastAt = now;
-    }, 2_000);
+    }, 1_000);
     return () => clearInterval(t);
-  }, [status]);
-  return rates;
+  }, [engine]);
+  return sample;
 }
 
 function subscribeShim(listener: () => void) {
@@ -87,25 +87,33 @@ function subscribeUpdate(listener: () => void) {
 export function StatusLine({ engine }: { engine: Engine | null }) {
   const [open, setOpen] = useState(false);
   const prompt = useSyncExternalStore(subscribeShim, () => shimEvents.prompt);
-  const updateWaiting = useSyncExternalStore(subscribeUpdate, () => updateEvents.waiting);
-  useTicker(1_000);
-  const status = engine === null ? null : engine.status();
-  if (engine === null || status === null) {
+  const update = useSyncExternalStore(subscribeUpdate, () => updateEvents.waiting);
+  const sample = useSample(engine);
+  if (engine === null) {
     return (
-      <div className="t3opt-status" data-testid="t3opt-status">
+      <div className={BAR} data-testid="t3opt-status">
         <span>not paired</span>
-        {updateWaiting ? <UpdateButton /> : null}
+        {update ? <UpdateButton /> : null}
       </div>
     );
   }
-  return <Connected engine={engine} open={open} setOpen={setOpen} prompt={prompt} update={updateWaiting} />;
+  return (
+    <Connected
+      engine={engine}
+      sample={sample}
+      open={open}
+      setOpen={setOpen}
+      prompt={prompt}
+      update={update}
+    />
+  );
 }
 
 function UpdateButton() {
   return (
     <button
       type="button"
-      className="t3opt-update"
+      className="ml-auto rounded-lg border-0 bg-update px-2 py-0.75 text-update-foreground"
       data-testid="t3opt-update"
       onClick={(e) => {
         e.stopPropagation();
@@ -119,16 +127,16 @@ function UpdateButton() {
 
 function Connected(props: {
   engine: Engine;
+  sample: Sample;
   open: boolean;
   setOpen: (open: boolean) => void;
-  prompt: typeof shimEvents.prompt;
+  prompt: PromptInfo | null;
   update: boolean;
 }) {
-  const { engine } = props;
+  const { engine, sample } = props;
   const status = engine.status();
-  const rates = useRates(() => engine.status());
   const { link, stats } = status;
-  const silent = link.lastDataAt === null ? null : Date.now() - link.lastDataAt;
+  const silent = link.lastDataAt === null ? null : Math.max(0, sample.at - link.lastDataAt);
   const live = silent !== null && silent < 3_000;
   const { have, total } = progress(engine);
   const synced = total === 0 ? 0 : Math.floor((have / total) * 100);
@@ -137,24 +145,30 @@ function Connected(props: {
     <>
       <button
         type="button"
-        className="t3opt-status"
+        className={BAR}
         data-testid="t3opt-status"
         data-live={live}
         onClick={() => props.setOpen(!props.open)}
       >
-        <span className="t3opt-dot" />
+        <span className={`size-2 flex-none rounded-full ${live ? "bg-success" : "bg-warning"}`} />
         <span>{heard}</span>
         <span>synced {synced}%</span>
-        {props.prompt ? <span data-testid="t3opt-prompt">{PROMPT_LABELS[props.prompt.state]}</span> : null}
+        {props.prompt ? (
+          <span data-testid="t3opt-prompt">{PROMPT_LABELS[props.prompt.state]}</span>
+        ) : null}
         <span>
-          ↓{kb(rates.down)} ↑{kb(rates.up)}
+          ↓{kb(sample.downRate)} ↑{kb(sample.upRate)}
         </span>
         <span>{link.trying}</span>
         {props.update ? <UpdateButton /> : null}
       </button>
       {props.open ? (
-        <div className="t3opt-details" data-testid="t3opt-details" onClick={() => props.setOpen(false)}>
-          <dl>
+        <div
+          className="fixed inset-x-0 top-(--t3opt-bar) z-(--t3opt-z) max-h-(--t3opt-details-max) overflow-auto bg-popover px-3.5 pt-3 pb-4 text-popover-foreground text-sm leading-snug shadow-2xl"
+          data-testid="t3opt-details"
+          onClick={() => props.setOpen(false)}
+        >
+          <dl className="m-0 grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1.5 [&_dd]:m-0 [&_dt]:text-muted-foreground">
             <dt>Transport</dt>
             <dd>
               {link.transport}, generation {link.generation}, {link.trying}

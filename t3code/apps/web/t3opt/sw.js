@@ -1,14 +1,6 @@
-// The service worker of the sidecar's web app (issue #23). scripts/t3opt-sw.mjs
-// puts VERSION and PRECACHE in front of this file at build time.
-//
-// - Install: caches the app shell (the entry, every route and what they
-//   import, the sync module). Files an older version already has come from
-//   its cache, so an update downloads only what changed.
-// - Navigation: the cached index.html, so the app opens with no network.
-// - Other files: from a cache, or fetched and kept when they are hashed
-//   build assets.
-// - A new version waits until the page asks it to take over.
-// - `/__sw` answers with the version in control.
+// The service worker of the sidecar's web app (issue #23); see
+// src/t3opt/README.md. scripts/t3opt-sw.mjs puts VERSION and PRECACHE in front
+// of this file at build time.
 
 /* global VERSION, PRECACHE */
 const SHELL = `t3opt-shell-${VERSION}`;

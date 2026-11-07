@@ -1,10 +1,6 @@
-// How the web app reaches the sidecar (issues #24, #27, #29): a WebRTC data
-// channel first, the sidecar's WebSocket when WebRTC does not open. One
-// RTCPeerConnection lives as long as the page and is never closed on
-// purpose. When the sidecar goes silent the app restarts ICE on it; only
-// when ICE comes back and still nothing arrives, or the channel closes, does
-// it build a new connection (the next generation), without signaling.
-// crates/sidecar/README.md describes the sidecar's side.
+// How the web app reaches the sidecar: a WebRTC data channel on one
+// RTCPeerConnection for the life of the page, the WebSocket as fallback.
+// See README.md in this folder and crates/sidecar/README.md.
 
 import type { Pairing } from "./store";
 
@@ -75,7 +71,9 @@ async function derive(
   restart: number,
 ) {
   const ufrag = `${device}+${side}${generation}+${restart}`;
-  const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(`t3opt ice ${ufrag}`)));
+  const mac = new Uint8Array(
+    await crypto.subtle.sign("HMAC", key, enc.encode(`t3opt ice ${ufrag}`)),
+  );
   const pwd = btoa(String.fromCharCode(...mac))
     .replace(/=+$/, "")
     .slice(0, 24);
@@ -252,7 +250,9 @@ export class Link {
     this.generation = generation;
     await this.storage.save({ generation });
     if (this.transport === "webrtc") {
-      this.set(this.keptAnswer ? `webrtc connecting (generation ${generation})` : "webrtc signaling");
+      this.set(
+        this.keptAnswer ? `webrtc connecting (generation ${generation})` : "webrtc signaling",
+      );
     }
     const pc = new RTCPeerConnection({ certificates: [certificate] });
     const dc = pc.createDataChannel("sync", { ordered: false, maxRetransmits: 0 });
@@ -374,7 +374,11 @@ export class Link {
       // The WebSocket runs over TCP; a closed one is opened again.
       if (this.ws === null) this.openWebSocket();
       const probe = this.rtc;
-      if (probe !== null && probe.dc.readyState !== "open" && now - probe.createdAt > FALLBACK_AFTER_MS) {
+      if (
+        probe !== null &&
+        probe.dc.readyState !== "open" &&
+        now - probe.createdAt > FALLBACK_AFTER_MS
+      ) {
         probe.pc.close();
         this.rtc = null;
       }

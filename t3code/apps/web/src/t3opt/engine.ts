@@ -176,7 +176,8 @@ export class Engine {
     } catch (error) {
       // Not acked: the sidecar sends it again. Keep what is newer.
       console.warn("t3opt: IndexedDB commit failed", error);
-      for (const [k, v] of commit.put) if (!this.put.has(k) && !this.remove.has(k)) this.put.set(k, v);
+      for (const [k, v] of commit.put)
+        if (!this.put.has(k) && !this.remove.has(k)) this.put.set(k, v);
       for (const k of commit.remove) if (!this.put.has(k)) this.remove.add(k);
       this.stateDirty ||= commit.state !== null;
     } finally {
