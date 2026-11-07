@@ -7,3 +7,9 @@ exclude = ["vendor"]
 # str0m's SCTP layer, patched for lossy links. See vendor/README.md.
 [patch.crates-io]
 sctp-proto = { path = "vendor/sctp-proto" }
+
+# Brotli is slow unoptimized, and the sync-core tests compress a lot.
+[profile.dev.package.brotli]
+opt-level = 3
+[profile.dev.package.brotli-decompressor]
+opt-level = 3

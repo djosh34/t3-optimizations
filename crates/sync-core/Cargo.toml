@@ -6,3 +6,6 @@ edition = "2024"
 publish = false
 
 [dependencies]
+# Pure Rust, so it builds for wasm32-unknown-unknown too. Only its built-in
+# dictionary is used, so every chunk decodes on its own.
+brotli = "8.0.2"
