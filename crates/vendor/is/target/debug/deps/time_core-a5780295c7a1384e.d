@@ -1,0 +1,10 @@
+/home/joshazimullah.linux/.t3/worktrees/t3-optimizations/t3-4a8ada9a/crates/vendor/is/target/debug/deps/time_core-a5780295c7a1384e.d: /home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/lib.rs /home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/hint.rs /home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/unit.rs /home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/util.rs
+
+/home/joshazimullah.linux/.t3/worktrees/t3-optimizations/t3-4a8ada9a/crates/vendor/is/target/debug/deps/libtime_core-a5780295c7a1384e.rlib: /home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/lib.rs /home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/hint.rs /home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/unit.rs /home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/util.rs
+
+/home/joshazimullah.linux/.t3/worktrees/t3-optimizations/t3-4a8ada9a/crates/vendor/is/target/debug/deps/libtime_core-a5780295c7a1384e.rmeta: /home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/lib.rs /home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/hint.rs /home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/unit.rs /home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/util.rs
+
+/home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/lib.rs:
+/home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/hint.rs:
+/home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/unit.rs:
+/home/joshazimullah.linux/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/time-core-0.1.9/src/util.rs:

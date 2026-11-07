@@ -1228,9 +1228,15 @@ impl IceAgent {
 
         // prune failed candidates.
         let mut any_pruned = false;
+        let nominated_send = self.nominated_send;
         self.candidate_pairs.retain(|p| {
             let keep = if self.ice_lite {
-                p.is_ice_lite_alive(now)
+                // t3-optimizations patch: the pair we send on stays, however
+                // long the remote's checks are lost. A pair made again from a
+                // later check is not nominated (keepalives carry no
+                // USE-CANDIDATE), so pruning it left nothing to send on until
+                // the remote restarted ICE.
+                Some(p.id()) == nominated_send || p.is_ice_lite_alive(now)
             } else {
                 p.is_still_possible(now, &self.timing_config)
             };
@@ -1935,15 +1941,25 @@ impl IceAgent {
             // lets us act on a nomination only once the pair is valid, i.e. our own
             // check on it succeeded, so a pair the peer nominated but we cannot reach
             // never becomes the send path.
+            // t3-optimizations patch: of pairs with the same priority, the
+            // one the remote checked last, so a remote on a new address still
+            // moves the send path although the old pair is never pruned.
             self.candidate_pairs
                 .iter_mut()
                 .filter(|p| p.is_nominated() && p.state() == CheckState::Succeeded)
-                .max_by_key(|p| p.prio())
+                .max_by_key(|p| (p.prio(), p.remote_binding_request_time()))
         };
 
         if let Some(best_prio) = best_prio {
             if let Some(nominated) = nominated_pair_priority {
-                if nominated == best_prio.prio() {
+                // t3-optimizations patch: an ice-lite agent compares pairs, not
+                // priorities, so it can move to an equal pair (see above).
+                let same = if self.ice_lite {
+                    Some(best_prio.id()) == self.nominated_send
+                } else {
+                    nominated == best_prio.prio()
+                };
+                if same {
                     // The best prio is also the current nominated prio. Make
                     // no changes since there can be multiple pairs having the
                     // same best_prio.
@@ -3045,6 +3061,64 @@ mod test {
             agent.handle_timeout(now);
         }
         assert_eq!(nominated_sends(&mut agent), vec![ipv4_4()]);
+    }
+
+    /// t3-optimizations patch: an ice-lite agent keeps sending on its pair
+    /// while the remote's checks are lost, and moves to a pair the remote
+    /// nominates from a new address.
+    #[test]
+    fn ice_lite_keeps_its_pair_and_follows_a_new_address() {
+        let mut agent = new_test_agent();
+        agent.set_ice_lite(true);
+        agent.set_controlling(false);
+        agent
+            .add_local_candidate(Candidate::host(ipv4_1(), "udp").unwrap())
+            .unwrap();
+        let remote_creds = IceCreds::new();
+        agent.set_remote_credentials(remote_creds.clone());
+        let prio = Candidate::host(ipv4_3(), "udp").unwrap().prio();
+
+        let nominate = |agent: &mut IceAgent, now: Instant, from: SocketAddr| {
+            let username = format!("{}:{}", agent.local_credentials.ufrag, remote_creds.ufrag);
+            let req = StunMessage::binding_request(&username, TransId::new(), true, 0, prio, true);
+            let bytes = serialize_stun_msg(req, &agent.local_credentials.pass.clone());
+            assert!(agent.handle_packet(
+                now,
+                StunPacket {
+                    message: StunMessage::parse(&bytes).unwrap(),
+                    source: from,
+                    destination: ipv4_1(),
+                    proto: Protocol::Udp,
+                },
+            ));
+            agent.handle_timeout(now);
+        };
+        let sends = |agent: &mut IceAgent| {
+            let mut v = vec![];
+            while let Some(e) = agent.poll_event() {
+                if let IceAgentEvent::NominatedSend { destination, .. } = e {
+                    v.push(destination);
+                }
+            }
+            v
+        };
+
+        let mut now = Instant::now();
+        agent.handle_timeout(now);
+        nominate(&mut agent, now, ipv4_3());
+        assert_eq!(sends(&mut agent), vec![ipv4_3()]);
+
+        // A minute without a single check from the remote.
+        for _ in 0..60 {
+            now += Duration::from_secs(1);
+            agent.handle_timeout(now);
+        }
+        assert_eq!(agent.candidate_pairs.len(), 1, "the pair we send on was pruned");
+        assert!(agent.has_viable_remote_candidate(ipv4_3()));
+
+        // The remote comes back from a new address and nominates it.
+        nominate(&mut agent, now, ipv4_4());
+        assert_eq!(sends(&mut agent), vec![ipv4_4()]);
     }
 
     fn make_serialized_binding_request(

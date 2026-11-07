@@ -115,8 +115,10 @@ const RESTART_AFTER: Duration = Duration::from_secs(8);
 /// much silence.
 const RESTART_WHEN_LOST: Duration = Duration::from_secs(2);
 /// When ICE connects again but no data comes for this long, the sidecar
-/// lost the connection (it restarted): the phone makes a new one.
-const DEAD_AFTER: Duration = Duration::from_secs(8);
+/// lost the connection (it restarted): the phone makes a new one. A new
+/// connection needs a DTLS handshake, which takes minutes at 70% loss, so
+/// this waits long enough not to mistake a lossy stretch for it.
+const DEAD_AFTER: Duration = Duration::from_secs(30);
 
 pub struct NativePhone {
     origin: String,

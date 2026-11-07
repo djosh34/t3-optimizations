@@ -680,6 +680,7 @@ pub(crate) mod test {
     // }
 
     #[test]
+    #[ignore = "t3-optimizations patch: an ice-lite agent keeps the pair it sends on, so it never disconnects; see crates/vendor/README.md"]
     pub fn ice_lite_disconnect_reconnect() {
         // init_log();
 

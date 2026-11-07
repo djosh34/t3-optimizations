@@ -30,6 +30,8 @@ jobs:
       - run: cargo test --workspace
       # The patched sctp-proto's own tests; see crates/vendor/README.md.
       - run: cargo test --manifest-path vendor/sctp-proto/Cargo.toml
+      # The patched ICE agent's own tests; see crates/vendor/README.md.
+      - run: cargo test --manifest-path vendor/is/Cargo.toml
       - run: cargo build -p sync-core --target wasm32-unknown-unknown
 
   go:
