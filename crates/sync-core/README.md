@@ -75,7 +75,7 @@ The sender paces packets at a send rate in wire bytes per second, counting 93 by
 
 ## Commands and calls
 
-The phone keeps a log. A command (`orchestration.dispatchCommand`) or call gets a number and is sent until the server has it; the server hands it to the sidecar once, and commands in the order they were made. The entry leaves the log when its reply is stored on the phone; until storage commits, the phone still reports it as the lowest entry it keeps, so the server keeps the reply for a page that dies before the commit. `Phone::entry_state` gives queued, sent, or "server has it" for the status line.
+The phone keeps a log. A command (`orchestration.dispatchCommand`) or call gets a number and is sent until the server has it; the server hands it to the sidecar once, and commands in the order they were made. The one exception is a sidecar restart: what it was handed but had not answered is handed over again, so the sidecar dispatches every command with its t3 `commandId`, which t3 applies once. The entry leaves the log when its reply is stored on the phone; until storage commits, the phone still reports it as the lowest entry it keeps, so the server keeps the reply for a page that dies before the commit. `Phone::entry_state` gives queued, sent, or "server has it" for the status line.
 
 ## Connections
 

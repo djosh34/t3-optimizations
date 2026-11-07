@@ -1,7 +1,7 @@
 //! The server's side, one per paired phone: syncs objects to the phone and
 //! hands the phone's commands and calls to the sidecar, each once.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
 use crate::Millis;
@@ -63,6 +63,10 @@ pub struct Server {
     /// Entries handed to the sidecar, kept until the phone drops them from
     /// its log, so a late copy is never handed over twice.
     done: BTreeMap<u64, EntryKind>,
+    /// Entries handed to the sidecar that it has not answered yet. They are
+    /// not saved: a restarted sidecar gets them again when the phone sends
+    /// them again on its new connection.
+    unanswered: BTreeSet<u64>,
     /// Complete commands waiting for the command before them, by that
     /// command's number.
     held: BTreeMap<u64, (u64, Vec<u8>)>,
@@ -76,6 +80,7 @@ impl Server {
             token,
             epoch: None,
             done: BTreeMap::new(),
+            unanswered: BTreeSet::new(),
             held: BTreeMap::new(),
             log_low: 0,
         }
@@ -124,6 +129,7 @@ impl Server {
     /// The result of a command or call, for the phone.
     pub fn reply(&mut self, seq: u64, payload: Vec<u8>) -> Result<(), Error> {
         let kind = *self.done.get(&seq).ok_or(Error::NoEntry(seq))?;
+        self.unanswered.remove(&seq);
         let class = if kind == EntryKind::BackgroundCall {
             Class::Background
         } else {
@@ -194,6 +200,7 @@ impl Server {
             };
             if kind != EntryKind::Command {
                 self.done.insert(seq, kind);
+                self.unanswered.insert(seq);
                 incoming.push(Incoming::Call {
                     seq,
                     payload: o.data,
@@ -224,6 +231,7 @@ impl Server {
                 continue;
             }
             self.done.insert(seq, EntryKind::Command);
+            self.unanswered.insert(seq);
             incoming.push(Incoming::Command { seq, payload });
         }
     }
@@ -236,43 +244,22 @@ impl Server {
         self.log_low = low;
         self.done = self.done.split_off(&low);
         self.held.retain(|_, (seq, _)| *seq >= low);
-        let stale: Vec<Key> = self
-            .ep
+        self.unanswered = self.unanswered.split_off(&low);
+        self.ep
             .inbox
             .objects
-            .keys()
-            .filter(|k| matches!(k, Key::Entry(s) if *s < low))
-            .copied()
-            .collect();
-        for k in stale {
-            self.ep.inbox.objects.remove(&k);
-        }
-        let replies: Vec<Key> = self
-            .ep
+            .retain(|k, _| !matches!(k, Key::Entry(s) if *s < low));
+        self.ep
             .out
-            .objects()
-            .map(|(k, _)| *k)
-            .filter(|k| matches!(k, Key::Reply(s) if *s < low))
-            .collect();
-        for k in replies {
-            self.ep.out.remove(k);
-        }
+            .remove_where(|k| matches!(k, Key::Reply(s) if s < low));
     }
 
     fn reset(&mut self) {
         self.ep.out.forget_peer();
-        let replies: Vec<Key> = self
-            .ep
-            .out
-            .objects()
-            .map(|(k, _)| *k)
-            .filter(|k| matches!(k, Key::Reply(_)))
-            .collect();
-        for k in replies {
-            self.ep.out.remove(k);
-        }
+        self.ep.out.remove_where(|k| matches!(k, Key::Reply(_)));
         self.ep.inbox.objects.clear();
         self.done.clear();
+        self.unanswered.clear();
         self.held.clear();
         self.log_low = 0;
     }
@@ -297,6 +284,12 @@ impl Server {
     }
 
     /// Everything a restarted sidecar needs to go on without a full resync.
+    ///
+    /// Commands and calls the sidecar was handed but had not answered are
+    /// left out: after a restart they are handed over again when the phone
+    /// sends them again, which it does on every new connection. A command can
+    /// so reach t3 twice across a sidecar crash; t3 keeps a receipt per
+    /// `commandId` and applies it once.
     pub fn save(&self) -> Vec<u8> {
         let mut out = vec![store::VERSION];
         out.extend_from_slice(&self.token);
@@ -308,8 +301,13 @@ impl Server {
             None => out.push(0),
         }
         put_varint(&mut out, self.log_low);
-        put_varint(&mut out, self.done.len() as u64);
-        for (&seq, &kind) in &self.done {
+        let answered: Vec<_> = self
+            .done
+            .iter()
+            .filter(|(seq, _)| !self.unanswered.contains(seq))
+            .collect();
+        put_varint(&mut out, answered.len() as u64);
+        for (&seq, &kind) in answered {
             put_varint(&mut out, seq);
             out.push(kind.to_u8());
         }

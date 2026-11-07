@@ -156,44 +156,28 @@ impl OutObject {
         if range.is_empty() {
             return;
         }
-        let mut count = 0;
-        let mut out = Vec::with_capacity(self.sent.len() + 2);
-        for s in self.sent.drain(..) {
-            if s.range.end <= range.start || s.range.start >= range.end {
-                out.push(s);
-                continue;
-            }
-            if now < s.at + rto {
-                count = count.max(s.count);
-            }
-            if s.range.start < range.start {
-                out.push(Sent {
-                    range: s.range.start..range.start,
-                    ..s
-                });
-            }
-            if range.end < s.range.end {
-                out.push(Sent {
-                    range: range.end..s.range.end,
-                    ..s
-                });
-            }
-        }
-        out.push(Sent {
-            range,
-            at: now,
-            count: count + 1,
-        });
-        out.sort_by_key(|s| s.range.start);
-        self.sent = out;
+        let count = self
+            .sent
+            .iter()
+            .filter(|s| s.range.start < range.end && range.start < s.range.end)
+            .filter(|s| now < s.at + rto)
+            .map(|s| s.count)
+            .max()
+            .unwrap_or(0);
+        self.cut_sent(&range);
+        let at = self.sent.partition_point(|s| s.range.start < range.start);
+        self.sent.insert(
+            at,
+            Sent {
+                range,
+                at: now,
+                count: count + 1,
+            },
+        );
     }
 
-    fn on_acked(&mut self, range: Range<u64>) {
-        self.rev_acked = true;
-        if range.is_empty() {
-            return;
-        }
-        self.acked.insert(range.clone());
+    /// Takes `range` out of the bytes in flight, splitting what overlaps.
+    fn cut_sent(&mut self, range: &Range<u64>) {
         let mut out = Vec::with_capacity(self.sent.len() + 1);
         for s in self.sent.drain(..) {
             if s.range.end <= range.start || s.range.start >= range.end {
@@ -214,6 +198,15 @@ impl OutObject {
             }
         }
         self.sent = out;
+    }
+
+    fn on_acked(&mut self, range: Range<u64>) {
+        self.rev_acked = true;
+        if range.is_empty() {
+            return;
+        }
+        self.cut_sent(&range);
+        self.acked.insert(range);
     }
 
     /// Forgets what is in flight; the bytes become eligible at once.
@@ -380,6 +373,19 @@ impl Outbox {
     pub fn remove(&mut self, key: Key) {
         if let Some(o) = self.objects.remove(&key) {
             self.index.remove(&(o.class, Reverse(o.order), key));
+        }
+    }
+
+    /// Removes every object whose key matches.
+    pub fn remove_where(&mut self, matches: impl Fn(Key) -> bool) {
+        let keys: Vec<Key> = self
+            .objects
+            .keys()
+            .copied()
+            .filter(|&k| matches(k))
+            .collect();
+        for k in keys {
+            self.remove(k);
         }
     }
 

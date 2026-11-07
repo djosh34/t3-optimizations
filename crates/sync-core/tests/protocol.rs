@@ -528,3 +528,27 @@ fn a_packet_number_beyond_the_limit_is_refused() {
     assert!(s.receive(0, &packet(MAX_SEQ)).is_ok());
     assert!(s.poll(0).is_some());
 }
+
+#[test]
+fn a_restarted_server_hands_over_again_what_it_never_answered() {
+    let mut p = Pair::new();
+    let seq = p.phone.command(b"prompt".to_vec());
+    while p
+        .incoming
+        .iter()
+        .all(|i| !matches!(i, Incoming::Command { .. }))
+    {
+        p.run(1);
+    }
+    p.incoming.clear();
+    // The sidecar dies before it answers.
+    let saved = p.server.save();
+    p.server = Server::load(&saved, Config::server(), p.now).expect("loads");
+    p.server.connected();
+    p.phone.connected();
+    p.run(2_000);
+    assert!(matches!(p.incoming.as_slice(), [Incoming::Command { seq: s, .. }] if *s == seq));
+    p.reply_to_commands();
+    p.run(2_000);
+    assert_eq!(p.phone.pending().count(), 0);
+}
