@@ -474,8 +474,20 @@ impl Outbox {
     /// again, so the sender never idles until the peer has everything.
     /// Copies of the third pass are extra: they do not count as sends, so
     /// they never hold back a retransmit of the second.
-    pub fn fill(&mut self, seq: u64, space: usize, f: &Fill, out: &mut Vec<Chunk>) -> usize {
+    ///
+    /// `space` is the packet's size on a slow link; a chunk that does not fit
+    /// it (large meta) may grow the packet up to `max_space`, once, so the
+    /// highest-priority data never waits behind smaller, lower data.
+    pub fn fill(
+        &mut self,
+        seq: u64,
+        space: usize,
+        max_space: usize,
+        f: &Fill,
+        out: &mut Vec<Chunk>,
+    ) -> usize {
         let mut left = space;
+        let mut extra = max_space.saturating_sub(space);
         let mut taken: BTreeMap<Key, RangeSet> = BTreeMap::new();
         let mut announced: BTreeSet<Key> = BTreeSet::new();
         let mut record: Vec<(Key, u64, Range<u64>)> = Vec::new();
@@ -507,7 +519,15 @@ impl Outbox {
                     let due = pass != 1 || o.announce_due(f.now, f.rto_of(o.class));
                     if due
                         && !announced.contains(&key)
-                        && let Some(c) = make_chunk(key, o, o.len()..o.len(), false, left)
+                        && let Some(c) = fit(
+                            key,
+                            o,
+                            o.len()..o.len(),
+                            false,
+                            space,
+                            &mut left,
+                            &mut extra,
+                        )
                     {
                         left -= chunk_len(&c);
                         announced.insert(key);
@@ -526,7 +546,9 @@ impl Outbox {
                 for r in ranges {
                     let mut r = r;
                     while !r.is_empty() {
-                        let Some(c) = make_chunk(key, o, r.clone(), from_end, left) else {
+                        let grow = if pass < 2 { &mut extra } else { &mut 0 };
+                        let Some(c) = fit(key, o, r.clone(), from_end, space, &mut left, grow)
+                        else {
                             break;
                         };
                         let got = c.offset..c.offset + c.body.raw_len();
@@ -574,8 +596,35 @@ impl Outbox {
                 },
             );
         }
-        space - left
+        space + max_space.saturating_sub(space) - extra - left
     }
+}
+
+/// `make_chunk` in `left` bytes. A chunk whose meta is too large for even
+/// an empty packet of `space` bytes may instead use `left + extra`, which
+/// then moves into `left`.
+fn fit(
+    key: Key,
+    o: &OutObject,
+    range: Range<u64>,
+    from_end: bool,
+    space: usize,
+    left: &mut usize,
+    extra: &mut usize,
+) -> Option<Chunk> {
+    if let Some(c) = make_chunk(key, o, range.clone(), from_end, *left) {
+        return Some(c);
+    }
+    // Without meta a chunk header is under 48 bytes, and `space` is far
+    // more; only meta can keep a chunk out of an empty packet.
+    let needs = if o.rev_acked { 0 } else { o.meta.len() };
+    if *extra == 0 || needs + 48 + MIN_CHUNK_SPACE <= space {
+        return None;
+    }
+    let c = make_chunk(key, o, range, from_end, *left + *extra)?;
+    *left += *extra;
+    *extra = 0;
+    Some(c)
 }
 
 /// A chunk needs at least this much space to be worth starting.

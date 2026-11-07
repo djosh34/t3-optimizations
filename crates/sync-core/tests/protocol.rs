@@ -552,3 +552,45 @@ fn a_restarted_server_hands_over_again_what_it_never_answered() {
     p.run(2_000);
     assert_eq!(p.phone.pending().count(), 0);
 }
+
+#[test]
+fn a_tail_with_the_largest_meta_overtakes_backfill_that_fits() {
+    let mut s = Server::new(TOKEN, Config::server(), 0);
+    s.set(100, Class::Background, 0, Vec::new(), text(20_000))
+        .expect("set");
+    let meta = vec![b'm'; sync_core::MAX_META];
+    s.set(TAIL, Class::Tail, 0, meta, b"hello".to_vec())
+        .expect("set");
+    let mut now = 0;
+    let packet = loop {
+        if let Some(b) = s.poll(now) {
+            assert!(b.len() <= MAX_PACKET);
+            break Packet::decode(&b).expect("decodes");
+        }
+        now += 1;
+    };
+    assert_eq!(
+        packet.chunks.first().map(|c| c.key),
+        Some(Key::Object(TAIL))
+    );
+}
+
+#[test]
+fn extreme_numbers_in_a_report_do_not_crash_the_server() {
+    use sync_core::wire::Report;
+    let mut s = Server::new(TOKEN, Config::server(), 0);
+    for (now, time_ms, max_seq) in [(0, u64::MAX, 0), (1, u64::MAX, u64::MAX), (2, 0, 0)] {
+        let p = Packet {
+            seq: now,
+            report: Some(Report {
+                time_ms,
+                bytes: u64::MAX,
+                packets: u64::MAX,
+                max_seq,
+            }),
+            ..Packet::default()
+        };
+        assert!(s.receive(now, &p.encode()).is_ok());
+        let _ = s.poll(now);
+    }
+}

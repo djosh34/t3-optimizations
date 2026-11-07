@@ -220,13 +220,8 @@ impl Endpoint {
                 copies: self.copies(),
             };
             let space = self.packet_target().saturating_sub(head);
-            self.out.fill(p.seq, space, &fill, &mut p.chunks);
-            if p.chunks.is_empty() {
-                // Nothing fit the small packet of a slow link (a chunk with
-                // large meta): use a full packet rather than none.
-                let space = MAX_PACKET.saturating_sub(head);
-                self.out.fill(p.seq, space, &fill, &mut p.chunks);
-            }
+            let max_space = MAX_PACKET.saturating_sub(head);
+            self.out.fill(p.seq, space, max_space, &fill, &mut p.chunks);
         }
         let bytes = p.encode();
         self.next_seq += 1;

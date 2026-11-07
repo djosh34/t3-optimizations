@@ -274,7 +274,10 @@ impl RateControl {
             self.report_base = Some(r);
             return;
         };
-        if r.time_ms < base.time_ms + REPORT_SPAN || r.max_seq < base.max_seq + REPORT_PACKETS {
+        // The peer's numbers: no arithmetic on them may overflow.
+        if r.time_ms < base.time_ms.saturating_add(REPORT_SPAN)
+            || r.max_seq < base.max_seq.saturating_add(REPORT_PACKETS)
+        {
             return;
         }
         let secs = (r.time_ms - base.time_ms) as f64 / 1000.0;
