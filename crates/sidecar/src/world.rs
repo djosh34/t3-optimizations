@@ -399,7 +399,14 @@ impl World {
                 .get(thread)
                 .map(|t| {
                     t.entities
-                        .keys()
+                        .iter()
+                        // An item the agent is still writing may exist
+                        // only in live frames: t3 has not stored it, so a
+                        // snapshot lacks it.
+                        .filter(|((coll, _), e)| {
+                            !text_key(coll, e).is_some_and(|k| t.live_text.contains_key(&k))
+                        })
+                        .map(|(k, _)| k)
                         .filter(|k| !seen.contains(*k))
                         .cloned()
                         .collect()
@@ -952,6 +959,24 @@ mod tests {
         );
         assert_eq!(w.tail("t1"), Some(a));
         assert_eq!(content(&w, a), "first");
+    }
+
+    #[test]
+    fn a_snapshot_keeps_a_message_t3_has_not_stored_yet() {
+        let mut w = World::default();
+        let snap = |items: Value| {
+            json!({"snapshotSequence": 3, "projection": {
+                "thread": {"id": "t1"}, "turnItems": items, "visibleTurnItems": [], "updatedAt": "now"}})
+        };
+        w.set_thread("t1", &snap(json!([item("a", 1, "first", false, "1")])));
+        w.apply_live(&json!({"item": item("b", 201, "being written", true, "2")}));
+        let b = object_id(&["text", "t1", "m-b"]);
+        assert_eq!(w.tail("t1"), Some(b));
+        // A snapshot taken while t3 holds the message back.
+        w.set_thread("t1", &snap(json!([item("a", 1, "first", false, "1")])));
+        assert_eq!(w.tail("t1"), Some(b));
+        assert_eq!(content(&w, b), "being written");
+        assert!(!content(&w, object_id(&["body", "t1", "turnItems", "b"])).is_empty());
     }
 
     #[test]
