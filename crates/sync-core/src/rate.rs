@@ -274,19 +274,23 @@ impl RateControl {
             self.report_base = Some(r);
             return;
         };
-        // The peer's numbers: no arithmetic on them may overflow.
-        if r.time_ms < base.time_ms.saturating_add(REPORT_SPAN)
-            || r.max_seq < base.max_seq.saturating_add(REPORT_PACKETS)
-        {
+        // The peer's numbers: no arithmetic on them may overflow, and the
+        // span and packet count are never zero.
+        let (Some(span), Some(sent)) = (
+            r.time_ms.checked_sub(base.time_ms),
+            r.max_seq.checked_sub(base.max_seq),
+        ) else {
+            return;
+        };
+        if span < REPORT_SPAN || sent < REPORT_PACKETS {
             return;
         }
-        let secs = (r.time_ms - base.time_ms) as f64 / 1000.0;
+        let secs = span as f64 / 1000.0;
         let packets = r.packets.saturating_sub(base.packets) as f64;
         let wire =
             r.bytes.saturating_sub(base.bytes) as f64 + packets * crate::WIRE_OVERHEAD as f64;
         let delivered = wire / secs;
-        let sent = (r.max_seq - base.max_seq) as f64;
-        let loss = (1.0 - packets / sent).clamp(0.0, 1.0);
+        let loss = (1.0 - packets / sent as f64).clamp(0.0, 1.0);
         if self.delivered == 0.0 {
             self.delivered = delivered;
             self.loss = loss;

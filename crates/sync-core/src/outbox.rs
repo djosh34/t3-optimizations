@@ -475,9 +475,10 @@ impl Outbox {
     /// Copies of the third pass are extra: they do not count as sends, so
     /// they never hold back a retransmit of the second.
     ///
-    /// `space` is the packet's size on a slow link; a chunk that does not fit
-    /// it (large meta) may grow the packet up to `max_space`, once, so the
-    /// highest-priority data never waits behind smaller, lower data.
+    /// `space` is the packet's size on a slow link. The first chunk whose
+    /// meta does not fit an empty packet of that size may grow the packet
+    /// up to `max_space`, once; in the third pass only while the packet is
+    /// still empty.
     pub fn fill(
         &mut self,
         seq: u64,
@@ -516,18 +517,17 @@ impl Outbox {
                 // shorter text, new meta, an empty object): an empty chunk
                 // tells the peer about it.
                 if ranges.is_empty() && o.acked.covers(0..o.len()) {
+                    let mut no_extra = 0;
+                    let grow = if pass < 2 || out.is_empty() {
+                        &mut extra
+                    } else {
+                        &mut no_extra
+                    };
                     let due = pass != 1 || o.announce_due(f.now, f.rto_of(o.class));
                     if due
                         && !announced.contains(&key)
-                        && let Some(c) = fit(
-                            key,
-                            o,
-                            o.len()..o.len(),
-                            false,
-                            space,
-                            &mut left,
-                            &mut extra,
-                        )
+                        && let Some(c) =
+                            fit(key, o, o.len()..o.len(), false, space, &mut left, grow)
                     {
                         left -= chunk_len(&c);
                         announced.insert(key);
@@ -539,6 +539,10 @@ impl Outbox {
                     }
                     continue;
                 }
+                // The packet may grow for the first chunk that needs it in
+                // the sending passes, and for spare copies only while the
+                // packet is still empty: an empty packet carries nothing.
+                let may_grow = pass < 2 || out.is_empty();
                 let from_end = class == Class::Tail;
                 if from_end {
                     ranges.reverse();
@@ -546,7 +550,8 @@ impl Outbox {
                 for r in ranges {
                     let mut r = r;
                     while !r.is_empty() {
-                        let grow = if pass < 2 { &mut extra } else { &mut 0 };
+                        let mut no_extra = 0;
+                        let grow = if may_grow { &mut extra } else { &mut no_extra };
                         let Some(c) = fit(key, o, r.clone(), from_end, space, &mut left, grow)
                         else {
                             break;

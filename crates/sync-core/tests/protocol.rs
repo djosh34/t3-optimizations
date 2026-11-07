@@ -593,4 +593,24 @@ fn extreme_numbers_in_a_report_do_not_crash_the_server() {
         assert!(s.receive(now, &p.encode()).is_ok());
         let _ = s.poll(now);
     }
+    let st = s.stats();
+    assert!(st.loss.is_finite() && st.delivered_rate.is_finite() && st.send_rate.is_finite());
+}
+
+#[test]
+fn while_a_large_meta_tail_waits_for_its_ack_every_packet_carries_it() {
+    let mut s = Server::new(TOKEN, Config::server(), 0);
+    let meta = vec![b'm'; sync_core::MAX_META];
+    s.set(TAIL, Class::Tail, 0, meta, b"hello".to_vec())
+        .expect("set");
+    // No acks come back.
+    let mut packets = 0;
+    for now in 0..900 {
+        while let Some(b) = s.poll(now) {
+            let p = Packet::decode(&b).expect("decodes");
+            assert!(!p.chunks.is_empty(), "an empty packet at {now} ms");
+            packets += 1;
+        }
+    }
+    assert!(packets > 1);
 }
