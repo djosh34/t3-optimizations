@@ -16,3 +16,6 @@ str0m = { version = "0.25.0", default-features = false, features = ["aws-lc-rs"]
 toml = "1.2.1"
 tungstenite = "0.30.0"
 ureq = "3.5.1"
+
+[dev-dependencies]
+native-phone = { path = "../native-phone" }

@@ -216,11 +216,23 @@ impl World {
     /// A `subscribeShell` snapshot item.
     pub fn set_shell(&mut self, item: &Value) {
         let snap = &item["snapshot"];
+        // A snapshot with resolved roots only refreshes the projects'
+        // repository identity; its empty thread list means nothing (see
+        // client-runtime's mergeShellSnapshotProjects).
+        if item.get("resolvedRepositoryIdentityRoots").is_some() {
+            for p in snap["projects"].as_array().into_iter().flatten() {
+                if let Some(id) = p["id"].as_str()
+                    && self.shell_projects.contains(id)
+                {
+                    self.put_project(id, p);
+                }
+            }
+            return;
+        }
         let header = json!({
             "schemaVersion": snap["schemaVersion"],
             "snapshotSequence": snap["snapshotSequence"],
             "olderSettled": snap.get("olderSettled"),
-            "resolvedRepositoryIdentityRoots": item.get("resolvedRepositoryIdentityRoots"),
         });
         self.put(
             object_id(&["shell"]),
@@ -822,6 +834,23 @@ mod tests {
         w.set_thread("t1", &snap(json!([item("a", 1, "x", false, "1")])));
         assert!(content(&w, b).is_empty());
         assert!(!content(&w, object_id(&["frame", "t1"])).is_empty());
+    }
+
+    #[test]
+    fn an_enrichment_snapshot_keeps_the_threads() {
+        let mut w = World::default();
+        let project = json!({"id": "p1", "workspaceRoot": "/w", "repositoryIdentity": null});
+        w.set_shell(&json!({"kind": "snapshot", "snapshot": {
+            "schemaVersion": 2, "snapshotSequence": 5, "projects": [project],
+            "threads": [{"id": "t1", "title": "x"}], "archivedThreads": []}}));
+        let listed = object_id(&["thread", "active", "t1"]);
+        assert!(!content(&w, listed).is_empty());
+        let enriched =
+            json!({"id": "p1", "workspaceRoot": "/w", "repositoryIdentity": {"name": "r"}});
+        w.set_shell(&json!({"kind": "snapshot", "resolvedRepositoryIdentityRoots": ["/w"], "snapshot": {
+            "schemaVersion": 2, "snapshotSequence": 5, "projects": [enriched], "threads": [], "archivedThreads": []}}));
+        assert!(!content(&w, listed).is_empty());
+        assert!(content(&w, object_id(&["project", "p1"])).contains(r#""name":"r""#));
     }
 
     #[test]

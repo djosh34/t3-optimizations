@@ -139,6 +139,7 @@ pub fn run(cfg: Config) -> Result<(), Error> {
         last_save: Instant::now(),
     };
     app.load_devices()?;
+    app.update_subscriptions();
     loop {
         app.step()?;
     }
@@ -252,9 +253,12 @@ impl App {
             }
             return Ok(());
         }
-        // Only a newer generation is a new page; an older one is a page
-        // that a newer one replaced.
-        if u.generation <= d.record.generation {
+        // A newer generation is a new page; an older one is a page that a
+        // newer one replaced. The current generation without a connection
+        // is a phone whose connection this sidecar lost by restarting: it
+        // gets a fresh one, so the phone's ICE connects, its old DTLS
+        // session fails, and it makes a new connection at once.
+        if u.generation < d.record.generation {
             return Ok(());
         }
         let Some(fingerprint) = d.record.fingerprint.as_deref().and_then(|f| f.parse().ok()) else {
@@ -428,6 +432,9 @@ impl App {
                     let thread = args["threadId"].as_str().map(str::to_owned);
                     if let Some(d) = self.devices.get_mut(device) {
                         d.set_focus(&self.world, thread);
+                        if let Err(e) = self.data.save_device(&d.record) {
+                            log(format!("device {device}: could not save: {e}"));
+                        }
                     }
                     self.update_subscriptions();
                     self.reply(
@@ -561,6 +568,7 @@ impl App {
             token: hex(&token),
             fingerprint: None,
             generation: 0,
+            focus: None,
         };
         self.data.save_device(&record)?;
         let mut d = Device::new(record, token, Device::fresh_server(token, self.now()));

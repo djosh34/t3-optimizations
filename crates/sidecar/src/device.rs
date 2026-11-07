@@ -34,10 +34,10 @@ pub struct Device {
 impl Device {
     pub fn new(record: DeviceRecord, token: [u8; 16], server: Server) -> Device {
         Device {
+            focus: record.focus.clone(),
             record,
             token,
             server,
-            focus: None,
             link: None,
             peers: BTreeMap::new(),
             dirty: true,
@@ -72,6 +72,7 @@ impl Device {
             return;
         }
         let old = std::mem::replace(&mut self.focus, thread);
+        self.record.focus = self.focus.clone();
         let mut ids: Vec<u64> = Vec::new();
         for t in [old.as_deref(), self.focus.as_deref()]
             .into_iter()

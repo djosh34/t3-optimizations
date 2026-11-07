@@ -64,6 +64,9 @@ pub struct DeviceRecord {
     pub fingerprint: Option<String>,
     /// The newest connection generation seen.
     pub generation: u64,
+    /// The thread the phone has open.
+    #[serde(default)]
+    pub focus: Option<String>,
 }
 
 pub struct DataDir {

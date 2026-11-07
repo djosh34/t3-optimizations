@@ -1,0 +1,15 @@
+[package]
+name = "native-phone"
+version = "0.1.0"
+description = "A phone without a browser: the sync protocol over the real data channel, for tests and the lab."
+edition = "2024"
+publish = false
+
+[dependencies]
+pipe = { path = "../pipe" }
+sync-core = { path = "../sync-core" }
+getrandom = "0.4.3"
+serde_json = "1.0.154"
+str0m = { version = "0.25.0", default-features = false, features = ["aws-lc-rs"] }
+tungstenite = "0.30.0"
+ureq = "3.5.1"
