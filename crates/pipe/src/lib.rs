@@ -203,6 +203,9 @@ impl Pipe {
                     peer.check(result, events);
                 }
                 if until <= now {
+                    // Sends what the timeouts made due and reports a peer
+                    // that failed on them as closed too.
+                    self.drain(events)?;
                     return Ok(());
                 }
                 continue;
