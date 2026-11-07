@@ -16,6 +16,7 @@ shift || true
 raw="$lab/reports/runs/baseline"
 dest="$lab/reports/baseline"
 mkdir -p "$raw" "$dest"
+rm -f "$raw/failed"
 
 if [[ $# -gt 0 ]]; then
   profiles=("$@")
@@ -51,6 +52,7 @@ one() {
     fi
     echo "attempt $attempt of $name failed: $(tail -n 1 "$raw/$name.log")"
   done
+  echo "$name" >>"$raw/failed"
   return 1
 }
 export -f one
@@ -70,6 +72,12 @@ printf '%s\n' "${runs[@]}" | xargs -P "$jobs" -L 1 bash -c 'one "$@"' _ || statu
   echo "userspace stack (issue #7), so production numbers differ."
   echo
   ./bin/lab summary "$dest"
+  if [[ -s "$raw/failed" ]]; then
+    echo
+    echo "These runs failed twice with a lab error and have no report:"
+    echo
+    sort "$raw/failed" | sed 's/^/- /'
+  fi
 } >"$dest/README.md"
 
 if [[ $status -ne 0 ]]; then

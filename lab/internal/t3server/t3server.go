@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/djosh34/t3-optimizations/lab/internal/agent"
+	"github.com/djosh34/t3-optimizations/lab/internal/netlab"
 	"github.com/djosh34/t3-optimizations/lab/internal/userproc"
 )
 
@@ -27,6 +28,8 @@ type Config struct {
 	User userproc.User
 	// NS is the network namespace to run in.
 	NS string
+	// LabID names the server's temp base dir, so deleting the lab deletes it.
+	LabID string
 	// T3Code is the vendored t3code/ directory.
 	T3Code string
 	// RunDir holds the server's data, logs and the agent log.
@@ -54,10 +57,10 @@ type Server struct {
 func AgentLog(runDir string) string { return filepath.Join(runDir, "agent.jsonl") }
 
 // Start starts the server and waits until it is ready. Its base dir is a
-// fresh temp dir; RemoveBaseDir deletes it after the server stopped.
+// fresh temp dir named after the lab, which netlab deletes with the lab.
 func Start(ctx context.Context, cfg Config) (*Server, error) {
 	u := cfg.User
-	out, err := u.Command(ctx, "", []string{"PATH=/usr/bin:/bin"}, "/", "mktemp", "-d", "-t", "t3lab-base-XXXXXX").Output()
+	out, err := u.Command(ctx, "", []string{"PATH=/usr/bin:/bin"}, "/", "mktemp", "-d", "-t", netlab.TempDirPattern(cfg.LabID)).Output()
 	if err != nil {
 		return nil, fmt.Errorf("mktemp: %w", err)
 	}
@@ -123,11 +126,6 @@ func Start(ctx context.Context, cfg Config) (*Server, error) {
 
 // Exited receives the server's exit error once, when it exits.
 func (s *Server) Exited() <-chan error { return s.done }
-
-// RemoveBaseDir deletes the server's data after it stopped.
-func (s *Server) RemoveBaseDir() error {
-	return s.cfg.User.Command(context.Background(), "", []string{"PATH=/usr/bin:/bin"}, "/", "rm", "-rf", "--", s.baseDir).Run()
-}
 
 func (s *Server) bin() string { return filepath.Join(s.cfg.T3Code, "apps", "server", "src", "bin.ts") }
 

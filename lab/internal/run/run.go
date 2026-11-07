@@ -204,13 +204,13 @@ func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir str
 		soak = soakParts
 	}
 	server, err := t3server.Start(procs, t3server.Config{
-		User: u, NS: lab.ServerNS, T3Code: filepath.Join(repo, "t3code"), RunDir: s.runDir,
+		User: u, NS: lab.ServerNS, LabID: lab.ID, T3Code: filepath.Join(repo, "t3code"), RunDir: s.runDir,
 		LabExe: o.LabExe, StaticDir: staticDir, Node: o.Node, CharsPerSecond: CharsPerSecond, SoakParts: soak,
 	})
 	if err != nil {
 		return report.Input{}, err
 	}
-	waits = append(waits, watch(procs, fail, "t3 server", server.Exited()), server.RemoveBaseDir)
+	waits = append(waits, watch(procs, fail, "t3 server", server.Exited()))
 	frontArgs := []string{"front", "--listen", ":" + frontPort, "--upstream", fmt.Sprintf("127.0.0.1:%d", t3server.Port)}
 	if o.Client == "websocket-nodeflate" {
 		frontArgs = append(frontArgs, "--no-deflate")

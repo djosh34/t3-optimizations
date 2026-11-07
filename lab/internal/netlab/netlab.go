@@ -1,7 +1,8 @@
 // Package netlab builds the lab's network: a server namespace and the phone
 // container's namespace, joined by a veth pair with tc netem on both ends.
 // Everything it creates is named with the prefix t3lab. It runs ip, tc and
-// docker as root and nothing else.
+// docker as root, and deletes the server's temp dirs as the user who owns
+// them.
 package netlab
 
 import (
@@ -18,6 +19,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/djosh34/t3-optimizations/lab/internal/profile"
@@ -293,7 +295,7 @@ func (l *Lab) Delete(ctx context.Context) error {
 
 func deleteID(ctx context.Context, id string) error {
 	l := New(id)
-	var errs []error
+	errs := []error{removeTempDirs(ctx, id)}
 	if out, err := Run(ctx, "docker", "ps", "-aq", "--filter", "name=^"+l.Container+"$"); err != nil {
 		errs = append(errs, err)
 	} else if strings.TrimSpace(out) != "" {
@@ -310,6 +312,34 @@ func deleteID(ctx context.Context, id string) error {
 	}
 	if err := os.Remove(filepath.Join(ownerDir, id)); err != nil && !errors.Is(err, os.ErrNotExist) {
 		errs = append(errs, err)
+	}
+	return errors.Join(errs...)
+}
+
+// TempDirPattern is the mktemp template for a lab's temp dirs.
+func TempDirPattern(id string) string { return Prefix + id + "-base-XXXXXX" }
+
+// removeTempDirs deletes a lab's temp dirs, each as the user who owns it, so
+// root never deletes inside a user's directory.
+func removeTempDirs(ctx context.Context, id string) error {
+	dirs, err := filepath.Glob(filepath.Join(os.TempDir(), Prefix+id+"-base-*"))
+	if err != nil {
+		return err
+	}
+	var errs []error
+	for _, dir := range dirs {
+		info, err := os.Lstat(dir)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		st, ok := info.Sys().(*syscall.Stat_t)
+		if !ok {
+			errs = append(errs, fmt.Errorf("no owner for %s", dir))
+			continue
+		}
+		errs = append(errs, run(ctx, "setpriv", "--reuid", strconv.Itoa(int(st.Uid)), "--regid", strconv.Itoa(int(st.Gid)),
+			"--clear-groups", "--", "rm", "-rf", "--", dir))
 	}
 	return errors.Join(errs...)
 }
@@ -343,6 +373,13 @@ func Cleanup(ctx context.Context) error {
 		return err
 	}
 	names = append(names, strings.Fields(containers)...)
+	tempDirs, err := filepath.Glob(filepath.Join(os.TempDir(), Prefix+"*-base-*"))
+	if err != nil {
+		return err
+	}
+	for _, dir := range tempDirs {
+		names = append(names, filepath.Base(dir))
+	}
 	if entries, err := os.ReadDir(ownerDir); err == nil {
 		for _, e := range entries {
 			names = append(names, Prefix+e.Name())

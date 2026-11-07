@@ -30,31 +30,36 @@ function normalize(text) {
 const stats = { rxBytes: 0, txBytes: 0, replyBytes: 0, duplicateReplyBytes: 0 };
 const received = new Uint8Array(reply.length);
 const promptRequestIds = new Set();
+let promptSentAt;
 let confirmed = false;
 
-// Counts reply text the application received more than once. A string in a
-// frame counts when at least 3/4 of it is pieces of the reply: message text
-// with t3's image marker inside counts, a setting like "approval-required"
-// does not. The first copy of each character is new, later copies are
+// Counts reply text the application received more than once. t3 sends each
+// assistant message as an object with role "assistant" and its whole text so
+// far; only messages created after the prompt was sent are the measured
+// reply. The first copy of each character is new, later copies are
 // duplicates.
 function countReplyText(value) {
-  if (typeof value === "string") {
-    const text = normalize(value);
-    const pieces = replyPieces(text);
-    const length = pieces.reduce((sum, [, n]) => sum + n, 0);
-    if (length === 0 || length * 4 < text.length * 3) return;
-    for (const [at, n] of pieces) {
+  if (Array.isArray(value)) {
+    value.forEach(countReplyText);
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+  if (
+    value.role === "assistant" &&
+    typeof value.text === "string" &&
+    promptSentAt !== undefined &&
+    Date.parse(value.createdAt) >= promptSentAt
+  ) {
+    for (const [at, n] of replyPieces(normalize(value.text))) {
       stats.replyBytes += n;
       for (let i = at; i < at + n; i++) {
         if (received[i]) stats.duplicateReplyBytes++;
         received[i] = 1;
       }
     }
-  } else if (Array.isArray(value)) {
-    value.forEach(countReplyText);
-  } else if (value && typeof value === "object") {
-    Object.values(value).forEach(countReplyText);
+    return;
   }
+  Object.values(value).forEach(countReplyText);
 }
 
 function frameText(payload) {
@@ -282,6 +287,7 @@ if (!stopping) {
     (async () => {
       await focusComposer(page, 0);
       await page.keyboard.type(cfg.prompt);
+      promptSentAt = Date.now();
       emit("prompt-sent");
       await page.keyboard.press("Enter");
       return "sent";
