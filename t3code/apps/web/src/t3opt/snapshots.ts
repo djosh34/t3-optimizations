@@ -1,7 +1,9 @@
 // The forked server's state as the web client reads it, rebuilt from synced
 // objects (crates/sidecar/README.md, "What phones get"). A thread shows as
-// soon as its thread body and frame are here; texts fill in as they arrive,
-// with an ellipsis where bytes are still missing.
+// soon as its thread body is here; turn items and texts fill in
+// as they arrive, with an ellipsis where bytes are still missing.
+
+import { createOrchestrationV2TurnItemVisibility } from "@t3tools/shared/orchestrationV2Timeline";
 
 import { jsonOf, type Obj, type Objects, textOf } from "./objects";
 
@@ -100,10 +102,7 @@ export interface ThreadSnapshot {
   readonly latestLocalTurnOrdinal: number | null;
 }
 
-/**
- * A thread as a `subscribeThread` snapshot item without its kind; null until
- * its thread body and frame are here.
- */
+/** A thread as a `subscribeThread` snapshot item without its kind; null until its thread body is here. */
 export function threadSnapshot(objects: Objects, threadId: string): ThreadSnapshot | null {
   const objs = objects.ofThread(threadId);
   const texts = textsByKey(objs);
@@ -129,19 +128,19 @@ export function threadSnapshot(objects: Objects, threadId: string): ThreadSnapsh
       lists.get(c)?.push(withText(v, key, texts));
     }
   }
-  if (thread === null || frame === null) return null;
+  if (thread === null) return null;
   const turnItems = lists.get("turnItems") ?? [];
   turnItems.sort((a, b) => Number(a.ordinal ?? 0) - Number(b.ordinal ?? 0));
   const projection: Json = { thread, ...Object.fromEntries(lists) };
-  projection.visibleTurnItems = visibleRows(threadId, frame, turnItems);
-  projection.updatedAt = frame.updatedAt;
+  projection.visibleTurnItems = visibleRows(threadId, frame ?? {}, projection);
+  projection.updatedAt = frame?.updatedAt ?? thread.updatedAt;
   return {
-    snapshotSequence: Number(frame.snapshotSequence ?? 0),
+    snapshotSequence: Number(frame?.snapshotSequence ?? 0),
     projection,
     historyCursor: null,
     hasMoreHistory: false,
     latestLocalTurnOrdinal:
-      typeof frame.latestLocalTurnOrdinal === "number" ? frame.latestLocalTurnOrdinal : null,
+      typeof frame?.latestLocalTurnOrdinal === "number" ? frame.latestLocalTurnOrdinal : null,
   };
 }
 
@@ -159,32 +158,39 @@ function rowWithItem(row: Json, item: Json, position: number): Json {
 }
 
 /**
- * The frame's rows with their items. The sidecar leaves the item out of a
- * local row (it is a turn item of its own); a row whose item has not arrived
- * yet is left out until it has. Local items older than the frame's first
- * local row get rows too: a frame from a live subscription covers only the
- * newest turns, and the phone has the older ones, so it shows all of them.
+ * The visible rows. Rows that come from other threads (inherited, synthetic)
+ * are the frame's; local rows are made here from every turn item the phone
+ * has, with t3's own visibility rule: the frame of the open thread comes from
+ * its last fetch, while its turn items arrive as they change.
  */
-function visibleRows(threadId: string, frame: Json, turnItems: ReadonlyArray<Json>): Json[] {
-  const rows = Array.isArray(frame.visibleTurnItems) ? frame.visibleTurnItems.filter(isJson) : [];
-  const byId = new Map(turnItems.map((t) => [t.id, t]));
-  const shown = new Set(rows.map((r) => r.sourceItemId));
-  const firstLocal = rows.find((r) => r.visibility === "local");
-  const firstOrdinal = byId.get(firstLocal?.sourceItemId)?.ordinal;
-  const older =
-    frame.hasMoreHistory === true && typeof firstOrdinal === "number"
-      ? turnItems
-          .filter(
-            (t) => typeof t.ordinal === "number" && t.ordinal < firstOrdinal && !shown.has(t.id),
-          )
-          .map((t) => ({ visibility: "local", sourceThreadId: threadId, sourceItemId: t.id }))
-      : [];
+function visibleRows(threadId: string, frame: Json, projection: Json): Json[] {
+  const turnItems = (projection.turnItems ?? []) as Json[];
+  const isVisible = createOrchestrationV2TurnItemVisibility({
+    runs: (projection.runs ?? []) as never,
+    attempts: (projection.attempts ?? []) as never,
+    items: turnItems as never,
+  });
+  const frameRows = Array.isArray(frame.visibleTurnItems) ? frame.visibleTurnItems.filter(isJson) : [];
   const out: Json[] = [];
-  for (const row of [...older, ...rows]) {
-    const item = isJson(row.item) ? row.item : byId.get(row.sourceItemId);
-    if (item !== undefined) out.push(rowWithItem(row, item, out.length));
+  for (const row of frameRows) {
+    if (row.visibility !== "local" && isJson(row.item)) out.push(rowWithItem(row, row.item, out.length));
+  }
+  for (const item of turnItems) {
+    if (!isVisible(item as never)) continue;
+    out.push(rowWithItem(localRow(threadId, item), item, out.length));
   }
   return out;
+}
+
+const localRows = new WeakMap<object, Json>();
+
+function localRow(threadId: string, item: Json): Json {
+  let row = localRows.get(item);
+  if (!row) {
+    row = { visibility: "local", sourceThreadId: threadId, sourceItemId: item.id };
+    localRows.set(item, row);
+  }
+  return row;
 }
 
 /** An image object's bytes as a blob, by attachment id. */
