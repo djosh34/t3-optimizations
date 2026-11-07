@@ -8,40 +8,6 @@ import type { Pairing } from "./store";
 
 type Json = Record<string, unknown>;
 
-/**
- * Commands the client sends by itself, such as marking a thread as read.
- * They go as calls at the background class, so they never hold up the
- * owner's commands, which t3 applies in order.
- */
-const AUTOMATIC_COMMANDS = new Set(["thread.visit"]);
-
-/**
- * Calls at the background class: subscriptions and the client's own reports.
- * Other calls go first: a prompt waits for `server.refreshProviders`, an
- * attachment for its upload URL.
- */
-const BACKGROUND_CALLS = new Set([
-  "providerAuthSubscribe",
-  "providerInstallSubscribe",
-  "orchestration.subscribeCommandOutput",
-  "subscribeAuthAccess",
-  "subscribeServerLifecycle",
-  "scheduledTasksSubscribe",
-  "server.getStorageCleanupReport",
-  "server.getDatabaseStorage",
-  "subscribeTerminalMetadata",
-  "subscribePreviewEvents",
-  "subscribeDiscoveredLocalServers",
-  "subscribeDeviceState",
-  "subscribeResourceTelemetry",
-  "pullRequestsSubscribeRefreshes",
-  "subscribeVcsStatus",
-  "subscribeWorktreeSetup",
-  "subscribeProjectClones",
-  "server.reportClientActivity",
-  "preview.reportProfiles",
-]);
-
 /** How the shim answers the client before the app is paired. */
 const UNPAIRED_AUTH = {
   policy: "remote-reachable",
@@ -286,8 +252,9 @@ class RpcServer {
         break;
       }
       case "orchestration.dispatchCommand": {
+        // Every command, also those the client sends by itself (thread.visit):
+        // the client sends the next one only after the last one's reply.
         const command = payload as Json | null;
-        if (AUTOMATIC_COMMANDS.has(String(command?.type))) break;
         const { seq, reply } = await this.engine.request("command", payload);
         if (command?.type === "message.dispatch") trackPrompt(this.engine, seq, reply);
         const r = readReply(await reply);
@@ -295,9 +262,10 @@ class RpcServer {
         return;
       }
     }
-    // Everything else: one call to the sidecar, one reply.
-    const background = BACKGROUND_CALLS.has(tag) || tag === "orchestration.dispatchCommand";
-    const { reply } = await this.engine.request("call", { tag, payload }, background);
+    // Everything else: one call to the sidecar, one reply, at the background
+    // class: the client makes many calls by itself (status, activity,
+    // subscriptions), and an urgent reply is repeated at heavy loss.
+    const { reply } = await this.engine.request("call", { tag, payload }, true);
     const r = readReply(await reply);
     if ("chunk" in r) {
       // The sidecar takes a stream's first chunk; the stream stays open here.
