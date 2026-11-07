@@ -82,10 +82,27 @@ function body(o: Obj): unknown {
 
 const filled = new WeakMap<object, { text: string; value: Json }>();
 
-/** A body with its text filled in from its text object. */
-function withText(entity: Json, key: string | undefined, texts: Map<string, Obj>): Json {
+/** Text the client shows as it streams; other text is part of a row's structure. */
+function isStreamedText(c: string, entity: Json): boolean {
+  return c === "turnItems"
+    ? entity.type === "assistant_message" || entity.type === "reasoning"
+    : entity.role === "assistant";
+}
+
+/**
+ * A body with its text filled in from its text object; null while the text
+ * of a row the client does not stream (a user message) is still on its way:
+ * the client would keep the row it first showed.
+ */
+function withText(
+  c: string,
+  entity: Json,
+  key: string | undefined,
+  texts: Map<string, Obj>,
+): Json | null {
   if (key === undefined || typeof entity.text !== "string") return entity;
   const t = texts.get(key);
+  if (!isStreamedText(c, entity) && !t?.complete) return null;
   const text = t ? textOf(t) : "";
   const cached = filled.get(entity);
   if (cached?.text === text) return cached.value;
@@ -125,7 +142,8 @@ export function threadSnapshot(objects: Objects, threadId: string): ThreadSnapsh
           : c === "turnItems"
             ? ((v.messageId as string | undefined) ?? (v.id as string | undefined))
             : undefined;
-      lists.get(c)?.push(withText(v, key, texts));
+      const filledIn = withText(c, v, key, texts);
+      if (filledIn !== null) lists.get(c)?.push(filledIn);
     }
   }
   if (thread === null) return null;

@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/djosh34/t3-optimizations/lab/internal/agent"
 	"github.com/djosh34/t3-optimizations/lab/internal/front"
@@ -24,6 +25,7 @@ import (
 
 const usage = `usage:
   sudo ./bin/lab run --profile <name> --seed <n> --client <client> [flags]
+  sudo ./bin/lab webapp-e2e [--outage 20s] [--seed n]   the web app end to end
   sudo ./bin/lab cleanup
   ./bin/lab profiles
   ./bin/lab summary <reports dir>
@@ -55,6 +57,8 @@ func dispatch(ctx context.Context, cmd string, args []string) error {
 	switch cmd {
 	case "run":
 		return runCmd(ctx, args)
+	case "webapp-e2e":
+		return webappE2ECmd(ctx, args)
 	case "cleanup":
 		return netlab.Cleanup(ctx)
 	case "profiles":
@@ -140,6 +144,51 @@ func runCmd(ctx context.Context, args []string) error {
 		return err
 	}
 	fmt.Println(headline)
+	return nil
+}
+
+func webappE2ECmd(ctx context.Context, args []string) error {
+	fs := flag.NewFlagSet("webapp-e2e", flag.ContinueOnError)
+	seed := fs.Int64("seed", 1, "seed for netem")
+	outage := fs.Duration("outage", 20*time.Second, "how long the link goes down in the outage step")
+	deadline := fs.Duration("deadline", 0, "bound for the whole test (default 45m plus the outage)")
+	out := fs.String("out", "", "directory for the run (default lab/reports/runs)")
+	node := fs.String("node", "", "node binary for the t3 server (default: node on root's PATH)")
+	runName := fs.String("name", "", "the run's directory under --out")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	var err error
+	if *node == "" {
+		if *node, err = exec.LookPath("node"); err != nil {
+			return fmt.Errorf("no node on PATH; pass --node: %w", err)
+		}
+	}
+	if *deadline == 0 {
+		*deadline = 45*time.Minute + *outage
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	labDir := filepath.Dir(filepath.Dir(exe))
+	if *out == "" {
+		*out = filepath.Join(labDir, "reports", "runs")
+	}
+	if *out, err = filepath.Abs(*out); err != nil {
+		return err
+	}
+	headline, failed, err := run.RunWebappE2E(ctx, run.E2EOptions{
+		Seed: *seed, Outage: *outage, Deadline: *deadline, OutDir: *out, Name: *runName,
+		LabDir: labDir, LabExe: exe, Node: *node,
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Println(headline)
+	if failed > 0 {
+		return fmt.Errorf("%d steps failed", failed)
+	}
 	return nil
 }
 

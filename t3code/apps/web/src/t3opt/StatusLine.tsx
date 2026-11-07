@@ -199,6 +199,8 @@ function Connected(props: {
             <dd>
               {(have / 1000).toFixed(0)} of {(total / 1000).toFixed(0)} kB known so far
             </dd>
+            <dt>Build</dt>
+            <dd>{import.meta.env.VITE_T3OPT_BUILD_LABEL}</dd>
             <dt>Packets</dt>
             <dd>
               {stats.sentPackets} sent, {stats.receivedPackets} received, {status.undecodable}{" "}

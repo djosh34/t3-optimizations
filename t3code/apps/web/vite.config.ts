@@ -322,6 +322,7 @@ export default defineConfig(() => {
       "import.meta.env.APP_VERSION": JSON.stringify(configuredAppVersion),
       // The sidecar's build of the web app (lab/scripts/build-webapp.sh).
       "import.meta.env.VITE_T3OPT": JSON.stringify(process.env.T3OPT_BUILD === "1" ? "1" : ""),
+      "import.meta.env.VITE_T3OPT_BUILD_LABEL": JSON.stringify(process.env.T3OPT_BUILD_LABEL ?? ""),
     },
     resolve: {
       tsconfigPaths: true,

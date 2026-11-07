@@ -42,6 +42,22 @@ type Config struct {
 	Webapp bool `json:"webapp,omitempty"`
 }
 
+// E2EConfig is the config of the web app's end-to-end driver,
+// driver/webapp-e2e.mjs.
+type E2EConfig struct {
+	Origin string `json:"origin"`
+	// Code is a pairing code from `t3 pair`.
+	Code     string `json:"code"`
+	ThreadID string `json:"threadId"`
+	Prompt   string `json:"prompt"`
+	// ReplyStart and ReplyEnd are sentences of the reply: its first, and the
+	// first after the approval.
+	ReplyStart    string `json:"replyStart"`
+	ReplyEnd      string `json:"replyEnd"`
+	Image         string `json:"image"`
+	OutageSeconds int    `json:"outageSeconds"`
+}
+
 // PipeConfig is the config of the pipe driver, driver/pipe.mjs.
 type PipeConfig struct {
 	// Mode is webrtc or udp.
