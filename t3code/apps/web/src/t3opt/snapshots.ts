@@ -265,6 +265,22 @@ function localRow(threadId: string, item: Json): Json {
 }
 
 /** An image object's bytes as a blob, by attachment id. */
+/**
+ * Whether the image comes over the sync link: the sidecar fetches every image
+ * a turn item it knows refers to, so the phone gets it, perhaps later.
+ */
+export function imageComing(objects: Objects, attachmentId: string): boolean {
+  if (objects.ofKind("image").some((i) => i.metaJson.i === attachmentId)) return true;
+  for (const id of objects.ids()) {
+    const o = objects.get(id);
+    if (o?.metaJson.c !== "turnItems") continue;
+    const attachments = (jsonOf(o) as Json | null)?.attachments;
+    if (!Array.isArray(attachments)) continue;
+    if (attachments.some((a: Json) => a?.type === "image" && a.id === attachmentId)) return true;
+  }
+  return false;
+}
+
 export function imageBlob(objects: Objects, attachmentId: string): Blob | null {
   const o = objects.ofKind("image").find((i) => i.metaJson.i === attachmentId);
   if (!o?.complete) return null;

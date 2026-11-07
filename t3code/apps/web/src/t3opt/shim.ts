@@ -3,7 +3,7 @@
 // or through the sidecar. See README.md in this folder.
 
 import type { Engine } from "./engine";
-import { configOf, imageBlob, shellSnapshot, threadSnapshot } from "./snapshots";
+import { configOf, imageBlob, imageComing, shellSnapshot, threadSnapshot } from "./snapshots";
 import type { Pairing } from "./store";
 
 type Json = Record<string, unknown>;
@@ -241,8 +241,10 @@ class RpcServer {
       case "assets.createUrl": {
         const resource = (payload as Json | null)?.resource as Json | undefined;
         const attachment = resource?._tag === "attachment" ? String(resource.attachmentId) : null;
-        const blob = attachment === null ? null : imageBlob(objects, attachment);
-        if (blob !== null) {
+        // Images come over the sync link, the last class, so the bytes can still
+        // be on their way; the client keeps the URL it gets, so wait for them.
+        if (attachment !== null && imageComing(objects, attachment)) {
+          const blob = await whenReady(this.engine, () => imageBlob(objects, attachment));
           this.exit(id, {
             _tag: "Success",
             value: { relativeUrl: URL.createObjectURL(blob), expiresAt: Date.now() + 3_600_000 },

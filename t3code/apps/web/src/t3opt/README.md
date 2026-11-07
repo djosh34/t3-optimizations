@@ -23,7 +23,7 @@ A WebSocket to `/ws` is a `ShimSocket` that speaks the same Effect RPC JSON:
 
 - `subscribeServerConfig`, `server.getConfig`, `orchestration.subscribeShell` and `orchestration.subscribeThread` are answered from synced state. Each change of the state sends a new snapshot; while the client has not acked the last one, only the newest waits.
 - `orchestration.subscribeThread` also tells the sidecar which thread is open (`sidecar.focus`), so its newest text goes first.
-- `assets.createUrl` for a synced image answers with a `blob:` URL of its bytes.
+- `assets.createUrl` for an image the sync link brings (one a turn item refers to; the sidecar fetches all of those) waits for its bytes and answers with a `blob:` URL. Images are the last class, and the client keeps the URL it gets, so a server URL would stay broken without HTTPS.
 - `orchestration.dispatchCommand` goes out as a sync-core command; the status line follows a prompt from queued to sent to "server has it" to confirmed.
 - Every other call goes to the sidecar as one call and one reply. Subscriptions (`subscribeServerLifecycle` and the like) get the first value t3 sends and stay open. They go at the background class: the client makes many calls by itself, and an urgent reply is repeated in several packets at heavy loss. Commands, also those the client sends by itself (`thread.visit`), are urgent: the client sends a prompt only after the reply to the command before it.
 

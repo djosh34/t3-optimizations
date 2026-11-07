@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import { Objects } from "./objects";
-import { shellSnapshot, threadSnapshot } from "./snapshots";
+import { imageComing, shellSnapshot, threadSnapshot } from "./snapshots";
 
 const encoder = new TextEncoder();
 
@@ -154,5 +154,27 @@ describe("shellSnapshot", () => {
       threads: [{ id: "t1" }],
       archivedThreads: [{ id: "t2" }],
     });
+  });
+});
+
+describe("imageComing", () => {
+  it("is true for an image a turn item refers to, before any of its bytes", () => {
+    const objects = new Objects();
+    thread(objects);
+    expect(imageComing(objects, "img1")).toBe(false);
+    put(
+      objects,
+      3,
+      { t: "t1", c: "turnItems", i: "u" },
+      {
+        ...item("u", "user_message", 1, "m-u"),
+        attachments: [
+          { type: "file", id: "doc1" },
+          { type: "image", id: "img1", mimeType: "image/png" },
+        ],
+      },
+    );
+    expect(imageComing(objects, "img1")).toBe(true);
+    expect(imageComing(objects, "doc1")).toBe(false);
   });
 });
