@@ -183,7 +183,8 @@ function Connected(props: {
           <dl className="m-0 grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1.5 [&_dd]:m-0 [&_dt]:text-muted-foreground">
             <dt>Transport</dt>
             <dd>
-              {link.transport}, generation {link.generation}, {link.trying}
+              {link.transport}, connection {link.generation}
+              {link.trying.endsWith("live") ? "" : `, ${link.trying}`}
             </dd>
             <dt>Handshake</dt>
             <dd>{link.handshakeMs === null ? "none yet" : `${link.handshakeMs} ms`}</dd>
