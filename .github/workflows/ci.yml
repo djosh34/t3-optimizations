@@ -28,6 +28,8 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
+      # The patched sctp-proto's own tests; see crates/vendor/README.md.
+      - run: cargo test --manifest-path vendor/sctp-proto/Cargo.toml
       - run: cargo build -p sync-core --target wasm32-unknown-unknown
 
   go:

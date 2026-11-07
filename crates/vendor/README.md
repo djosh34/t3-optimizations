@@ -10,6 +10,8 @@ The first commit that added it is the crate exactly as published on crates.io (w
 - `src/association/timer.rs`: the timer table's default uses `RTO_MAX` instead of its own `60000`.
 - `src/association/mod.rs`: a retransmit timeout and a fast retransmit no longer cut the congestion window and `ssthresh`. Loss is not a congestion signal on the links this runs on; the sync protocol paces what it sends (issue #25). This changes only what this server sends. The phone-to-server direction is the browser's own SCTP.
 
-Only `crates/pipe` uses this crate. Its own tests are left as published and are not part of `make check` or CI; the effect of the patch is measured in the lab (`lab/reports/pipe`, issue #49).
+- `src/endpoint/endpoint_test.rs`: `test_assoc_congestion_control_slow_reader` is ignored. It waits for a retransmit timeout to cut the congestion window to 1 MTU, which the patch removes, so it never ends.
+
+Only `crates/pipe` uses this crate. Its tests run in `make check` and in CI's `rust` job (`cargo test --manifest-path vendor/sctp-proto/Cargo.toml`); the effect of the patch on a lossy link is measured in the lab (`lab/reports/pipe`, issue #49).
 
 To move to a newer sctp-proto: copy the new release here unchanged in one commit, then apply the changes above again in the next.
