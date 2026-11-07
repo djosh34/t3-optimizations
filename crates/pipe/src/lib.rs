@@ -80,8 +80,10 @@ pub enum PipeEvent {
     /// connection failed, or [`Pipe::close`] ended it.
     Closed(PeerId),
     /// A STUN binding request no connection takes, with its username
-    /// fragments. Answer with [`Pipe::connect`] or [`Pipe::restart_ice`]
-    /// within a few seconds and the request goes to that connection.
+    /// fragments, which are public: check it with
+    /// [`Pipe::unknown_authentic`] first. Answer with [`Pipe::connect`] or
+    /// [`Pipe::restart_ice`] within a few seconds and the request goes to
+    /// that connection.
     Unknown {
         local_ufrag: String,
         remote_ufrag: String,
@@ -289,6 +291,30 @@ impl Pipe {
         api.set_local_ice_credentials(local);
         api.set_remote_ice_credentials(remote);
         Ok(())
+    }
+
+    /// Whether a kept unknown request for `local_ufrag` carries a valid
+    /// MESSAGE-INTEGRITY under `password`, the server's password for that
+    /// fragment. The fragment is public; only the integrity shows the
+    /// request comes from someone who knows the token. Requests that fail
+    /// are dropped.
+    pub fn unknown_authentic(&mut self, local_ufrag: &str, password: &str) -> bool {
+        let provider = str0m::crypto::from_feature_flags();
+        let hmac =
+            |key: &[u8], payloads: &[&[u8]]| provider.sha1_hmac_provider.sha1_hmac(key, payloads);
+        let mut authentic = false;
+        self.unknown.retain(|u| {
+            let Ok(m) = StunMessage::parse(&u.data) else {
+                return false;
+            };
+            if m.split_username().map(|(local, _)| local) != Some(local_ufrag) {
+                return true;
+            }
+            let ok = m.verify(password.as_bytes(), hmac);
+            authentic |= ok;
+            ok
+        });
+        authentic
     }
 
     /// Ends a connection at once, without telling the browser; for one a

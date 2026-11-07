@@ -279,6 +279,16 @@ impl App {
         };
         let local = creds::derive(&d.token, &u.device, Side::Server, u.generation, u.restart);
         let remote = creds::derive(&d.token, &u.device, Side::Phone, u.generation, u.restart);
+        // The fragment is public; only a request signed with the derived
+        // password may restart ICE, make a connection or move the
+        // generation.
+        if !self.pipe.unknown_authentic(local_ufrag, &local.pass) {
+            log(format!(
+                "device {}: STUN request for {local_ufrag} failed its integrity check",
+                u.device
+            ));
+            return Ok(());
+        }
         if let Some(&(peer, restart)) = d.peers.get(&u.generation) {
             if u.restart > restart {
                 self.pipe.restart_ice(peer, local, remote)?;
@@ -340,6 +350,13 @@ impl App {
         // A phone that could not set derived credentials still connects,
         // with random ones; it then needs signaling every time.
         let (generation, restart, local) = match derived {
+            // A delayed offer of a page a newer one replaced.
+            Some(u) if u.generation < d.record.generation => {
+                return Err(ApiError::Bad(format!(
+                    "generation {} is older than {}",
+                    u.generation, d.record.generation
+                )));
+            }
             Some(u) => {
                 let local = creds::derive(
                     &d.token,
@@ -407,6 +424,21 @@ impl App {
             match Server::hello(data) {
                 Some(h) if h.token == d.token => {}
                 _ => return,
+            }
+            // A connection of an older page never takes over from a newer
+            // one.
+            let generation_of = |l: Option<Link>| match l {
+                Some(Link::Rtc(peer)) => d
+                    .peers
+                    .iter()
+                    .find(|(_, (p, _))| *p == peer)
+                    .map(|(g, _)| *g),
+                _ => None,
+            };
+            if let (Some(new), Some(current)) = (generation_of(Some(link)), generation_of(d.link))
+                && new < current
+            {
+                return;
             }
             if let Some(old) = d.link {
                 match old {

@@ -268,6 +268,10 @@ impl NativePhone {
         Ok(())
     }
 
+    pub fn pairing(&self) -> &Pairing {
+        &self.pairing
+    }
+
     /// How long since the last packet from the sidecar.
     pub fn silent_for(&self) -> Duration {
         self.last_data.elapsed()

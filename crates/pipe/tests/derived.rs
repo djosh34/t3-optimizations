@@ -72,6 +72,7 @@ impl Server {
         let id = identity();
         let local = creds::derive(&id.token, DEVICE, Side::Server, u.generation, u.restart);
         let remote = creds::derive(&id.token, DEVICE, Side::Phone, u.generation, u.restart);
+        assert!(self.pipe.unknown_authentic(local_ufrag, &local.pass));
         match self.peers.get(&u.generation) {
             Some(&peer) => self.pipe.restart_ice(peer, local, remote)?,
             None => {

@@ -556,10 +556,37 @@ impl World {
     }
 
     fn remove_entity(&mut self, thread: &str, coll: &str, id: &str) {
-        if let Some(state) = self.threads.get_mut(thread) {
-            state.entities.remove(&(coll.to_owned(), id.to_owned()));
-        }
         self.delete(object_id(&["body", thread, coll, id]));
+        let Some(state) = self.threads.get_mut(thread) else {
+            return;
+        };
+        let Some(entity) = state.entities.remove(&(coll.to_owned(), id.to_owned())) else {
+            return;
+        };
+        // Its text goes too once no other entity shows it (a message and
+        // its turn item share one), and a deleted message is no tail.
+        let Some(key) = text_key(coll, &entity) else {
+            return;
+        };
+        let shown = state
+            .entities
+            .iter()
+            .any(|((c, _), e)| text_key(c, e).as_deref() == Some(key.as_str()));
+        if shown {
+            return;
+        }
+        state.stored_text.remove(&key);
+        state.live_text.remove(&key);
+        state.text_kind.remove(&key);
+        let old_tail = state.assistant.values().next_back().cloned();
+        state.assistant.retain(|_, k| *k != key);
+        let new_tail = state.assistant.values().next_back().cloned();
+        if old_tail != new_tail {
+            for k in [old_tail, new_tail].into_iter().flatten() {
+                self.changed.insert(object_id(&["text", thread, &k]));
+            }
+        }
+        self.delete(object_id(&["text", thread, &key]));
     }
 
     /// Remembers an assistant message's place for the tail.
@@ -897,6 +924,34 @@ mod tests {
             "schemaVersion": 2, "snapshotSequence": 5, "projects": [enriched], "threads": [], "archivedThreads": []}}));
         assert!(!content(&w, listed).is_empty());
         assert!(content(&w, object_id(&["project", "p1"])).contains(r#""name":"r""#));
+    }
+
+    #[test]
+    fn a_deleted_message_takes_its_text_and_the_tail_with_it() {
+        let mut w = World::default();
+        let snap = |items: Value| {
+            json!({"snapshotSequence": 3, "projection": {
+                "thread": {"id": "t1"}, "turnItems": items, "visibleTurnItems": [], "updatedAt": "now"}})
+        };
+        w.set_thread(
+            "t1",
+            &snap(json!([
+                item("a", 1, "first", false, "1"),
+                item("b", 2, "second", false, "1")
+            ])),
+        );
+        let (a, b) = (
+            object_id(&["text", "t1", "m-a"]),
+            object_id(&["text", "t1", "m-b"]),
+        );
+        assert_eq!(w.tail("t1"), Some(b));
+        w.set_thread("t1", &snap(json!([item("a", 1, "first", false, "1")])));
+        assert!(
+            content(&w, b).is_empty(),
+            "the deleted message's text stayed"
+        );
+        assert_eq!(w.tail("t1"), Some(a));
+        assert_eq!(content(&w, a), "first");
     }
 
     #[test]

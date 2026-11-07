@@ -443,6 +443,10 @@ impl Setup {
         ))
     }
 
+    fn origin(&self) -> String {
+        format!("http://127.0.0.1:{}", self.http)
+    }
+
     fn restart_sidecar(&mut self) -> R {
         self.sidecar = None;
         self.sidecar = Some(Sidecar::start(
@@ -607,6 +611,26 @@ fn sidecar_end_to_end() -> R {
     assert!(reloaded.generation() > phone.generation());
     drop(phone);
     let mut phone = reloaded;
+
+    // A delayed offer of an older page is refused.
+    let p = phone.pairing().clone();
+    let mut old_page = pipe::client::Client::new(
+        "127.0.0.1:0".parse()?,
+        pipe::generate_cert()?,
+        pipe::client::Identity {
+            token: p.token,
+            device: p.device.clone(),
+        },
+        1,
+    )?;
+    let token: String = p.token.iter().map(|b| format!("{b:02x}")).collect();
+    let stale = ureq::post(&format!("{}/api/rtc/offer", setup.origin()))
+        .header("authorization", &format!("Bearer {token}"))
+        .config()
+        .http_status_as_error(false)
+        .build()
+        .send(old_page.offer()?)?;
+    assert_eq!(stale.status().as_u16(), 400, "a stale offer was accepted");
 
     // A 10 s outage, recovered by an ICE restart on the same connection.
     let generation = phone.generation();
