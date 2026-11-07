@@ -4,6 +4,7 @@
 #   lab/bin/pipe-lab-unpatched  the same code with sctp-proto as published
 # The unpatched build copies crates/ to a temp dir and drops the
 # [patch.crates-io] section there; crates/ itself is not changed.
+# --patched-only builds only the first, as CI does.
 set -euo pipefail
 
 repo="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -12,6 +13,10 @@ mkdir -p "$bin"
 
 cargo build --manifest-path "$repo/crates/Cargo.toml" --release -p pipe --bin pipe-lab
 install -m 755 "$repo/crates/target/release/pipe-lab" "$bin/pipe-lab"
+if [ "${1:-}" = --patched-only ]; then
+  echo "built $bin/pipe-lab"
+  exit 0
+fi
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT

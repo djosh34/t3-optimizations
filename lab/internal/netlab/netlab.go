@@ -38,6 +38,15 @@ const (
 	tunnelPhoneAddr  = "10.231.1.2"
 )
 
+// Fixed MAC addresses of the veth ends, so each side's neighbor entries can
+// be set up front. Without them the kernel resolves addresses with ARP over
+// the shaped link; at heavy loss an entry fails now and then and the kernel
+// drops what it queued for it, which a real phone link does not do.
+const (
+	serverMAC = "02:00:0a:e7:00:01"
+	phoneMAC  = "02:00:0a:e7:00:02"
+)
+
 // ownerDir holds one file per running lab, named by its id, with the lab's pid.
 const ownerDir = "/run/t3lab"
 
@@ -138,9 +147,11 @@ func (l *Lab) CreateServer(ctx context.Context) error {
 	steps := [][]string{
 		{"ip", "netns", "add", ns},
 		{"ip", "-n", ns, "link", "set", "lo", "up"},
-		{"ip", "-n", ns, "link", "add", l.serverIf, "gso_max_segs", "1", "gso_max_size", "1500", "type", "veth",
-			"peer", "name", l.phoneIf, "gso_max_segs", "1", "gso_max_size", "1500"},
+		{"ip", "-n", ns, "link", "add", l.serverIf, "address", serverMAC, "gso_max_segs", "1", "gso_max_size", "1500",
+			"type", "veth", "peer", "name", l.phoneIf, "address", phoneMAC, "gso_max_segs", "1", "gso_max_size", "1500"},
 		{"ip", "-n", ns, "addr", "add", ServerAddr + "/24", "dev", l.serverIf},
+		{"ip", "-n", ns, "neigh", "replace", phoneAddr, "lladdr", phoneMAC, "nud", "permanent", "dev", l.serverIf},
+		{"ip", "-n", ns, "neigh", "replace", phoneAddrChanged, "lladdr", phoneMAC, "nud", "permanent", "dev", l.serverIf},
 		{"ip", "-n", ns, "link", "set", l.serverIf, "up"},
 		{"tc", "-n", ns, "qdisc", "add", "dev", l.serverIf, "clsact"},
 	}
@@ -161,6 +172,7 @@ func (l *Lab) AttachPhone(ctx context.Context, pid int) error {
 		{"ip", "-n", l.ServerNS, "link", "set", l.phoneIf, "netns", ns},
 		{"ip", "-n", ns, "addr", "add", phoneAddr + "/24", "dev", l.phoneIf},
 		{"ip", "-n", ns, "link", "set", l.phoneIf, "up"},
+		{"ip", "-n", ns, "neigh", "replace", ServerAddr, "lladdr", serverMAC, "nud", "permanent", "dev", l.phoneIf},
 		{"ip", "-n", ns, "link", "set", "lo", "up"},
 		{"tc", "-n", ns, "qdisc", "add", "dev", l.phoneIf, "clsact"},
 	}
