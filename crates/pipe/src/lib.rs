@@ -185,6 +185,8 @@ pub struct Pipe {
     cert: Option<DtlsCert>,
     peers: Vec<Peer>,
     unknown: Vec<Unknown>,
+    /// Events that came up while `send` flushed, for the next `poll`.
+    held: Vec<PipeEvent>,
     next_id: u64,
     buf: Vec<u8>,
 }
@@ -203,6 +205,7 @@ impl Pipe {
             cert: config.cert,
             peers: Vec::new(),
             unknown: Vec::new(),
+            held: Vec::new(),
             next_id: 1,
             buf: vec![0; 2000],
         })
@@ -308,13 +311,33 @@ impl Pipe {
             .ok_or(Error::NoPeer(id))
     }
 
-    /// Queues one message to the browser. It leaves on the next `poll`.
+    /// Sends one message to the browser, in a UDP datagram of its own.
     /// Returns false when SCTP's send buffer is full and dropped it.
+    ///
+    /// SCTP bundles messages written together into one datagram of up to the
+    /// MTU. The sync protocol sizes its packets to the link, small on a slow
+    /// one, so a bundle loses several packets at once and fills a queue that
+    /// counts packets with full-size ones: at 10 kbit/s in the lab a queue
+    /// of 20 held 18 s. Sending what SCTP has after each message keeps one
+    /// message per datagram.
     pub fn send(&mut self, id: PeerId, data: &[u8]) -> Result<bool, Error> {
         let peer = self.peer(id)?;
         let channel = peer.channel.ok_or(Error::NoPeer(id))?;
         let mut channel = peer.rtc.channel(channel).ok_or(Error::NoPeer(id))?;
-        Ok(channel.write(true, data)?)
+        let written = channel.write(true, data)?;
+        // Events of this flush wait for the next `poll`.
+        let mut held = std::mem::take(&mut self.held);
+        let flushed = self.drain(&mut held);
+        self.held = held;
+        flushed?;
+        Ok(written)
+    }
+
+    /// Bytes queued in SCTP for a connection, not sent yet.
+    pub fn buffered(&mut self, id: PeerId) -> Option<usize> {
+        let peer = self.peer(id).ok()?;
+        let channel = peer.channel?;
+        Some(peer.rtc.channel(channel)?.buffered_amount())
     }
 
     /// The host candidate's address: where browsers send to.
@@ -335,6 +358,7 @@ impl Pipe {
     /// are new events, which it appends to `events`.
     pub fn poll(&mut self, until: Instant, events: &mut Vec<PipeEvent>) -> Result<(), Error> {
         let before = events.len();
+        events.append(&mut self.held);
         self.replay_unknown(events);
         loop {
             let next = self.drain(events)?;

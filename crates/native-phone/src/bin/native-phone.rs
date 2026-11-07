@@ -92,7 +92,18 @@ fn commands() -> Receiver<String> {
 fn run() -> Result<(), Error> {
     let cfg = config()?;
     let stdin = commands();
-    let pairing = pair(&cfg.origin, &cfg.code)?;
+    // The sidecar may still be starting.
+    let started = Instant::now();
+    let pairing = loop {
+        match pair(&cfg.origin, &cfg.code) {
+            Ok(p) => break p,
+            Err(e) if started.elapsed() < Duration::from_secs(30) => {
+                emit("note", json!({"text": format!("pairing, will retry: {e}")}));
+                thread::sleep(Duration::from_secs(1));
+            }
+            Err(e) => return Err(e),
+        }
+    };
     emit("paired", json!({}));
     let via = Via::Rtc {
         local: cfg.local,
@@ -143,6 +154,7 @@ fn run() -> Result<(), Error> {
     let mut seen = vec![false; cfg.reply.len()];
     let mut approved: Vec<String> = Vec::new();
     let mut last_sample = Instant::now();
+    let mut last_link = Instant::now();
     loop {
         match stdin.try_recv() {
             Ok(c) if c == "stop" => break,
@@ -158,6 +170,10 @@ fn run() -> Result<(), Error> {
             continue;
         }
         last_sample = Instant::now();
+        if last_link.elapsed() >= Duration::from_secs(10) {
+            last_link = Instant::now();
+            link(&phone);
+        }
         for request in phone.bodies(&cfg.thread, "runtimeRequests") {
             let Some(id) = request["id"].as_str() else {
                 continue;
@@ -201,6 +217,23 @@ fn run() -> Result<(), Error> {
         }),
     );
     Ok(())
+}
+
+/// What the phone's side of the sync sees, for the run's log.
+fn link(phone: &NativePhone) {
+    let s = phone.stats();
+    let r = phone.reconnects();
+    emit(
+        "link",
+        json!({"text": format!(
+            "send {:.0} B/s, delivered {:.0} B/s, loss {:.0}%, srtt {} ms, received {} packets, last heard {} ms ago, {} ICE restarts",
+            s.send_rate, s.delivered_rate, s.loss * 100.0,
+            s.srtt_ms.map_or("-".into(), |v| format!("{v:.0}")),
+            s.received_packets,
+            phone.silent_for().as_millis(),
+            r.ice_restarts,
+        )}),
+    );
 }
 
 /// Whether the phone shows the warm-up reply.

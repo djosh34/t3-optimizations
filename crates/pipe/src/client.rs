@@ -50,6 +50,9 @@ pub struct Client {
     pending: Option<SdpPendingOffer>,
     channel: Option<ChannelId>,
     closed: bool,
+    /// Events that came up while `send` flushed, for the next `poll`.
+    held: Vec<ClientEvent>,
+    datagrams: u64,
     buf: Vec<u8>,
 }
 
@@ -90,6 +93,8 @@ impl Client {
             pending: None,
             channel: None,
             closed: false,
+            held: Vec::new(),
+            datagrams: 0,
             buf: vec![0; 2000],
         })
     }
@@ -181,6 +186,11 @@ impl Client {
         replace_ice_credentials(kept, &server)
     }
 
+    /// UDP datagrams read so far.
+    pub fn datagrams(&self) -> u64 {
+        self.datagrams
+    }
+
     pub fn is_open(&self) -> bool {
         self.channel.is_some()
     }
@@ -189,8 +199,8 @@ impl Client {
         self.closed
     }
 
-    /// Sends one message; false when SCTP's buffer is full or the channel is
-    /// not open.
+    /// Sends one message in a datagram of its own (see `Pipe::send`); false
+    /// when SCTP's buffer is full or the channel is not open.
     pub fn send(&mut self, data: &[u8]) -> Result<bool, Error> {
         let Some(id) = self.channel else {
             return Ok(false);
@@ -198,7 +208,12 @@ impl Client {
         let Some(mut channel) = self.rtc.channel(id) else {
             return Ok(false);
         };
-        Ok(channel.write(true, data)?)
+        let written = channel.write(true, data)?;
+        let mut held = std::mem::take(&mut self.held);
+        let flushed = self.drain(&mut held);
+        self.held = held;
+        flushed?;
+        Ok(written)
     }
 
     /// Closes the channel, as a page that unloads does.
@@ -212,6 +227,7 @@ impl Client {
     /// are new events, which it appends to `events`.
     pub fn poll(&mut self, until: Instant, events: &mut Vec<ClientEvent>) -> Result<(), Error> {
         let before = events.len();
+        events.append(&mut self.held);
         loop {
             let next = self.drain(events)?;
             if events.len() > before || self.closed {
@@ -240,6 +256,7 @@ impl Client {
                 }
                 Err(e) => return Err(e.into()),
             };
+            self.datagrams += 1;
             let data = self.buf[..n].to_vec();
             let Ok(contents) = data.as_slice().try_into() else {
                 continue;

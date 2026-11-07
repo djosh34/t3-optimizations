@@ -636,8 +636,11 @@ fn a_spare_copy_never_grows_a_packet_that_already_carries_data() {
         while let Some(b) = s.poll(now) {
             let p = Packet::decode(&b).expect("decodes");
             if !first {
+                // A packet grows once, by the cost of a meta that does not fit
+                // it (140 bytes and a chunk header); a spare copy never grows
+                // it further.
                 assert!(
-                    b.len() <= 200 || p.chunks.len() == 1,
+                    b.len() <= 200 + 140 + 48 || p.chunks.len() == 1,
                     "{} bytes in {} chunks at {now} ms",
                     b.len(),
                     p.chunks.len()
@@ -646,4 +649,22 @@ fn a_spare_copy_never_grows_a_packet_that_already_carries_data() {
             first = false;
         }
     }
+}
+
+#[test]
+fn a_large_meta_does_not_make_every_packet_full_size() {
+    let mut s = Server::new(TOKEN, Config::server(), 0);
+    // The sidecar's metas are about 200 bytes; long text waits.
+    s.set(TAIL, Class::Tail, 0, vec![b'm'; 200], vec![b'x'; 20_000])
+        .expect("set");
+    let mut sizes = Vec::new();
+    for now in 0..3_000 {
+        while let Some(b) = s.poll(now) {
+            sizes.push(b.len());
+        }
+    }
+    let largest = sizes.iter().copied().max().unwrap_or(0);
+    // At the starting rate a packet holds about 200 bytes, and grows once by
+    // what the meta costs.
+    assert!(largest <= 200 + 200 + 48, "packets up to {largest} bytes");
 }

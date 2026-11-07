@@ -229,5 +229,37 @@ fn cold_connect_and_ice_restart_without_signaling() -> TestResult {
         vec![peer1, peer2],
         "the restart opened a new channel"
     );
+
+    // Messages written together still leave one per datagram: SCTP would
+    // bundle them (see Pipe::send).
+    run_for_quiet(&mut server, &mut second)?;
+    let before = second.datagrams();
+    for i in 0..5u8 {
+        assert!(server.pipe.send(peer2, &[i; 40])?);
+    }
+    let mut got = 0;
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while got < 5 && Instant::now() < deadline {
+        server.step()?;
+        let mut evs = Vec::new();
+        step_client(&mut second, &mut evs)?;
+        got += evs
+            .iter()
+            .filter(|e| matches!(e, ClientEvent::Data(d) if d.len() == 40))
+            .count();
+    }
+    assert_eq!(got, 5);
+    let datagrams = second.datagrams() - before;
+    assert!(datagrams >= 5, "5 messages came in {datagrams} datagrams");
+    Ok(())
+}
+
+/// Runs both a moment so nothing is in flight.
+fn run_for_quiet(server: &mut Server, client: &mut Client) -> TestResult {
+    let end = Instant::now() + Duration::from_millis(300);
+    while Instant::now() < end {
+        server.step()?;
+        step_client(client, &mut Vec::new())?;
+    }
     Ok(())
 }

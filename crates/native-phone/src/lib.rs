@@ -261,6 +261,11 @@ impl NativePhone {
         Ok(())
     }
 
+    /// How long since the last packet from the sidecar.
+    pub fn silent_for(&self) -> Duration {
+        self.last_data.elapsed()
+    }
+
     pub fn reconnects(&self) -> Reconnects {
         self.reconnects
     }

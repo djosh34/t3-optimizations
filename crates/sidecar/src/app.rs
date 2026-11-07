@@ -64,6 +64,7 @@ const SAVE_EVERY: Duration = Duration::from_secs(2);
 /// The loop wakes at least this often to take messages from other threads.
 const TICK: Duration = Duration::from_millis(5);
 const REPORTS_MAX: u64 = 4 << 20;
+const STATS_EVERY: Duration = Duration::from_secs(10);
 
 pub struct App {
     data: DataDir,
@@ -87,6 +88,9 @@ pub struct App {
     ws_device: HashMap<u64, String>,
     start: Instant,
     last_save: Instant,
+    last_stats: Instant,
+    /// Packets SCTP dropped for a full send buffer since the last stats line.
+    dropped: u64,
 }
 
 /// Runs the sidecar until a fatal error.
@@ -137,6 +141,8 @@ pub fn run(cfg: Config) -> Result<(), Error> {
         ws_device: HashMap::new(),
         start: Instant::now(),
         last_save: Instant::now(),
+        last_stats: Instant::now(),
+        dropped: 0,
     };
     app.load_devices()?;
     app.update_subscriptions();
@@ -145,8 +151,10 @@ pub fn run(cfg: Config) -> Result<(), Error> {
     }
 }
 
+/// Logs a line with the Unix time in milliseconds, so it lines up with the
+/// lab's other logs.
 fn log(msg: impl std::fmt::Display) {
-    eprintln!("sidecar: {msg}");
+    eprintln!("sidecar: {} {msg}", unix_ms());
 }
 
 impl App {
@@ -204,7 +212,36 @@ impl App {
         self.start_fetches();
         self.send_packets()?;
         self.save_due()?;
+        self.log_stats();
         Ok(())
+    }
+
+    /// Every 10 s, one line per connected phone: what the sync sees.
+    fn log_stats(&mut self) {
+        if self.last_stats.elapsed() < STATS_EVERY {
+            return;
+        }
+        self.last_stats = Instant::now();
+        let dropped = std::mem::take(&mut self.dropped);
+        for d in self.devices.values().filter(|d| d.link.is_some()) {
+            let s = d.server.stats();
+            let queued = match d.link {
+                Some(Link::Rtc(peer)) => self.pipe.buffered(peer).unwrap_or(0),
+                _ => 0,
+            };
+            log(format!(
+                "device {} stats: send {:.0} B/s, delivered {:.0} B/s, loss {:.0}%, srtt {} ms, unsynced {} B, in flight {} packets, sent {} received {} packets, SCTP queue {queued} B, {dropped} dropped by a full SCTP buffer",
+                d.record.id,
+                s.send_rate,
+                s.delivered_rate,
+                s.loss * 100.0,
+                s.srtt_ms.map_or("-".into(), |r| format!("{r:.0}")),
+                s.unsynced_bytes,
+                s.inflight_packets,
+                s.sent_packets,
+                s.received_packets,
+            ));
+        }
     }
 
     // The phones' side.
@@ -472,8 +509,9 @@ impl App {
             while let Some(packet) = d.server.poll(now) {
                 match link {
                     Link::Rtc(peer) => match self.pipe.send(peer, &packet) {
+                        Ok(true) => {}
                         // A full send buffer is loss, which sync-core handles.
-                        Ok(_) => {}
+                        Ok(false) => self.dropped += 1,
                         Err(pipe::Error::NoPeer(_)) => break,
                         Err(e) => return Err(e.into()),
                     },
