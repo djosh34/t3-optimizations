@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["sync-core", "pipe", "sidecar", "native-phone"]
+members = ["sync-core", "pipe", "sidecar", "native-phone", "phone-wasm"]
 # Vendored crates keep their own tests and lints; see vendor/README.md.
 exclude = ["vendor"]
 
