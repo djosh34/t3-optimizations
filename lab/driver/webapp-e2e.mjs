@@ -41,7 +41,8 @@ async function shot(name) {
   try {
     await page.screenshot({ path: `/out/${name}-safari.png`, timeout: 15_000 });
     await page.setViewportSize({ width: 402, height: 874 });
-    await sleep(300);
+    // WebKit lays the page out again for the new height within a second.
+    await sleep(1_500);
     await page.screenshot({ path: `/out/${name}-home-screen.png`, timeout: 15_000 });
     emit("screenshot", { name });
   } catch (error) {
@@ -239,13 +240,13 @@ await step("thread-fills-newest-first", async () => {
   await ask("shape case50");
   await page.evaluate(() => window.t3opt.store.clearContent());
   await reload();
-  // The newest assistant text shows before the thread's first prompt.
+  // The end of the newest reply shows before the thread's first reply.
   const order = [];
   const until = Date.now() + 300_000;
   let n = 0;
   while (Date.now() < until && order.length < 2) {
     for (const [label, text] of [
-      ["newest", cfg.replyEnd],
+      ["newest", cfg.replyLast],
       ["oldest", "The lab thread is set up"],
     ]) {
       if (order.includes(label)) continue;
@@ -347,10 +348,16 @@ await step("update", async () => {
   await button.waitFor({ timeout: 180_000 });
   await shot("update-offered");
   await button.click();
-  await page.waitForFunction((v) => fetch("/__sw").then((r) => r.json()).then((j) => j.version !== v), before, {
-    timeout: 120_000,
-    polling: 1_000,
-  });
+  // The page reloads into the new version; a check during the reload fails.
+  await page.waitForFunction(
+    (v) =>
+      fetch("/__sw")
+        .then((r) => r.json())
+        .then((j) => j.version !== v)
+        .catch(() => false),
+    before,
+    { timeout: 120_000, polling: 1_000 },
+  );
   await appReady();
   await shot("updated");
   return `${before} to ${await swVersion()}`;

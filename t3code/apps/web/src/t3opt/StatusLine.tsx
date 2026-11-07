@@ -14,11 +14,17 @@ const PROMPT_LABELS: Record<PromptState, string> = {
   failed: "prompt failed",
 };
 
+const PROMPT_SHOWN_MS = 10_000;
+
 const BAR =
   "fixed inset-x-0 top-0 z-(--t3opt-z) box-border flex h-(--t3opt-bar) w-full items-center gap-2.5 overflow-hidden whitespace-nowrap border-0 border-b border-border bg-popover px-2.5 pt-(--t3opt-safe-top) text-left font-medium text-popover-foreground text-2xs leading-none";
 
 function kb(bytesPerSecond: number) {
   return `${(bytesPerSecond / 1000).toFixed(bytesPerSecond < 10_000 ? 1 : 0)} kB/s`;
+}
+
+function kbNumber(bytesPerSecond: number) {
+  return (bytesPerSecond / 1000).toFixed(1);
 }
 
 function ago(ms: number) {
@@ -113,7 +119,7 @@ function UpdateButton() {
   return (
     <button
       type="button"
-      className="ml-auto rounded-lg border-0 bg-update px-2 py-0.75 text-update-foreground"
+      className="ml-2 shrink-0 rounded-lg border-0 bg-update px-2 py-0.75 text-update-foreground"
       data-testid="t3opt-update"
       onClick={(e) => {
         e.stopPropagation();
@@ -140,28 +146,34 @@ function Connected(props: {
   const live = silent !== null && silent < 3_000;
   const { have, total } = progress(engine);
   const synced = total === 0 ? 0 : Math.floor((have / total) * 100);
-  const heard = live ? "live" : silent === null ? "not heard yet" : `last heard ${ago(silent)} ago`;
+  const heard = live ? "live" : silent === null ? "not heard yet" : `heard ${ago(silent)} ago`;
+  // A confirmed prompt stays on the line for a while, then makes room.
+  const prompt =
+    props.prompt !== null &&
+    (props.prompt.state !== "confirmed" || sample.at - props.prompt.at < PROMPT_SHOWN_MS)
+      ? props.prompt
+      : null;
   return (
     <>
-      <button
-        type="button"
-        className={BAR}
-        data-testid="t3opt-status"
-        data-live={live}
-        onClick={() => props.setOpen(!props.open)}
-      >
-        <span className={`size-2 flex-none rounded-full ${live ? "bg-success" : "bg-warning"}`} />
-        <span>{heard}</span>
-        <span>synced {synced}%</span>
-        {props.prompt ? (
-          <span data-testid="t3opt-prompt">{PROMPT_LABELS[props.prompt.state]}</span>
-        ) : null}
-        <span>
-          ↓{kb(sample.downRate)} ↑{kb(sample.upRate)}
-        </span>
-        <span>{link.trying}</span>
+      <div className={BAR}>
+        <button
+          type="button"
+          className="flex h-full min-w-0 flex-1 items-center gap-2.5 overflow-hidden border-0 bg-transparent p-0 text-left text-inherit"
+          data-testid="t3opt-status"
+          data-live={live}
+          onClick={() => props.setOpen(!props.open)}
+        >
+          <span className={`size-2 flex-none rounded-full ${live ? "bg-success" : "bg-warning"}`} />
+          <span>{heard}</span>
+          <span>synced {synced}%</span>
+          {prompt ? <span data-testid="t3opt-prompt">{PROMPT_LABELS[prompt.state]}</span> : null}
+          <span>
+            ↓{kbNumber(sample.downRate)} ↑{kbNumber(sample.upRate)} kB/s
+          </span>
+          <span>{live ? link.transport : link.trying}</span>
+        </button>
         {props.update ? <UpdateButton /> : null}
-      </button>
+      </div>
       {props.open ? (
         <div
           className="fixed inset-x-0 top-(--t3opt-bar) z-(--t3opt-z) max-h-(--t3opt-details-max) overflow-auto bg-popover px-3.5 pt-3 pb-4 text-popover-foreground text-sm leading-snug shadow-2xl"

@@ -51,9 +51,10 @@ type E2EConfig struct {
 	ThreadID string `json:"threadId"`
 	Prompt   string `json:"prompt"`
 	// ReplyStart and ReplyEnd are sentences of the reply: its first, and the
-	// first after the approval.
+	// first after the approval. ReplyLast is the end of its last line.
 	ReplyStart    string `json:"replyStart"`
 	ReplyEnd      string `json:"replyEnd"`
+	ReplyLast     string `json:"replyLast"`
 	Image         string `json:"image"`
 	OutageSeconds int    `json:"outageSeconds"`
 }

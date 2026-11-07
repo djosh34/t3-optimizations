@@ -211,6 +211,7 @@ func (e *e2e) run(parent context.Context, repo, phoneDir string, o E2EOptions) (
 	driver, err := phone.StartDriver(ctx, e.lab, e.u, "webapp-e2e.mjs", phone.E2EConfig{
 		Origin: front, Code: code, ThreadID: threadID, Prompt: agent.MeasuredPrompt,
 		ReplyStart: firstSentence(steps[0].Text), ReplyEnd: firstSentence(steps[4].Text),
+		ReplyLast:     replyLast(steps),
 		Image:         base64.StdEncoding.EncodeToString(agent.Picture()),
 		OutageSeconds: int(o.Outage.Seconds()),
 	}, phoneDir, filepath.Join(e.runDir, "driver.log"))
@@ -268,6 +269,17 @@ func (e *e2e) run(parent context.Context, repo, phoneDir string, o E2EOptions) (
 			return nil, context.Cause(ctx)
 		}
 	}
+}
+
+// replyLast is the text of the reply's last line between its last quotes:
+// the string the code block ends with, one token when it is highlighted.
+func replyLast(steps []agent.Step) string {
+	text := strings.TrimSpace(steps[len(steps)-1].Text)
+	line := text[strings.LastIndex(text, "\n")+1:]
+	if parts := strings.Split(line, `"`); len(parts) >= 3 {
+		return parts[len(parts)-2]
+	}
+	return line
 }
 
 func (e *e2e) shape(ctx context.Context, name string) error {
