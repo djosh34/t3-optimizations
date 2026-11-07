@@ -32,7 +32,7 @@ const Prefix = "t3lab"
 // lab's own namespaces and never reach the host.
 const (
 	ServerAddr       = "10.231.0.1"
-	phoneAddr        = "10.231.0.2"
+	PhoneAddr        = "10.231.0.2"
 	phoneAddrChanged = "10.231.0.3"
 	TunnelServerAddr = "10.231.1.1"
 	tunnelPhoneAddr  = "10.231.1.2"
@@ -150,7 +150,7 @@ func (l *Lab) CreateServer(ctx context.Context) error {
 		{"ip", "-n", ns, "link", "add", l.serverIf, "address", serverMAC, "gso_max_segs", "1", "gso_max_size", "1500",
 			"type", "veth", "peer", "name", l.phoneIf, "address", phoneMAC, "gso_max_segs", "1", "gso_max_size", "1500"},
 		{"ip", "-n", ns, "addr", "add", ServerAddr + "/24", "dev", l.serverIf},
-		{"ip", "-n", ns, "neigh", "replace", phoneAddr, "lladdr", phoneMAC, "nud", "permanent", "dev", l.serverIf},
+		{"ip", "-n", ns, "neigh", "replace", PhoneAddr, "lladdr", phoneMAC, "nud", "permanent", "dev", l.serverIf},
 		{"ip", "-n", ns, "neigh", "replace", phoneAddrChanged, "lladdr", phoneMAC, "nud", "permanent", "dev", l.serverIf},
 		{"ip", "-n", ns, "link", "set", l.serverIf, "up"},
 		{"tc", "-n", ns, "qdisc", "add", "dev", l.serverIf, "clsact"},
@@ -170,7 +170,7 @@ func (l *Lab) AttachPhone(ctx context.Context, pid int) error {
 	steps := [][]string{
 		{"ip", "netns", "attach", ns, strconv.Itoa(pid)},
 		{"ip", "-n", l.ServerNS, "link", "set", l.phoneIf, "netns", ns},
-		{"ip", "-n", ns, "addr", "add", phoneAddr + "/24", "dev", l.phoneIf},
+		{"ip", "-n", ns, "addr", "add", PhoneAddr + "/24", "dev", l.phoneIf},
 		{"ip", "-n", ns, "link", "set", l.phoneIf, "up"},
 		{"ip", "-n", ns, "neigh", "replace", ServerAddr, "lladdr", serverMAC, "nud", "permanent", "dev", l.phoneIf},
 		{"ip", "-n", ns, "link", "set", "lo", "up"},
@@ -264,7 +264,7 @@ func (l *Lab) ChangePhoneAddr(ctx context.Context) error {
 	if err := run(ctx, "ip", "-n", l.PhoneNS, "addr", "add", phoneAddrChanged+"/24", "dev", l.phoneIf); err != nil {
 		return err
 	}
-	return run(ctx, "ip", "-n", l.PhoneNS, "addr", "del", phoneAddr+"/24", "dev", l.phoneIf)
+	return run(ctx, "ip", "-n", l.PhoneNS, "addr", "del", PhoneAddr+"/24", "dev", l.phoneIf)
 }
 
 // Counters are the bytes on the wire at the server end of the link.

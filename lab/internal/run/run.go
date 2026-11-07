@@ -40,8 +40,8 @@ const soakParts = 450
 type Options struct {
 	Profile profile.Profile
 	Seed    int64
-	// Client is websocket or websocket-nodeflate, or a pipe client: pipe,
-	// pipe-unpatched or udp.
+	// Client is websocket, websocket-nodeflate or sidecar-native, or a pipe
+	// client: pipe, pipe-unpatched or udp.
 	Client string
 	// Kind is warm or cold.
 	Kind string
@@ -67,8 +67,12 @@ const tunnelPort = "7000"
 // headline.
 func Run(ctx context.Context, o Options) (string, error) {
 	pipe := pipereport.IsPipeClient(o.Client)
-	if o.Client != "websocket" && o.Client != "websocket-nodeflate" && !pipe {
-		return "", fmt.Errorf("unknown client %q: use websocket, websocket-nodeflate, pipe, pipe-unpatched or udp", o.Client)
+	sidecar := o.Client == ClientSidecarNative
+	if o.Client != "websocket" && o.Client != "websocket-nodeflate" && !pipe && !sidecar {
+		return "", fmt.Errorf("unknown client %q: use websocket, websocket-nodeflate, sidecar-native, pipe, pipe-unpatched or udp", o.Client)
+	}
+	if sidecar && o.Profile.TCPPath {
+		return "", fmt.Errorf("profile %s carries the link in a TCP tunnel, which sidecar-native runs do not set up yet", o.Profile.Name)
 	}
 	if o.Kind != "warm" && o.Kind != "cold" {
 		return "", fmt.Errorf("unknown kind %q: use warm or cold", o.Kind)
@@ -89,9 +93,13 @@ func Run(ctx context.Context, o Options) (string, error) {
 	}
 	repo := filepath.Dir(o.LabDir)
 	staticDir := filepath.Join(u.Home, ".cache", "t3lab", "baseline-client-"+BaselineCommit[:12], "dist")
-	var server string
+	var server, sidecarBin, nativeBin string
 	if pipe {
 		if server, err = pipeServer(o.LabDir, o.Client); err != nil {
+			return "", err
+		}
+	} else if sidecar {
+		if sidecarBin, nativeBin, err = sidecarBinaries(o.LabDir); err != nil {
 			return "", err
 		}
 	} else if _, err := os.Stat(filepath.Join(staticDir, "index.html")); err != nil {
@@ -149,7 +157,12 @@ func Run(ctx context.Context, o Options) (string, error) {
 		r := pipereport.Build(in)
 		return r.Headline(), r.Write(runDir, u.WriteFile)
 	}
-	in, err := s.execute(ctx, repo, staticDir, phoneDir)
+	var in report.Input
+	if sidecar {
+		in, err = s.executeSidecar(ctx, repo, phoneDir, sidecarBin, nativeBin)
+	} else {
+		in, err = s.execute(ctx, repo, staticDir, phoneDir)
+	}
 	if err != nil {
 		return "", err
 	}
@@ -241,7 +254,16 @@ func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir str
 	if err != nil {
 		return report.Input{}, err
 	}
-	events, err := u.Create(filepath.Join(s.runDir, "phone.jsonl"))
+	return s.drive(ctx, driver, reply, "")
+}
+
+// drive runs the measured part of a t3 scenario with a started phone
+// driver: waits until it is ready, applies the profile, sends "go", injects
+// the faults, and collects events until the reply is complete or the
+// deadline passes. path is the report's note on the transport.
+func (s *scenario) drive(ctx context.Context, driver *phone.Driver, reply, path string) (report.Input, error) {
+	o, lab := s.o, s.lab
+	events, err := s.u.Create(filepath.Join(s.runDir, "phone.jsonl"))
 	if err != nil {
 		return report.Input{}, err
 	}
@@ -307,6 +329,7 @@ func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir str
 		Switched: switched, End: end, Reply: reply,
 		Agent: agentLog, Phone: phoneEvents,
 		WireDown: after.Down - before.Down, WireUp: after.Up - before.Up,
+		Path: path,
 	}, nil
 }
 

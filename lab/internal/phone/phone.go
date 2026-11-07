@@ -50,6 +50,22 @@ type PipeConfig struct {
 	UDPPort int    `json:"udpPort,omitempty"`
 }
 
+// NativeConfig is the config of the native phone, crates/native-phone, for
+// sidecar-native runs.
+type NativeConfig struct {
+	// Origin is the sidecar's HTTP side.
+	Origin string `json:"origin"`
+	// Code is a pairing code of the forked t3 server.
+	Code     string `json:"code"`
+	ThreadID string `json:"threadId"`
+	Prompt   string `json:"prompt"`
+	// Reply is the normalized text of the measured reply.
+	Reply string `json:"reply"`
+	Kind  string `json:"kind"`
+	// Local is the phone's own address, its ICE candidate.
+	Local string `json:"local"`
+}
+
 // Event is one line the driver prints.
 type Event struct {
 	T    int64  `json:"t"`
@@ -114,6 +130,16 @@ type Driver struct {
 // container's /out: the soak reply is too long for one command-line
 // argument. Its stderr goes to logPath.
 func StartDriver(ctx context.Context, lab *netlab.Lab, u userproc.User, script string, cfg any, outDir, logPath string) (*Driver, error) {
+	return start(ctx, lab, u, []string{"node", "/lab/" + script}, cfg, outDir, logPath)
+}
+
+// StartNative runs the native phone, a binary in outDir, in the container
+// like a driver script.
+func StartNative(ctx context.Context, lab *netlab.Lab, u userproc.User, binary string, cfg NativeConfig, outDir, logPath string) (*Driver, error) {
+	return start(ctx, lab, u, []string{"/out/" + binary}, cfg, outDir, logPath)
+}
+
+func start(ctx context.Context, lab *netlab.Lab, u userproc.User, command []string, cfg any, outDir, logPath string) (*Driver, error) {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
@@ -125,7 +151,8 @@ func StartDriver(ctx context.Context, lab *netlab.Lab, u userproc.User, script s
 	if err != nil {
 		return nil, err
 	}
-	cmd := exec.CommandContext(ctx, "docker", "exec", "-i", lab.Container, "node", "/lab/"+script, "/out/driver-config.json")
+	args := append([]string{"exec", "-i", lab.Container}, command...)
+	cmd := exec.CommandContext(ctx, "docker", append(args, "/out/driver-config.json")...)
 	cmd.Stderr = log
 	stdin, err := cmd.StdinPipe()
 	if err != nil {

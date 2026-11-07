@@ -36,7 +36,7 @@ type Config struct {
 	RunDir string
 	// LabExe is the lab binary, which the server starts as the fake agent.
 	LabExe string
-	// StaticDir is the web client build the server serves.
+	// StaticDir is the web client build the server serves; empty serves none.
 	StaticDir string
 	// Node is the node binary that runs the server.
 	Node           string
@@ -129,17 +129,26 @@ func (s *Server) Exited() <-chan error { return s.done }
 
 func (s *Server) bin() string { return filepath.Join(s.cfg.T3Code, "apps", "server", "src", "bin.ts") }
 
+// BaseDir is the server's --base-dir.
+func (s *Server) BaseDir() string { return s.baseDir }
+
+// CLI is the command that runs the server's t3 CLI.
+func (s *Server) CLI() []string { return []string{s.cfg.Node, s.bin()} }
+
 // env keeps the provider CLIs of this host out of reach: no PATH entry for
 // them and a home dir of the server's own. PATH has node's directory for the
 // server's own child processes.
 func (s *Server) env() []string {
-	return []string{
+	env := []string{
 		"HOME=" + s.home,
 		"PATH=" + filepath.Dir(s.cfg.Node) + ":/usr/bin:/bin",
 		"LANG=C.UTF-8",
-		"T3CODE_STATIC_DIR=" + s.cfg.StaticDir,
 		"T3CODE_NO_BROWSER=true",
 	}
+	if s.cfg.StaticDir != "" {
+		env = append(env, "T3CODE_STATIC_DIR="+s.cfg.StaticDir)
+	}
+	return env
 }
 
 // settings turns off the providers that are on by default, so no prompt can
