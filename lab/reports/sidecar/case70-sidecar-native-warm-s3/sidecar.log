@@ -1,0 +1,16 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794066960877 device iz8ab77n paired
+sidecar: 1794066960928 device iz8ab77n: generation 1 signaled
+sidecar: 1794066960930 data channel 1: ICE Checking
+sidecar: 1794066960931 data channel 1: ICE Completed
+sidecar: 1794066960931 data channel 1 open
+sidecar: 1794066960997 device iz8ab77n: now on Rtc(PeerId(1))
+sidecar: 1794066960997 device iz8ab77n: lost its cache, syncing everything
+sidecar: 1794066961776 connected to t3
+sidecar: 1794066970846 device iz8ab77n stats: send 1423 B/s, delivered 1269 B/s, loss 34%, srtt 1138 ms, unsynced 23616 B, in flight 42 packets, sent 68 received 19 packets, SCTP queue 2383 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066980866 device iz8ab77n stats: send 1068 B/s, delivered 835 B/s, loss 52%, srtt 1189 ms, unsynced 23631 B, in flight 63 packets, sent 103 received 28 packets, SCTP queue 414 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066990876 device iz8ab77n stats: send 801 B/s, delivered 521 B/s, loss 66%, srtt 1114 ms, unsynced 31654 B, in flight 85 packets, sent 131 received 35 packets, SCTP queue 597 B, 0 dropped by a full SCTP buffer
+sidecar: 1794067000896 device iz8ab77n stats: send 601 B/s, delivered 385 B/s, loss 73%, srtt 1177 ms, unsynced 31109 B, in flight 95 packets, sent 145 received 41 packets, SCTP queue 187 B, 0 dropped by a full SCTP buffer
+sidecar: 1794067010896 device iz8ab77n stats: send 1847 B/s, delivered 476 B/s, loss 68%, srtt 1169 ms, unsynced 29670 B, in flight 135 packets, sent 194 received 52 packets, SCTP queue 737 B, 0 dropped by a full SCTP buffer
+sidecar: 1794067020917 device iz8ab77n stats: send 3753 B/s, delivered 706 B/s, loss 72%, srtt 1286 ms, unsynced 31342 B, in flight 193 packets, sent 276 received 69 packets, SCTP queue 6677 B, 0 dropped by a full SCTP buffer
+sidecar: 1794067030926 device iz8ab77n stats: send 2346 B/s, delivered 1007 B/s, loss 68%, srtt 2269 ms, unsynced 30590 B, in flight 226 packets, sent 373 received 87 packets, SCTP queue 959 B, 0 dropped by a full SCTP buffer

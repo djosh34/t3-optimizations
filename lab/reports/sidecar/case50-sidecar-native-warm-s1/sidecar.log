@@ -1,0 +1,14 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794066815157 device eco5m193 paired
+sidecar: 1794066815208 device eco5m193: generation 1 signaled
+sidecar: 1794066815211 data channel 1: ICE Checking
+sidecar: 1794066815212 data channel 1: ICE Completed
+sidecar: 1794066815213 data channel 1 open
+sidecar: 1794066815287 device eco5m193: now on Rtc(PeerId(1))
+sidecar: 1794066815287 device eco5m193: lost its cache, syncing everything
+sidecar: 1794066816086 connected to t3
+sidecar: 1794066825127 device eco5m193 stats: send 1055 B/s, delivered 1538 B/s, loss 33%, srtt 590 ms, unsynced 22477 B, in flight 26 packets, sent 63 received 29 packets, SCTP queue 385 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066835137 device eco5m193 stats: send 1805 B/s, delivered 994 B/s, loss 45%, srtt 589 ms, unsynced 22313 B, in flight 41 packets, sent 89 received 48 packets, SCTP queue 584 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066845157 device eco5m193 stats: send 3437 B/s, delivered 1310 B/s, loss 47%, srtt 640 ms, unsynced 27074 B, in flight 77 packets, sent 168 received 74 packets, SCTP queue 376 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066855166 device eco5m193 stats: send 6463 B/s, delivered 2448 B/s, loss 43%, srtt 675 ms, unsynced 22810 B, in flight 128 packets, sent 272 received 101 packets, SCTP queue 5406 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066865167 device eco5m193 stats: send 11520 B/s, delivered 5046 B/s, loss 47%, srtt 666 ms, unsynced 6326 B, in flight 248 packets, sent 495 received 122 packets, SCTP queue 9403 B, 0 dropped by a full SCTP buffer

@@ -94,7 +94,7 @@ func runCmd(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	name := fs.String("profile", "", "profile name; see `lab profiles`")
 	seed := fs.Int64("seed", 1, "seed for netem and the fault schedule")
-	client := fs.String("client", "websocket", "client: websocket, websocket-nodeflate, or the pipe clients pipe, pipe-unpatched and udp")
+	client := fs.String("client", "websocket", "client: websocket, websocket-nodeflate, sidecar-native, or the pipe clients pipe, pipe-unpatched and udp")
 	kind := fs.String("kind", "warm", "warm: start connected, then switch to the profile; cold: open the app under the profile")
 	deadline := fs.Duration("deadline", 0, "override the profile's deadline (15m, 60m for the soak; pipe runs measure for 2m)")
 	out := fs.String("out", "", "directory for the run's report and raw data (default lab/reports/runs)")

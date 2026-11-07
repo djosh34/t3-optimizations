@@ -1,0 +1,45 @@
+{"t":1794066884708,"ev":"paired"}
+{"t":1794066885677,"ev":"thread-open"}
+{"t":1794066885677,"ev":"ready"}
+{"t":1794066885716,"ev":"prompt-sent"}
+{"t":1794066888205,"ev":"prompt-confirmed"}
+{"t":1794066890116,"ev":"text","n":69}
+{"t":1794066895766,"ev":"link","text":"send 3000 B/s, delivered 386 B/s, loss 63%, srtt 431 ms, received 27 packets, last heard 786 ms ago, 0 ICE restarts"}
+{"t":1794066899106,"ev":"text","n":452}
+{"t":1794066899546,"ev":"text","n":473}
+{"t":1794066899986,"ev":"text","n":486}
+{"t":1794066901037,"ev":"text","n":526}
+{"t":1794066902756,"ev":"text","n":593}
+{"t":1794066905976,"ev":"link","text":"send 3000 B/s, delivered 285 B/s, loss 62%, srtt 431 ms, received 37 packets, last heard 955 ms ago, 0 ICE restarts"}
+{"t":1794066907486,"ev":"text","n":628}
+{"t":1794066910037,"ev":"text","n":886}
+{"t":1794066910256,"ev":"text","n":893}
+{"t":1794066910466,"ev":"text","n":909}
+{"t":1794066912380,"ev":"text","n":945}
+{"t":1794066913467,"ev":"text","n":950}
+{"t":1794066914076,"ev":"text","n":988}
+{"t":1794066915566,"ev":"text","n":1032}
+{"t":1794066915988,"ev":"link","text":"send 3000 B/s, delivered 230 B/s, loss 68%, srtt 431 ms, received 54 packets, last heard 494 ms ago, 0 ICE restarts"}
+{"t":1794066919227,"ev":"text","n":1077}
+{"t":1794066926086,"ev":"link","text":"send 3000 B/s, delivered 171 B/s, loss 72%, srtt 431 ms, received 81 packets, last heard 198 ms ago, 0 ICE restarts"}
+{"t":1794066931710,"ev":"approval-shown"}
+{"t":1794066931710,"ev":"approval-clicked"}
+{"t":1794066936266,"ev":"link","text":"send 1000 B/s, delivered 624 B/s, loss 58%, srtt 1518 ms, received 112 packets, last heard 52 ms ago, 0 ICE restarts"}
+{"t":1794066937560,"ev":"text","n":1097}
+{"t":1794066937996,"ev":"text","n":1105}
+{"t":1794066938457,"ev":"text","n":1120}
+{"t":1794066939117,"ev":"text","n":1132}
+{"t":1794066941696,"ev":"text","n":1173}
+{"t":1794066944516,"ev":"text","n":1288}
+{"t":1794066945376,"ev":"text","n":1393}
+{"t":1794066946446,"ev":"link","text":"send 750 B/s, delivered 454 B/s, loss 60%, srtt 2047 ms, received 133 packets, last heard 327 ms ago, 0 ICE restarts"}
+{"t":1794066947306,"ev":"text","n":1429}
+{"t":1794066947987,"ev":"text","n":1456}
+{"t":1794066948626,"ev":"text","n":1466}
+{"t":1794066949463,"ev":"text","n":1497}
+{"t":1794066950147,"ev":"text","n":1575}
+{"t":1794066952528,"ev":"text","n":1595}
+{"t":1794066953007,"ev":"text","n":1596}
+{"t":1794066953007,"ev":"complete"}
+{"t":1794066953007,"ev":"note","text":"native phone: 0 ICE restarts, 0 new connections, loss up 69%, 0 packets it could not read"}
+{"t":1794066953007,"ev":"stats","rxBytes":45584,"txBytes":52182}

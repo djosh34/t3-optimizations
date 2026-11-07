@@ -335,7 +335,16 @@ impl RateControl {
         let drained = self
             .drain_from
             .is_some_and(|r| self.rate <= (PATH_CHANGE_RATE * r).max(self.cfg.floor));
-        let stuck = grown && drained && fresh >= self.drain_rtt.map(|r| 0.9 * r);
+        // Once drained that far, an RTT that did not come down and is still
+        // well above the base is enough; it need not also clear the jitter
+        // margin. Otherwise one sample in the jitter's lower tail ends the
+        // drains and the count starts over (issue #44: after a clean link,
+        // the rate stayed down for most of a reply).
+        let still_up = match (fresh, base) {
+            (Some(f), Some(b)) => f > b * GROWTH_FACTOR,
+            _ => false,
+        };
+        let stuck = still_up && drained && fresh >= self.drain_rtt.map(|r| 0.9 * r);
         if stuck {
             // No queue of ours explains an RTT that stays up at a fraction
             // of the rate: the path itself got slower. Its RTT is the new

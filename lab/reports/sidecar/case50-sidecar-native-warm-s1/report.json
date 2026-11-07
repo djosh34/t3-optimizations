@@ -1,0 +1,343 @@
+{
+  "profile": "case50",
+  "about": "graded: 50% loss, 100 kbit/s",
+  "grade": "graded",
+  "client": "sidecar-native",
+  "kind": "warm",
+  "seed": 1,
+  "commit": "225ea00fa9b4",
+  "path": "WebRTC data channel (UDP, str0m with the patched SCTP layer) over a veth pair in the lab; the phone is crates/native-phone, not WebKit. In production the UDP goes through Tailscale.",
+  "status": "done",
+  "deadline": "15m0s",
+  "runS": 50.482,
+  "promptConfirmationS": 1.171,
+  "timeToFirstTextS": 3.47,
+  "completeS": 50.456,
+  "agentGotPromptS": 0.782,
+  "maxLagS": 5.317,
+  "medianLagS": 1.117,
+  "p95LagS": 2.717,
+  "longestSilenceS": 7.331,
+  "shownChars": 1596,
+  "producedChars": 1596,
+  "replyChars": 1596,
+  "approvalShownAfterS": 6.328,
+  "wireDownBytes": 130486,
+  "wireUpBytes": 63452,
+  "appReceivedBytes": 105374,
+  "appSentBytes": 37157,
+  "replyBytesReceived": 0,
+  "duplicateReplyBytes": 0,
+  "webSocketsOpenedAfterSwitch": 0,
+  "lag": [
+    {
+      "atS": 0,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 1,
+      "lagS": 0.117,
+      "shown": 0,
+      "produced": 8
+    },
+    {
+      "atS": 2,
+      "lagS": 1.117,
+      "shown": 0,
+      "produced": 49
+    },
+    {
+      "atS": 3,
+      "lagS": 2.117,
+      "shown": 0,
+      "produced": 89
+    },
+    {
+      "atS": 4,
+      "lagS": 0.917,
+      "shown": 89,
+      "produced": 129
+    },
+    {
+      "atS": 5,
+      "lagS": 0.417,
+      "shown": 149,
+      "produced": 169
+    },
+    {
+      "atS": 6,
+      "lagS": 0.517,
+      "shown": 186,
+      "produced": 211
+    },
+    {
+      "atS": 7,
+      "lagS": 1.517,
+      "shown": 186,
+      "produced": 250
+    },
+    {
+      "atS": 8,
+      "lagS": 1.917,
+      "shown": 211,
+      "produced": 291
+    },
+    {
+      "atS": 9,
+      "lagS": 0.517,
+      "shown": 307,
+      "produced": 329
+    },
+    {
+      "atS": 10,
+      "lagS": 1.517,
+      "shown": 307,
+      "produced": 369
+    },
+    {
+      "atS": 11,
+      "lagS": 2.517,
+      "shown": 307,
+      "produced": 406
+    },
+    {
+      "atS": 12,
+      "lagS": 0.716,
+      "shown": 414,
+      "produced": 449
+    },
+    {
+      "atS": 13,
+      "lagS": 1.317,
+      "shown": 431,
+      "produced": 489
+    },
+    {
+      "atS": 14,
+      "lagS": 2.317,
+      "shown": 431,
+      "produced": 531
+    },
+    {
+      "atS": 15,
+      "lagS": 3.317,
+      "shown": 431,
+      "produced": 569
+    },
+    {
+      "atS": 16,
+      "lagS": 4.317,
+      "shown": 431,
+      "produced": 609
+    },
+    {
+      "atS": 17,
+      "lagS": 5.317,
+      "shown": 431,
+      "produced": 647
+    },
+    {
+      "atS": 18,
+      "lagS": 0.917,
+      "shown": 647,
+      "produced": 689
+    },
+    {
+      "atS": 19,
+      "lagS": 0.917,
+      "shown": 689,
+      "produced": 730
+    },
+    {
+      "atS": 20,
+      "lagS": 1.517,
+      "shown": 705,
+      "produced": 770
+    },
+    {
+      "atS": 21,
+      "lagS": 0.717,
+      "shown": 779,
+      "produced": 811
+    },
+    {
+      "atS": 22,
+      "lagS": 0.517,
+      "shown": 829,
+      "produced": 852
+    },
+    {
+      "atS": 23,
+      "lagS": 1.217,
+      "shown": 839,
+      "produced": 893
+    },
+    {
+      "atS": 24,
+      "lagS": 1.517,
+      "shown": 870,
+      "produced": 934
+    },
+    {
+      "atS": 25,
+      "lagS": 1.217,
+      "shown": 922,
+      "produced": 974
+    },
+    {
+      "atS": 26,
+      "lagS": 0.517,
+      "shown": 988,
+      "produced": 1013
+    },
+    {
+      "atS": 27,
+      "lagS": 0.717,
+      "shown": 1020,
+      "produced": 1053
+    },
+    {
+      "atS": 28,
+      "lagS": 1.717,
+      "shown": 1020,
+      "produced": 1077
+    },
+    {
+      "atS": 29,
+      "lagS": 2.717,
+      "shown": 1020,
+      "produced": 1077
+    },
+    {
+      "atS": 30,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 31,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 32,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 33,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 34,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 35,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 36,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 37,
+      "lagS": 0.817,
+      "shown": 1086,
+      "produced": 1120
+    },
+    {
+      "atS": 38,
+      "lagS": 0.917,
+      "shown": 1120,
+      "produced": 1158
+    },
+    {
+      "atS": 39,
+      "lagS": 1.517,
+      "shown": 1136,
+      "produced": 1196
+    },
+    {
+      "atS": 40,
+      "lagS": 0.917,
+      "shown": 1196,
+      "produced": 1237
+    },
+    {
+      "atS": 41,
+      "lagS": 1.5,
+      "shown": 1212,
+      "produced": 1277
+    },
+    {
+      "atS": 42,
+      "lagS": 1.517,
+      "shown": 1254,
+      "produced": 1317
+    },
+    {
+      "atS": 43,
+      "lagS": 1.217,
+      "shown": 1304,
+      "produced": 1355
+    },
+    {
+      "atS": 44,
+      "lagS": 1.617,
+      "shown": 1328,
+      "produced": 1388
+    },
+    {
+      "atS": 45,
+      "lagS": 1.217,
+      "shown": 1378,
+      "produced": 1425
+    },
+    {
+      "atS": 46,
+      "lagS": 0.617,
+      "shown": 1435,
+      "produced": 1461
+    },
+    {
+      "atS": 47,
+      "lagS": 1.117,
+      "shown": 1452,
+      "produced": 1497
+    },
+    {
+      "atS": 48,
+      "lagS": 1.817,
+      "shown": 1466,
+      "produced": 1528
+    },
+    {
+      "atS": 49,
+      "lagS": 1.517,
+      "shown": 1507,
+      "produced": 1564
+    },
+    {
+      "atS": 50,
+      "lagS": 1.717,
+      "shown": 1537,
+      "produced": 1596
+    }
+  ],
+  "notes": [
+    "native phone: 0 ICE restarts, 0 new connections, loss up 63%, 0 packets it could not read"
+  ]
+}

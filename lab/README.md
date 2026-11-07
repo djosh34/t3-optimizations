@@ -24,7 +24,7 @@ scripts/run-baseline.sh 3               # every baseline run, 3 at a time, into 
 
 `run` flags:
 
-- `--client`: `websocket` (the web client as Safari runs it, with WebSocket compression) or `websocket-nodeflate` (no compression, like the unchanged iOS app, which never negotiates it; issue #7). The pipe clients `pipe`, `pipe-unpatched` and `udp` run ticks instead of the t3 web client; see [Pipe runs](#pipe-runs).
+- `--client`: `websocket` (the web client as Safari runs it, with WebSocket compression) or `websocket-nodeflate` (no compression, like the unchanged iOS app, which never negotiates it; issue #7). `sidecar-native` is the sync protocol through the sidecar on the data channel, with a native phone in the web app's place; see [Sidecar runs](#sidecar-runs). The pipe clients `pipe`, `pipe-unpatched` and `udp` run ticks instead of the t3 web client; see [Pipe runs](#pipe-runs).
 - `--kind`: `warm` (default) starts connected on a clean link and then switches to the profile. `cold` sets everything up on the clean link, closes the page, switches to the profile, and then opens the app again.
 - `--seed`: seeds netem. The same seed gives the same fault sequence. Timings still differ from run to run, because the browser and the server do not run in lockstep.
 - `--deadline`: overrides the run's deadline (15 minutes, 60 for `soak`). A run that is not done by then reports "not done by deadline" instead of waiting.
@@ -148,9 +148,20 @@ scripts/run-pipe.sh 3                   # every pipe run, 3 at a time, into repo
 
 The run starts the pipe on the clean link, lets ticks flow for 3 s, switches to the profile and measures for 2 minutes (`--deadline` changes that). Pipe runs are warm only. The report gives for each direction the ticks sent and received after the switch, the longest gap between two arrivals (counted from the switch to the end of the run), the gaps over 2 s, and the age of the ticks when they arrived (arrival minus send time; both ends share the host's clock). Raw logs: `phone.jsonl` (driver) and `server.jsonl` (`pipe-lab`).
 
+## Sidecar runs
+
+`--client sidecar-native` runs the same scenario as the WebSocket client through the sidecar (issue #44): the forked t3 server and `crates/sidecar` in the server namespace, and `crates/native-phone` in the phone container. The native phone does what the web app will do (sync-core's phone over a WebRTC data channel, the sidecar's derived ICE credentials, storing before it acks), on str0m instead of WebKit. It pairs with a code from the t3 server, opens the lab thread, sends the measured prompt, approves the approval, and prints the same events as `driver.mjs`, so the report is the same. It skips the setup turn with an attached image: uploads do not go through the sidecar yet.
+
+```sh
+lab/scripts/build-sidecar.sh            # once, as yourself: lab/bin/sidecar and lab/bin/native-phone
+sudo ./bin/lab run --profile case70 --seed 1 --client sidecar-native
+```
+
+The sidecar listens on 10.231.0.1:8480 (HTTP) and UDP 12444 in the server namespace; its log is `sidecar.log` in the run directory. The results of the graded cases are in [reports/sidecar](reports/sidecar/README.md). Profiles that carry the link in a TCP tunnel (`derp`) are not supported for this client yet.
+
 ## CI
 
-The `lab-smoke` job runs profiles A, outage10 and case70 for 3 minutes each with the same setup: namespaces, the forked server, WebKit in the same image. A must finish; the other two must produce a report. It then runs `--client pipe` on case50 for 30 s, which must carry ticks both ways. The reports are uploaded as an artifact.
+The `lab-smoke` job runs profiles A, outage10 and case70 for 3 minutes each with the same setup: namespaces, the forked server, WebKit in the same image. A must finish; the other two must produce a report. It then runs `--client pipe` on case50 for 30 s, which must carry ticks both ways, and `--client sidecar-native` on case70 for 3 minutes, which must get the prompt confirmed. The reports are uploaded as an artifact.
 
 ## Code
 
@@ -163,5 +174,6 @@ The `lab-smoke` job runs profiles A, outage10 and case70 for 3 minutes each with
 - `internal/front`: the HTTPS front.
 - `internal/tunnel`: the TCP outer path.
 - `internal/phone`, `driver/`: the container and the Playwright drivers, `driver.mjs` for the t3 web client and `pipe.mjs` for pipe runs (Playwright 1.64.1, image `mcr.microsoft.com/playwright:v1.64.1-noble`).
+- `internal/run/sidecar.go`: sidecar runs; the native phone is `crates/native-phone`.
 - `internal/report`: the measures, JSON and Markdown.
 - `internal/pipereport`: the measures of pipe runs.

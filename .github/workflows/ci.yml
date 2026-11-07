@@ -30,6 +30,8 @@ jobs:
       - run: cargo test --workspace
       # The patched sctp-proto's own tests; see crates/vendor/README.md.
       - run: cargo test --manifest-path vendor/sctp-proto/Cargo.toml
+      # The patched ICE agent's own tests; see crates/vendor/README.md.
+      - run: cargo test --manifest-path vendor/is/Cargo.toml
       - run: cargo build -p sync-core --target wasm32-unknown-unknown
 
   go:
@@ -77,12 +79,13 @@ jobs:
       - run: vp run --filter @t3tools/web test
       - run: vp run --filter t3 test
 
-  # Three short chaos lab runs of the baseline client and one of the pipe,
-  # with the same setup as on the VM: netem namespaces, the forked t3
-  # server, WebKit in docker.
+  # Three short chaos lab runs of the baseline client, one of the pipe and
+  # one of the sidecar, with the same setup as on the VM: netem namespaces,
+  # the forked t3 server, WebKit in docker. Then the sidecar's tests that
+  # need node, Go and docker.
   lab-smoke:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
         with:
@@ -116,6 +119,7 @@ jobs:
       - run: rustup toolchain install
         working-directory: crates
       - run: lab/scripts/build-pipe-lab.sh --patched-only
+      - run: lab/scripts/build-sidecar.sh
       - run: go build -o bin/lab ./cmd/lab
         working-directory: lab
       # A must finish; outage10 and case70 must produce a report, whatever
@@ -137,6 +141,19 @@ jobs:
             --out reports/runs/ci --name pipe-case50
           cat reports/runs/ci/pipe-case50/report.md
           jq -e '.down.received > 0 and .up.received > 0' reports/runs/ci/pipe-case50/report.json
+      # The sync protocol through the sidecar must get the prompt confirmed.
+      - name: Sidecar run
+        working-directory: lab
+        run: |
+          sudo ./bin/lab run --node "$(command -v node)" --profile case70 --seed 1 --client sidecar-native \
+            --deadline 3m --out reports/runs/ci --name sidecar-case70
+          cat reports/runs/ci/sidecar-case70/report.md
+          jq -e '.promptConfirmationS != null' reports/runs/ci/sidecar-case70/report.json
+      - name: Sidecar integration tests
+        working-directory: crates
+        run: |
+          cargo test -p sidecar --test integration -- --ignored --exact sidecar_end_to_end
+          cargo test -p sidecar --test integration -- --ignored --exact webkit_transport
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -146,3 +163,4 @@ jobs:
             lab/reports/runs/ci/*/*.log
             lab/reports/runs/ci/*/*.jsonl
             lab/reports/runs/ci/*/phone/*.png
+            crates/target/webkit-transport/*.png

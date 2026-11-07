@@ -1,12 +1,14 @@
 [workspace]
 resolver = "3"
-members = ["sync-core", "pipe"]
+members = ["sync-core", "pipe", "sidecar", "native-phone"]
 # Vendored crates keep their own tests and lints; see vendor/README.md.
 exclude = ["vendor"]
 
 # str0m's SCTP layer, patched for lossy links. See vendor/README.md.
 [patch.crates-io]
 sctp-proto = { path = "vendor/sctp-proto" }
+# str0m's ICE agent, patched so the server keeps its path. See vendor/README.md.
+is = { path = "vendor/is" }
 
 # Brotli is slow unoptimized, and the sync-core tests compress a lot.
 [profile.dev.package.brotli]

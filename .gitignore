@@ -1,3 +1,5 @@
 /crates/target/
 /lab/bin/
 /lab/reports/runs/
+# Build output of the vendored crates' own tests.
+/crates/vendor/*/target/

@@ -45,6 +45,8 @@ type Input struct {
 	Phone []phone.Event
 	// WireDown and WireUp are bytes on the link after the switch.
 	WireDown, WireUp uint64
+	// Path says what carries the client's traffic; empty means PathNote.
+	Path string
 }
 
 // LagPoint is the newest-text lag at one moment.
@@ -116,7 +118,7 @@ func Build(in Input) Report {
 	r := Report{
 		Profile: in.Profile, About: in.About, Grade: in.Grade,
 		Client: in.Client, Kind: in.Kind, Seed: in.Seed, Commit: in.Commit,
-		Path:       PathNote,
+		Path:       cmp.Or(in.Path, PathNote),
 		Deadline:   in.Deadline.String(),
 		RunS:       secs(in.End.Sub(in.Switched)),
 		ReplyChars: len(in.Reply),
@@ -373,8 +375,11 @@ func (r Report) Markdown() string {
 	row("Approval shown after it was asked", fmtSecs(r.ApprovalShownAfterS))
 	row("Bytes on the wire down / up", fmt.Sprintf("%d / %d", r.WireDownBytes, r.WireUpBytes))
 	row("Bytes the app received / sent", fmt.Sprintf("%d / %d", r.AppReceivedBytes, r.AppSentBytes))
-	row("Reply text received / of it duplicates", fmt.Sprintf("%d / %d", r.ReplyBytesReceived, r.DuplicateReplyBytes))
-	row("WebSockets opened after the switch", fmt.Sprint(r.WebSocketsOpenedAfterSwitch))
+	// The reply and socket counts come from watching the WebSocket client's frames.
+	if strings.HasPrefix(r.Client, "websocket") {
+		row("Reply text received / of it duplicates", fmt.Sprintf("%d / %d", r.ReplyBytesReceived, r.DuplicateReplyBytes))
+		row("WebSockets opened after the switch", fmt.Sprint(r.WebSocketsOpenedAfterSwitch))
+	}
 	b.WriteString("\n## Newest-text lag over time\n\nEvery 10 s after the prompt was sent.\n\n")
 	b.WriteString("| After (s) | Lag (s) | Shown | Produced |\n|---|---|---|---|\n")
 	for i, p := range r.Lag {

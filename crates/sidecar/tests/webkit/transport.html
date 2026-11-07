@@ -1,0 +1,145 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sidecar transport test</title>
+<style>
+  body { font: 15px/1.4 -apple-system, system-ui, sans-serif; margin: 16px; }
+  li.ok::marker { content: "✓ "; color: #1a7f37; }
+  li.fail::marker { content: "✗ "; color: #cf222e; }
+</style>
+<h1>Sidecar transport</h1>
+<p>What WebKit does with the sidecar's data channel, as the web app will (issue #44).</p>
+<ol id="steps"></ol>
+<script>
+  // The phone's side of the transport in WebKit: derived ICE credentials,
+  // a signaled first connection, an ICE restart and a new connection
+  // without signaling, and the WebSocket fallback. The test drives it from
+  // Playwright through window.t3; crates/sidecar/README.md describes it.
+  const enc = new TextEncoder();
+  let token, device, key;
+
+  function hex(s) {
+    return Uint8Array.from(s.match(/../g).map((b) => parseInt(b, 16)));
+  }
+
+  window.t3 = {
+    async init(cfg) {
+      device = cfg.device;
+      token = hex(cfg.token);
+      key = await crypto.subtle.importKey("raw", token, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+      this.cert = await RTCPeerConnection.generateCertificate({ name: "ECDSA", namedCurve: "P-256" });
+    },
+
+    // pipe::creds::derive in WebCrypto.
+    async derive(side, generation, restart) {
+      const ufrag = `${device}+${side}${generation}+${restart}`;
+      const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(`t3opt ice ${ufrag}`)));
+      const pwd = btoa(String.fromCharCode(...mac)).replace(/=+$/, "").slice(0, 24);
+      return { ufrag, pwd };
+    },
+
+    withCreds(sdp, creds) {
+      const old = sdp.match(/a=ice-ufrag:(.*)\r?\n/)?.[1];
+      let out = sdp
+        .replace(/a=ice-ufrag:.*\r?\n/g, `a=ice-ufrag:${creds.ufrag}\r\n`)
+        .replace(/a=ice-pwd:.*\r?\n/g, `a=ice-pwd:${creds.pwd}\r\n`);
+      if (old) out = out.split(` ufrag ${old}`).join(` ufrag ${creds.ufrag}`);
+      return out;
+    },
+
+    // A hello packet (sync-core wire.rs): version and hello flag, packet
+    // number, token, epoch, as varints where they are numbers.
+    hello(seq) {
+      const out = [0x11];
+      for (let v = seq; ; v = Math.floor(v / 128)) {
+        if (v < 128) { out.push(v); break; }
+        out.push((v % 128) | 0x80);
+      }
+      return Uint8Array.from([...out, ...token, 7]);
+    },
+
+    // Opens a connection of `generation`; with `answer` it needs no
+    // signaling. Sends hellos and counts what comes back.
+    async connect(generation, answer) {
+      const pc = new RTCPeerConnection({ certificates: [this.cert] });
+      const dc = pc.createDataChannel("sync", { ordered: false, maxRetransmits: 0 });
+      dc.binaryType = "arraybuffer";
+      const conn = { pc, dc, generation, restart: 0, received: 0, states: [] };
+      pc.oniceconnectionstatechange = () => conn.states.push(pc.iceConnectionState);
+      dc.onmessage = () => conn.received++;
+      let seq = 0;
+      dc.onopen = () => {
+        conn.timer = setInterval(() => dc.readyState === "open" && dc.send(this.hello(seq++)), 200);
+      };
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription({ type: "offer", sdp: this.withCreds(offer.sdp, await this.derive("p", generation, 0)) });
+      if (answer === undefined) {
+        const r = await fetch("/api/rtc/offer", {
+          method: "POST",
+          headers: { authorization: `Bearer ${[...token].map((b) => b.toString(16).padStart(2, "0")).join("")}` },
+          body: pc.localDescription.sdp,
+        });
+        if (!r.ok) throw new Error(`signaling: ${r.status} ${await r.text()}`);
+        conn.kept = await r.text();
+        await pc.setRemoteDescription({ type: "answer", sdp: conn.kept });
+      } else {
+        conn.kept = answer;
+        await pc.setRemoteDescription({ type: "answer", sdp: this.withCreds(answer, await this.derive("s", generation, 0)) });
+      }
+      return conn;
+    },
+
+    // An ICE restart on the same connection, without signaling.
+    async restartIce(conn) {
+      conn.restart++;
+      conn.pc.restartIce();
+      const offer = await conn.pc.createOffer();
+      const mine = await this.derive("p", conn.generation, conn.restart);
+      await conn.pc.setLocalDescription({ type: "offer", sdp: this.withCreds(offer.sdp, mine) });
+      const theirs = await this.derive("s", conn.generation, conn.restart);
+      await conn.pc.setRemoteDescription({ type: "answer", sdp: this.withCreds(conn.kept, theirs) });
+    },
+
+    // The certificate as the web app keeps it, in IndexedDB.
+    async keepCert() {
+      const db = await new Promise((ok, fail) => {
+        const q = indexedDB.open("t3opt-test", 1);
+        q.onupgradeneeded = () => q.result.createObjectStore("s");
+        q.onsuccess = () => ok(q.result);
+        q.onerror = () => fail(q.error);
+      });
+      await new Promise((ok, fail) => {
+        const t = db.transaction("s", "readwrite");
+        t.objectStore("s").put(this.cert, "cert");
+        t.oncomplete = ok;
+        t.onerror = () => fail(t.error);
+      });
+      this.cert = await new Promise((ok, fail) => {
+        const q = db.transaction("s").objectStore("s").get("cert");
+        q.onsuccess = () => ok(q.result);
+        q.onerror = () => fail(q.error);
+      });
+    },
+
+    async websocket() {
+      const ws = new WebSocket(`ws://${location.host}/sync`);
+      ws.binaryType = "arraybuffer";
+      const conn = { ws, received: 0 };
+      ws.onmessage = () => conn.received++;
+      await new Promise((ok, fail) => {
+        ws.onopen = ok;
+        ws.onerror = () => fail(new Error("WebSocket failed"));
+      });
+      let seq = 0;
+      conn.timer = setInterval(() => ws.send(this.hello(seq++)), 200);
+      return conn;
+    },
+
+    step(text, ok) {
+      const li = document.createElement("li");
+      li.className = ok ? "ok" : "fail";
+      li.textContent = text;
+      document.getElementById("steps").append(li);
+    },
+  };
+</script>

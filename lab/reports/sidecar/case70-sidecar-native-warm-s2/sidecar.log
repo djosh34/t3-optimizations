@@ -1,0 +1,15 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794066884708 device m7ekyvdn paired
+sidecar: 1794066884759 device m7ekyvdn: generation 1 signaled
+sidecar: 1794066884760 data channel 1: ICE Checking
+sidecar: 1794066884761 data channel 1: ICE Completed
+sidecar: 1794066884762 data channel 1 open
+sidecar: 1794066884837 device m7ekyvdn: now on Rtc(PeerId(1))
+sidecar: 1794066884837 device m7ekyvdn: lost its cache, syncing everything
+sidecar: 1794066885676 connected to t3
+sidecar: 1794066894676 device m7ekyvdn stats: send 1125 B/s, delivered 964 B/s, loss 52%, srtt 847 ms, unsynced 23517 B, in flight 39 packets, sent 64 received 18 packets, SCTP queue 1385 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066904677 device m7ekyvdn stats: send 1525 B/s, delivered 679 B/s, loss 55%, srtt 961 ms, unsynced 23537 B, in flight 65 packets, sent 100 received 29 packets, SCTP queue 193 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066914688 device m7ekyvdn stats: send 2364 B/s, delivered 562 B/s, loss 67%, srtt 1070 ms, unsynced 30995 B, in flight 107 packets, sent 160 received 39 packets, SCTP queue 580 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066924697 device m7ekyvdn stats: send 3619 B/s, delivered 926 B/s, loss 62%, srtt 1265 ms, unsynced 28375 B, in flight 154 packets, sent 229 received 50 packets, SCTP queue 1307 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066934708 device m7ekyvdn stats: send 2875 B/s, delivered 1025 B/s, loss 64%, srtt 2040 ms, unsynced 25824 B, in flight 220 packets, sent 324 received 69 packets, SCTP queue 5861 B, 0 dropped by a full SCTP buffer
+sidecar: 1794066944717 device m7ekyvdn stats: send 2570 B/s, delivered 865 B/s, loss 65%, srtt 1757 ms, unsynced 29102 B, in flight 259 packets, sent 386 received 87 packets, SCTP queue 788 B, 0 dropped by a full SCTP buffer

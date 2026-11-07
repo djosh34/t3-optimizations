@@ -3592,6 +3592,7 @@ export const ORCHESTRATION_V2_WS_METHODS = {
   subscribeShell: "orchestration.subscribeShell",
   subscribeThread: "orchestration.subscribeThread",
   subscribeCommandOutput: "orchestration.subscribeCommandOutput",
+  subscribeLiveText: "orchestration.subscribeLiveText",
 } as const;
 
 export const OrchestrationV2SubscribeCommandOutputInput = Schema.Struct({
@@ -3611,6 +3612,20 @@ export const OrchestrationV2CommandOutputFrame = Schema.Struct({
   running: Schema.Boolean,
 });
 export type OrchestrationV2CommandOutputFrame = typeof OrchestrationV2CommandOutputFrame.Type;
+
+/**
+ * Unpersisted stream of assistant and reasoning items with their raw partial text, at most every
+ * 100 ms, before the paragraph and code-fence buffering that thread subscribers get. For the
+ * t3-optimizations sidecar; the first frame of each item may come before any persisted event.
+ */
+export const OrchestrationV2SubscribeLiveTextInput = Schema.Struct({});
+export type OrchestrationV2SubscribeLiveTextInput =
+  typeof OrchestrationV2SubscribeLiveTextInput.Type;
+
+export const OrchestrationV2LiveTextFrame = Schema.Struct({
+  item: OrchestrationV2TurnItem,
+});
+export type OrchestrationV2LiveTextFrame = typeof OrchestrationV2LiveTextFrame.Type;
 
 export class OrchestrationV2CommandOutputError extends Schema.TaggedError<OrchestrationV2CommandOutputError>()(
   "OrchestrationV2CommandOutputError",
@@ -4273,6 +4288,10 @@ export const OrchestrationV2RpcSchemas = {
   subscribeCommandOutput: {
     input: OrchestrationV2SubscribeCommandOutputInput,
     output: OrchestrationV2CommandOutputFrame,
+  },
+  subscribeLiveText: {
+    input: OrchestrationV2SubscribeLiveTextInput,
+    output: OrchestrationV2LiveTextFrame,
   },
 } as const;
 

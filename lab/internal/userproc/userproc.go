@@ -126,3 +126,14 @@ func (u User) WriteFile(path string, data []byte) error {
 	_, err = f.Write(data)
 	return errors.Join(err, f.Close())
 }
+
+// Install copies an executable as the user.
+func (u User) Install(src, dst string) error {
+	var stderr bytes.Buffer
+	cmd := u.Command(context.Background(), "", userEnv, "/", "install", "-m", "755", "--", src, dst)
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("install %s: %w: %s", dst, err, strings.TrimSpace(stderr.String()))
+	}
+	return nil
+}

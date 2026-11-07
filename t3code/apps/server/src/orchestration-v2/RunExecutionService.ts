@@ -1,4 +1,5 @@
 import { makeAssistantStreamingFilter } from "./assistantStreaming.ts";
+import * as LiveTextHub from "./LiveTextHub.ts";
 import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import {
   isOrchestrationV2WorkActive,
@@ -617,6 +618,7 @@ export const layer: Layer.Layer<
     const turnItemPositions = yield* TurnItemPositionStore.TurnItemPositionStoreV2;
     const finalizationObserver = yield* RunFinalizationService.RunFinalizationObserver;
     const turnAnalytics = yield* ProviderUsageAnalytics.ProviderTurnAnalytics;
+    const liveText = yield* LiveTextHub.LiveTextHub;
 
     const writeFinalRunEvents = Effect.fn("RunExecutionService.writeFinalRunEvents")(
       function* (input: {
@@ -1412,6 +1414,13 @@ export const layer: Layer.Layer<
                 event.providerTurn.providerThreadId === input.providerThread.id
               ) {
                 yield* Ref.set(latestRootProviderTurn, event.providerTurn);
+              }
+              // The sidecar gets raw partial text; the filter below holds it back from storage.
+              if (
+                event.type === "turn_item.updated" &&
+                LiveTextHub.isLiveTextItem(event.turnItem)
+              ) {
+                yield* liveText.publish(event.turnItem);
               }
               let storedEventCount = 0;
               const deliveredEvent = filterAssistantEvent(

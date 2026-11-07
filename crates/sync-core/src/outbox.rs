@@ -633,8 +633,14 @@ fn fit(
     if *extra == 0 || needs + 48 + MIN_CHUNK_SPACE <= space {
         return None;
     }
-    let c = make_chunk(key, o, range, from_end, *left + *extra)?;
-    *left += *extra;
+    // By what the meta costs, so the chunk still gets a packet's worth of
+    // bytes. Growing by all of `extra` filled the rest of the packet too, so
+    // with the sidecar's 200-byte metas nearly every packet on a slow link
+    // was full size (issue #44).
+    let grow = (needs + 48).min(*extra);
+    let c = make_chunk(key, o, range, from_end, *left + grow)?;
+    *left += grow;
+    // Once per packet, as before.
     *extra = 0;
     Some(c)
 }
