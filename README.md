@@ -14,7 +14,7 @@ Every `t3` command started from this copy (serve, pair, dev, tests) passes `--ba
 
 ### `crates/`
 
-A Cargo workspace (Rust stable, see `crates/rust-toolchain.toml`). `sync-core` holds the sync protocol and builds both natively and for `wasm32-unknown-unknown`, so the sidecar and the web app share it.
+A Cargo workspace (Rust stable, see `crates/rust-toolchain.toml`). `sync-core` holds the sync protocol and builds both natively and for `wasm32-unknown-unknown`, so the sidecar and the web app share it. [crates/sync-core/README.md](crates/sync-core/README.md) describes the protocol and its simulator.
 
 `pipe` is the server side of the WebRTC data channel to the phone, on str0m: ICE-lite on one UDP port, DTLS server role without the cookie exchange, new ICE credentials for every connection. Its SCTP layer is a patched copy of sctp-proto in `vendor/` (2 s retransmit cap, no congestion-window cut on loss), described in [crates/vendor/README.md](crates/vendor/README.md). Its `pipe-lab` binary is the server end of the lab's pipe runs.
 
