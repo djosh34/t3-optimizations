@@ -216,6 +216,7 @@ impl Endpoint {
             let fill = Fill {
                 now,
                 rto: self.rate.rto(self.cfg.peer_ack_interval),
+                fast_rto: self.rate.fast_rto(self.cfg.peer_ack_interval),
                 copies: self.copies(),
             };
             let space = self.packet_target().saturating_sub(head);

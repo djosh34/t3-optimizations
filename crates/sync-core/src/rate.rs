@@ -173,6 +173,19 @@ impl RateControl {
         }
     }
 
+    /// Retransmit timeout of the repeated classes: a quarter above the
+    /// smoothed RTT, without the variance term. A needless resend of their
+    /// few bytes costs less than waiting.
+    pub fn fast_rto(&self, peer_ack_interval: Millis) -> Millis {
+        match self.srtt {
+            None => self.rto(peer_ack_interval),
+            Some(s) => {
+                let v = 1.25 * s + peer_ack_interval as f64;
+                (v as Millis).clamp(200, self.rto(peer_ack_interval))
+            }
+        }
+    }
+
     fn refill(&mut self, now: Millis) {
         let dt = now.saturating_sub(self.last_refill) as f64 / 1000.0;
         self.last_refill = now.max(self.last_refill);
@@ -319,11 +332,16 @@ impl RateControl {
         if stuck {
             // No queue of ours explains an RTT that stays up at a fraction
             // of the rate: the path itself got slower. Its RTT is the new
-            // base, and the rate grows again from here.
+            // base, and the drains were for nothing: the rate goes back
+            // toward where they started and grows from there.
             let rtt = fresh.unwrap_or(interval);
             self.rtt_window.clear();
             self.rtt_window.push_back((now, rtt));
-            self.drain_from = None;
+            if let Some(r) = self.drain_from.take() {
+                // Never above what the link was seen to take.
+                let cap = self.capacity().unwrap_or(self.rate);
+                self.rate = r.min(cap).max(self.rate);
+            }
             self.drain_rtt = None;
             self.slow_start = true;
             self.changed_at = now;

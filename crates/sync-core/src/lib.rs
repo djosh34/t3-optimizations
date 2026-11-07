@@ -12,7 +12,7 @@
 //! milliseconds and moves packets between [`Server::poll`] /
 //! [`Phone::poll`] and the other side's `receive`. It builds natively for
 //! the sidecar and for `wasm32-unknown-unknown` for the web app. See
-//! `README.md` next to this file for the protocol.
+//! the crate's `README.md` for the protocol.
 
 mod endpoint;
 mod inbox;

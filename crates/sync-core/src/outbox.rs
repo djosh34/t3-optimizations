@@ -285,8 +285,20 @@ pub(crate) struct Acked {
 pub(crate) struct Fill {
     pub now: Millis,
     pub rto: Millis,
+    /// The shorter retransmit timeout of the repeated classes.
+    pub fast_rto: Millis,
     /// Copies of each byte in the repeated classes.
     pub copies: u32,
+}
+
+impl Fill {
+    fn rto_of(&self, class: Class) -> Millis {
+        if class.repeats() {
+            self.fast_rto
+        } else {
+            self.rto
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -476,7 +488,7 @@ impl Outbox {
                     continue;
                 }
                 let mut ranges = if pass == 1 {
-                    o.eligible(f.now, f.rto, f.copies)
+                    o.eligible(f.now, f.rto_of(o.class), f.copies)
                 } else {
                     o.unacked()
                 };
@@ -486,7 +498,7 @@ impl Outbox {
                 // shorter text, new meta, an empty object): an empty chunk
                 // tells the peer about it.
                 if ranges.is_empty() && o.acked.covers(0..o.len()) {
-                    let due = pass != 1 || o.announce_due(f.now, f.rto);
+                    let due = pass != 1 || o.announce_due(f.now, f.rto_of(o.class));
                     if due
                         && !announced.contains(&key)
                         && let Some(c) = make_chunk(key, o, o.len()..o.len(), false, left)
@@ -543,7 +555,8 @@ impl Outbox {
 
         for (key, range) in timed {
             if let Some(o) = self.objects.get_mut(&key) {
-                o.record_sent(range, f.now, f.rto);
+                let rto = f.rto_of(o.class);
+                o.record_sent(range, f.now, rto);
             }
         }
         if !record.is_empty() {
