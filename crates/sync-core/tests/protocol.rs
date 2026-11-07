@@ -614,3 +614,36 @@ fn while_a_large_meta_tail_waits_for_its_ack_every_packet_carries_it() {
     }
     assert!(packets > 1);
 }
+
+#[test]
+fn a_spare_copy_never_grows_a_packet_that_already_carries_data() {
+    let mut s = Server::new(TOKEN, Config::server(), 0);
+    // Meta that fits the small packet, and bytes that do not compress.
+    let mut x: u64 = 7;
+    let data: Vec<u8> = (0..300)
+        .map(|_| {
+            x = x
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            (x >> 56) as u8
+        })
+        .collect();
+    s.set(TAIL, Class::Tail, 0, vec![b'm'; 140], data)
+        .expect("set");
+    // No acks come back; after the first packet, spare copies go out.
+    let mut first = true;
+    for now in 0..900 {
+        while let Some(b) = s.poll(now) {
+            let p = Packet::decode(&b).expect("decodes");
+            if !first {
+                assert!(
+                    b.len() <= 200 || p.chunks.len() == 1,
+                    "{} bytes in {} chunks at {now} ms",
+                    b.len(),
+                    p.chunks.len()
+                );
+            }
+            first = false;
+        }
+    }
+}

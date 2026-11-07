@@ -518,7 +518,7 @@ impl Outbox {
                 // tells the peer about it.
                 if ranges.is_empty() && o.acked.covers(0..o.len()) {
                     let mut no_extra = 0;
-                    let grow = if pass < 2 || out.is_empty() {
+                    let grow = if may_grow(pass, out) {
                         &mut extra
                     } else {
                         &mut no_extra
@@ -539,10 +539,6 @@ impl Outbox {
                     }
                     continue;
                 }
-                // The packet may grow for the first chunk that needs it in
-                // the sending passes, and for spare copies only while the
-                // packet is still empty: an empty packet carries nothing.
-                let may_grow = pass < 2 || out.is_empty();
                 let from_end = class == Class::Tail;
                 if from_end {
                     ranges.reverse();
@@ -551,7 +547,11 @@ impl Outbox {
                     let mut r = r;
                     while !r.is_empty() {
                         let mut no_extra = 0;
-                        let grow = if may_grow { &mut extra } else { &mut no_extra };
+                        let grow = if may_grow(pass, out) {
+                            &mut extra
+                        } else {
+                            &mut no_extra
+                        };
                         let Some(c) = fit(key, o, r.clone(), from_end, space, &mut left, grow)
                         else {
                             break;
@@ -603,6 +603,13 @@ impl Outbox {
         }
         space + max_space.saturating_sub(space) - extra - left
     }
+}
+
+/// Whether the next chunk may grow the packet: in the sending passes, and
+/// for spare copies (pass 2) only while the packet is still empty, since an
+/// empty packet carries nothing.
+fn may_grow(pass: u32, out: &[Chunk]) -> bool {
+    pass < 2 || out.is_empty()
 }
 
 /// `make_chunk` in `left` bytes. A chunk whose meta is too large for even
