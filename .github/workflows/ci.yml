@@ -28,6 +28,8 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
+      # The patched sctp-proto's own tests; see crates/vendor/README.md.
+      - run: cargo test --manifest-path vendor/sctp-proto/Cargo.toml
       - run: cargo build -p sync-core --target wasm32-unknown-unknown
 
   go:
@@ -75,8 +77,9 @@ jobs:
       - run: vp run --filter @t3tools/web test
       - run: vp run --filter t3 test
 
-  # Three short chaos lab runs of the baseline client, with the same setup as
-  # on the VM: netem namespaces, the forked t3 server, WebKit in docker.
+  # Three short chaos lab runs of the baseline client and one of the pipe,
+  # with the same setup as on the VM: netem namespaces, the forked t3
+  # server, WebKit in docker.
   lab-smoke:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -109,6 +112,10 @@ jobs:
         working-directory: t3code
       - run: scripts/unset-hooks-path.sh
       - run: lab/scripts/build-baseline-client.sh
+      # Installs what crates/rust-toolchain.toml names.
+      - run: rustup toolchain install
+        working-directory: crates
+      - run: lab/scripts/build-pipe-lab.sh --patched-only
       - run: go build -o bin/lab ./cmd/lab
         working-directory: lab
       # A must finish; outage10 and case70 must produce a report, whatever
@@ -122,6 +129,14 @@ jobs:
             cat "reports/runs/ci/$profile/report.md"
           done
           jq -e '.status == "done"' reports/runs/ci/A/report.json
+      # The pipe must carry ticks both ways at 50% loss.
+      - name: Pipe run
+        working-directory: lab
+        run: |
+          sudo ./bin/lab run --profile case50 --seed 1 --client pipe --deadline 30s \
+            --out reports/runs/ci --name pipe-case50
+          cat reports/runs/ci/pipe-case50/report.md
+          jq -e '.down.received > 0 and .up.received > 0' reports/runs/ci/pipe-case50/report.json
       - if: always()
         uses: actions/upload-artifact@v4
         with:

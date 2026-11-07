@@ -192,6 +192,7 @@ var All = func() []Profile {
 	case70down, case70up := lossy(10_000, random("70%"), 20)
 	case50down, case50up := lossy(100_000, random("50%"), 50)
 	loss30down, loss30up := lossy(100_000, random("30%"), 50)
+	loss70down, loss70up := lossy(100_000, random("70%"), 50)
 	loss90down, loss90up := lossy(100_000, random("90%"), 50)
 	burst90down, burst90up := lossy(100_000, ge("45%", "5%"), 50)
 	rate100down, rate100up := lossy(800, nil, 4)
@@ -208,6 +209,7 @@ var All = func() []Profile {
 		Profile{Name: "case70", About: "graded: 70% loss, 10 kbit/s", Down: case70down, Up: case70up, Graded: true},
 		Profile{Name: "case50", About: "graded: 50% loss, 100 kbit/s", Down: case50down, Up: case50up, Graded: true},
 		profile("loss30", "30% random loss, 100 kbit/s", loss30down, loss30up),
+		profile("loss70", "70% random loss, 100 kbit/s", loss70down, loss70up),
 		profile("loss90", "90% random loss, 100 kbit/s", loss90down, loss90up),
 		profile("burst90", "90% bursty loss (bad runs of 20 packets), 100 kbit/s", burst90down, burst90up),
 		profile("rate100", "100 bytes/s, no random loss", rate100down, rate100up),

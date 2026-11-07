@@ -16,6 +16,7 @@ rust:
 	cd crates && cargo fmt --check
 	cd crates && cargo clippy --workspace --all-targets -- -D warnings
 	cd crates && cargo test --workspace
+	cd crates && cargo test --manifest-path vendor/sctp-proto/Cargo.toml
 	cd crates && cargo build -p sync-core --target wasm32-unknown-unknown
 
 go:

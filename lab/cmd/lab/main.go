@@ -15,6 +15,7 @@ import (
 	"github.com/djosh34/t3-optimizations/lab/internal/agent"
 	"github.com/djosh34/t3-optimizations/lab/internal/front"
 	"github.com/djosh34/t3-optimizations/lab/internal/netlab"
+	"github.com/djosh34/t3-optimizations/lab/internal/pipereport"
 	"github.com/djosh34/t3-optimizations/lab/internal/profile"
 	"github.com/djosh34/t3-optimizations/lab/internal/report"
 	"github.com/djosh34/t3-optimizations/lab/internal/run"
@@ -26,6 +27,7 @@ const usage = `usage:
   sudo ./bin/lab cleanup
   ./bin/lab profiles
   ./bin/lab summary <reports dir>
+  ./bin/lab pipe-summary <reports dir>
   ./bin/lab render <run dir>...   rewrite report.md from report.json
 
 The lab runs these itself:
@@ -70,6 +72,11 @@ func dispatch(ctx context.Context, cmd string, args []string) error {
 			return errors.New("usage: lab summary <reports dir>")
 		}
 		return report.Summary(args[0])
+	case "pipe-summary":
+		if len(args) != 1 {
+			return errors.New("usage: lab pipe-summary <reports dir>")
+		}
+		return pipereport.Summary(args[0])
 	case "fakeagent":
 		return fakeAgentCmd(ctx, args)
 	case "front":
@@ -87,9 +94,9 @@ func runCmd(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	name := fs.String("profile", "", "profile name; see `lab profiles`")
 	seed := fs.Int64("seed", 1, "seed for netem and the fault schedule")
-	client := fs.String("client", "websocket", "client: websocket or websocket-nodeflate")
+	client := fs.String("client", "websocket", "client: websocket, websocket-nodeflate, or the pipe clients pipe, pipe-unpatched and udp")
 	kind := fs.String("kind", "warm", "warm: start connected, then switch to the profile; cold: open the app under the profile")
-	deadline := fs.Duration("deadline", 0, "override the profile's deadline (15m, 60m for the soak)")
+	deadline := fs.Duration("deadline", 0, "override the profile's deadline (15m, 60m for the soak; pipe runs measure for 2m)")
 	out := fs.String("out", "", "directory for the run's report and raw data (default lab/reports/runs)")
 	node := fs.String("node", "", "node binary for the t3 server (default: node on root's PATH)")
 	runName := fs.String("name", "", "the run's directory under --out (default: time, profile, client, kind, seed)")
@@ -117,7 +124,7 @@ func runCmd(ctx context.Context, args []string) error {
 	if *out, err = filepath.Abs(*out); err != nil {
 		return err
 	}
-	r, err := run.Run(ctx, run.Options{
+	headline, err := run.Run(ctx, run.Options{
 		Profile:  p,
 		Seed:     *seed,
 		Client:   *client,
@@ -132,7 +139,7 @@ func runCmd(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(r.Headline())
+	fmt.Println(headline)
 	return nil
 }
 

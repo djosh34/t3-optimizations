@@ -1,0 +1,37 @@
+{
+  "profile": "loss70",
+  "about": "70% random loss, 100 kbit/s",
+  "grade": "fault",
+  "client": "udp",
+  "seed": 2,
+  "commit": "663e401402c1",
+  "runS": 120,
+  "down": {
+    "sent": 1200,
+    "received": 342,
+    "deliveredPct": 28.5,
+    "longestGapS": 1.851,
+    "longestGapAtS": 4.618,
+    "gapsOver2S": 0,
+    "ageMedianS": 0.309,
+    "ageP95S": 0.388,
+    "ageMaxS": 0.465
+  },
+  "up": {
+    "sent": 1193,
+    "received": 351,
+    "deliveredPct": 29.42162615255658,
+    "longestGapS": 1.637,
+    "longestGapAtS": 44.243,
+    "gapsOver2S": 0,
+    "ageMedianS": 0.3,
+    "ageP95S": 0.385,
+    "ageMaxS": 0.43
+  },
+  "wireDownBytes": 23054,
+  "wireUpBytes": 23654,
+  "notes": [
+    "-3.0s phone: open",
+    "-2.9s server: open 10.231.0.2:60994"
+  ]
+}

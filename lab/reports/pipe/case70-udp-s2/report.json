@@ -1,0 +1,37 @@
+{
+  "profile": "case70",
+  "about": "graded: 70% loss, 10 kbit/s",
+  "grade": "graded",
+  "client": "udp",
+  "seed": 2,
+  "commit": "663e401402c1",
+  "runS": 120,
+  "down": {
+    "sent": 1200,
+    "received": 344,
+    "deliveredPct": 28.666666666666668,
+    "longestGapS": 1.83,
+    "longestGapAtS": 4.666,
+    "gapsOver2S": 0,
+    "ageMedianS": 0.358,
+    "ageP95S": 0.437,
+    "ageMaxS": 0.515
+  },
+  "up": {
+    "sent": 1193,
+    "received": 352,
+    "deliveredPct": 29.50544844928751,
+    "longestGapS": 1.631,
+    "longestGapAtS": 44.347,
+    "gapsOver2S": 0,
+    "ageMedianS": 0.35,
+    "ageP95S": 0.433,
+    "ageMaxS": 0.479
+  },
+  "wireDownBytes": 23048,
+  "wireUpBytes": 23584,
+  "notes": [
+    "-3.0s phone: open",
+    "-2.9s server: open 10.231.0.2:42346"
+  ]
+}
