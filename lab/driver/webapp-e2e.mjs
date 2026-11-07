@@ -38,14 +38,22 @@ const page = await context.newPage();
 // fails on one; only the update step expects the new version to take control.
 const TAKEOVER = "t3opt: a new version took control";
 const reloadTriggers = [];
+const startedAt = Date.now();
+const log = (text) => console.error(`${((Date.now() - startedAt) / 1000).toFixed(1)} ${text}`);
 page.on("console", (m) => {
   const text = m.text();
   if (text.startsWith("t3opt: a chunk failed to load") || text.startsWith(TAKEOVER)) reloadTriggers.push(text);
-  if (m.type() === "error" || m.type() === "warning") console.error(`page ${m.type()}: ${text.slice(0, 500)}`);
+  if (m.type() === "error" || m.type() === "warning") log(`page ${m.type()}: ${text.slice(0, 500)}`);
 });
 page.on("requestfailed", (r) => {
   const u = new URL(r.url());
-  if (u.pathname.startsWith("/assets/")) console.error(`page asset failed: ${u.pathname} ${r.failure()?.errorText}`);
+  if (u.pathname.startsWith("/assets/")) log(`page asset failed: ${u.pathname} ${r.failure()?.errorText}`);
+});
+page.on("response", (r) => {
+  if (r.status() >= 400) log(`page HTTP ${r.status()}: ${r.request().method()} ${new URL(r.url()).pathname}`);
+});
+page.on("framenavigated", (f) => {
+  if (f === page.mainFrame()) log(`page navigated: ${new URL(f.url()).pathname}`);
 });
 
 async function shot(name) {
@@ -67,6 +75,7 @@ const results = [];
 async function step(name, run, { takeover = false } = {}) {
   const started = Date.now();
   reloadTriggers.length = 0;
+  log(`step ${name}`);
   try {
     const detail = await run();
     const unexpected = reloadTriggers.filter((t) => !(takeover && t.startsWith(TAKEOVER)));

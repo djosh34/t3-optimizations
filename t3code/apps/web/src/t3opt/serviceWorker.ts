@@ -8,26 +8,49 @@ export const updateEvents = {
   apply: () => {},
 };
 
+/** Set when the user asked for the waiting version: only then does a new worker reload the page. */
+let updateRequested = false;
+
 function setWaiting(worker: ServiceWorker) {
   updateEvents.waiting = true;
-  updateEvents.apply = () => worker.postMessage("skip-waiting", []);
+  updateEvents.apply = () => {
+    updateRequested = true;
+    worker.postMessage("skip-waiting", []);
+  };
   for (const l of updateEvents.listeners) l();
+}
+
+async function controllingVersion(): Promise<string | null> {
+  if (!navigator.serviceWorker.controller) return null;
+  const r = await fetch("/__sw");
+  if (!r.ok) return null;
+  const { version } = (await r.json()) as { version?: string };
+  return version ?? null;
 }
 
 export async function registerServiceWorker(): Promise<void> {
   if (!("serviceWorker" in navigator)) return;
+  // A page reloads only into the version the user asked for. The first
+  // install takes control without one; any other change is logged, as an
+  // unexplained reload would lose a typed prompt and the scroll position.
   let reloading = false;
-  // The first install takes control without a reload; only an update reloads.
-  let controlled = navigator.serviceWorker.controller !== null;
+  let version = await controllingVersion().catch(() => null);
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (!controlled) {
-      controlled = true;
+    if (updateRequested) {
+      if (reloading) return;
+      reloading = true;
+      console.warn("t3opt: a new version took control, reloading");
+      location.reload();
       return;
     }
-    if (reloading) return;
-    reloading = true;
-    console.warn("t3opt: a new version took control, reloading");
-    location.reload();
+    const from = version;
+    void controllingVersion()
+      .catch(() => null)
+      .then((to) => {
+        version = to;
+        if (from !== null)
+          console.warn(`t3opt: a service worker took control unasked, ${from} to ${to}`);
+      });
   });
   const reg = await navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" });
   const watch = (worker: ServiceWorker | null) => {

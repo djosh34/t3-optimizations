@@ -71,8 +71,13 @@ function mountStatusLine(engine: Engine | null) {
 
 export async function startT3opt(): Promise<void> {
   const realFetch = window.fetch.bind(window);
-  // The client reloads once when a lazy chunk fails; the lab's driver logs this.
+  // The client reloads once when a lazy chunk fails; the lab's driver logs
+  // this. Loads cut off because the page is going away do not count.
+  let leaving = false;
+  window.addEventListener("beforeunload", () => (leaving = true));
+  window.addEventListener("pagehide", () => (leaving = true));
   window.addEventListener("vite:preloadError", (event) => {
+    if (leaving) return;
     console.warn("t3opt: a chunk failed to load", (event as Event & { payload?: unknown }).payload);
   });
   void registerServiceWorker().catch((error: unknown) =>
