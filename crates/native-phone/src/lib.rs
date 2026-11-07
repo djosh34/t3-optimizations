@@ -106,8 +106,14 @@ pub struct Reconnects {
 }
 
 /// With nothing from the sidecar for this long, the phone restarts ICE,
-/// and again every time this passes.
-const RESTART_AFTER: Duration = Duration::from_secs(4);
+/// and again every time this passes. A restart drops the path until ICE
+/// connects again, which takes seconds at heavy loss, so it must be rare:
+/// at 70% loss and one alive packet a second, 8 s of silence comes about
+/// once in 2 minutes.
+const RESTART_AFTER: Duration = Duration::from_secs(8);
+/// When ICE itself reports the path lost, the restart comes after this
+/// much silence.
+const RESTART_WHEN_LOST: Duration = Duration::from_secs(2);
 /// When ICE connects again but no data comes for this long, the sidecar
 /// lost the connection (it restarted): the phone makes a new one.
 const DEAD_AFTER: Duration = Duration::from_secs(8);
@@ -127,6 +133,8 @@ pub struct NativePhone {
     last_data: Instant,
     last_restart: Option<Instant>,
     ice_up_since: Option<Instant>,
+    /// ICE reports the path lost (Disconnected or Failed).
+    ice_lost: bool,
     reconnects: Reconnects,
 }
 
@@ -173,6 +181,7 @@ impl NativePhone {
             last_data: Instant::now(),
             last_restart: None,
             ice_up_since: None,
+            ice_lost: false,
             reconnects: Reconnects::default(),
         })
     }
@@ -225,6 +234,7 @@ impl NativePhone {
             last_data: Instant::now(),
             last_restart: None,
             ice_up_since: None,
+            ice_lost: false,
             reconnects: Reconnects::default(),
         })
     }
@@ -239,6 +249,7 @@ impl NativePhone {
         self.last_data = Instant::now();
         self.last_restart = None;
         self.ice_up_since = None;
+        self.ice_lost = false;
         self.reconnects.generations += 1;
         Ok(())
     }
@@ -282,8 +293,12 @@ impl NativePhone {
         if self.closed.is_some() {
             return self.reconnect();
         }
-        if !matches!(self.transport, Transport::Rtc(_)) || self.last_data.elapsed() < RESTART_AFTER
-        {
+        let wait = if self.ice_lost {
+            RESTART_WHEN_LOST
+        } else {
+            RESTART_AFTER
+        };
+        if !matches!(self.transport, Transport::Rtc(_)) || self.last_data.elapsed() < wait {
             return Ok(());
         }
         if self.ice_up_since.is_some_and(|t| t.elapsed() >= DEAD_AFTER) {
@@ -315,9 +330,13 @@ impl NativePhone {
                         ClientEvent::Data(d) => received.push(d),
                         ClientEvent::Closed(why) => self.closed = Some(why),
                         ClientEvent::IceState(s) if s == "Connected" || s == "Completed" => {
+                            self.ice_lost = false;
                             self.ice_up_since.get_or_insert_with(Instant::now);
                         }
-                        ClientEvent::IceState(_) => self.ice_up_since = None,
+                        ClientEvent::IceState(s) => {
+                            self.ice_lost = s == "Disconnected" || s == "Failed";
+                            self.ice_up_since = None;
+                        }
                         ClientEvent::Open => {}
                     }
                 }

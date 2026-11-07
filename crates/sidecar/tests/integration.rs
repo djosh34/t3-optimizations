@@ -229,12 +229,14 @@ impl T3 {
 struct Sidecar {
     _proc: Proc,
     origin: String,
+    /// Its log lines so far.
+    log: Arc<Mutex<Vec<String>>>,
 }
 
 impl Sidecar {
-    fn start(t3: &T3, data: &Path, http: u16, udp: u16) -> R<Sidecar> {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_sidecar"))
-            .args(["--t3-url", &t3.url, "--t3-base-dir"])
+    fn start(t3: &T3, data: &Path, http: u16, udp: u16, web_dir: Option<&Path>) -> R<Sidecar> {
+        let mut cmd = Command::new(env!("CARGO_BIN_EXE_sidecar"));
+        cmd.args(["--t3-url", &t3.url, "--t3-base-dir"])
             .arg(&t3.base)
             .args(["--t3-command", &t3.command(), "--data-dir"])
             .arg(data)
@@ -243,12 +245,27 @@ impl Sidecar {
                 &format!("127.0.0.1:{http}"),
                 "--udp",
                 &format!("127.0.0.1:{udp}"),
-            ])
+            ]);
+        if let Some(dir) = web_dir {
+            cmd.arg("--web-dir").arg(dir);
+        }
+        let mut child = cmd
             .env("HOME", &t3.home)
             .stdout(Stdio::piped())
-            .stderr(Stdio::inherit())
+            .stderr(Stdio::piped())
             .spawn()?;
         let stdout = child.stdout.take().ok_or("no stdout")?;
+        let stderr = child.stderr.take().ok_or("no stderr")?;
+        let log: Arc<Mutex<Vec<String>>> = Arc::default();
+        let lines = log.clone();
+        thread::spawn(move || {
+            for line in BufReader::new(stderr).lines().map_while(Result::ok) {
+                eprintln!("{line}");
+                if let Ok(mut l) = lines.lock() {
+                    l.push(line);
+                }
+            }
+        });
         let mut line = String::new();
         BufReader::new(stdout).read_line(&mut line)?;
         if !line.starts_with("sidecar ready") {
@@ -257,7 +274,14 @@ impl Sidecar {
         Ok(Sidecar {
             _proc: Proc(child),
             origin: format!("http://127.0.0.1:{http}"),
+            log,
         })
+    }
+
+    fn logged(&self, text: &str) -> bool {
+        self.log
+            .lock()
+            .is_ok_and(|l| l.iter().any(|line| line.contains(text)))
     }
 }
 
@@ -380,7 +404,7 @@ impl Setup {
         log(format!("thread {thread} warmed up"));
         let data = TempDir::new("sidecar-data")?;
         let (http, udp) = (free_tcp_port()?, free_udp_port()?);
-        let sidecar = Sidecar::start(&t3, &data.0, http, udp)?;
+        let sidecar = Sidecar::start(&t3, &data.0, http, udp, None)?;
         let relay = Relay::start(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), udp))?;
         let pairing = pair(&sidecar.origin, &t3.pairing_code()?)?;
         log(format!("paired as device {}", pairing.device));
@@ -421,7 +445,13 @@ impl Setup {
 
     fn restart_sidecar(&mut self) -> R {
         self.sidecar = None;
-        self.sidecar = Some(Sidecar::start(&self.t3, &self.data.0, self.http, self.udp)?);
+        self.sidecar = Some(Sidecar::start(
+            &self.t3,
+            &self.data.0,
+            self.http,
+            self.udp,
+            None,
+        )?);
         Ok(())
     }
 }
@@ -599,6 +629,91 @@ fn sidecar_end_to_end() -> R {
         generation,
         "the outage needed a new connection"
     );
+    Ok(())
+}
+
+/// The data channel features in Playwright WebKit: derived ICE
+/// credentials, an ICE restart and a new connection without signaling, and
+/// the WebSocket fallback. Screenshots land in crates/target/webkit-transport.
+#[test]
+#[ignore = "needs docker, node with t3code's dependencies and Go; CI's lab-smoke job runs it"]
+fn webkit_transport() -> R {
+    started();
+    let t3 = T3::start()?;
+    let data = TempDir::new("sidecar-data")?;
+    let web = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/webkit");
+    let sidecar = Sidecar::start(&t3, &data.0, free_tcp_port()?, free_udp_port()?, Some(&web))?;
+    let pairing = pair(&sidecar.origin, &t3.pairing_code()?)?;
+    let token: String = pairing.token.iter().map(|b| format!("{b:02x}")).collect();
+    let image = "t3lab-phone:1.64.1";
+    let have = Command::new("docker")
+        .args(["image", "inspect", image])
+        .output()?;
+    if !have.status.success() {
+        let built = Command::new("docker")
+            .args(["build", "-t", image])
+            .arg(repo().join("lab/driver"))
+            .status()?;
+        if !built.success() {
+            return Err("docker build of the phone image failed".into());
+        }
+    }
+    let shots = Path::new(env!("CARGO_MANIFEST_DIR")).join("../target/webkit-transport");
+    fs::create_dir_all(&shots)?;
+    let uid = String::from_utf8(Command::new("id").arg("-u").output()?.stdout)?;
+    let gid = String::from_utf8(Command::new("id").arg("-g").output()?.stdout)?;
+    let args = json!({"origin": sidecar.origin, "device": pairing.device, "token": token});
+    let out = Command::new("docker")
+        .args([
+            "run",
+            "--rm",
+            "--name",
+            &format!("t3lab-webkit-{}", std::process::id()),
+        ])
+        .args(["--network", "host", "--init", "--shm-size", "512m"])
+        .args([
+            "--user",
+            &format!("{}:{}", uid.trim(), gid.trim()),
+            "-e",
+            "HOME=/tmp",
+        ])
+        .arg("-v")
+        .arg(format!("{}:/x:ro", web.display()))
+        .arg("-v")
+        .arg(format!("{}:/out", shots.canonicalize()?.display()))
+        .args([image, "node", "/x/transport.mjs", &args.to_string()])
+        .stderr(Stdio::inherit())
+        .output()?;
+    let text = String::from_utf8_lossy(&out.stdout);
+    log(format!("WebKit: {text}"));
+    if !out.status.success() {
+        return Err(format!("the WebKit driver failed: {}", out.status).into());
+    }
+    let results: Value = serde_json::from_str(text.trim())?;
+    for step in ["signaled", "restart", "cold", "websocket"] {
+        assert_eq!(results[step]["ok"], true, "{step}: {}", results[step]);
+    }
+    assert!(
+        results["signaled"]["ufrag"]
+            .as_str()
+            .is_some_and(|u| u.ends_with("+p1+0"))
+    );
+    assert!(
+        sidecar.logged("ICE restart 1 on generation 1"),
+        "the sidecar saw no ICE restart"
+    );
+    assert!(
+        sidecar.logged("generation 2 connects without signaling"),
+        "the sidecar saw no cold connect"
+    );
+    assert!(
+        sidecar.logged("now on Ws("),
+        "the sidecar never used the WebSocket"
+    );
+    log(format!(
+        "screenshots in {}",
+        shots.canonicalize()?.display()
+    ));
     Ok(())
 }
 
