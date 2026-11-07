@@ -135,6 +135,7 @@ fn webrtc(udp: SocketAddr, http: SocketAddr, mut log: Log) -> Result<(), BoxErro
     let mut pipe = Pipe::bind(Config {
         bind: udp,
         advertise: None,
+        cert: None,
     })?;
     let server = tiny_http::Server::http(http)?;
     let (offers, offers_rx) = mpsc::channel::<Offer>();
@@ -145,7 +146,7 @@ fn webrtc(udp: SocketAddr, http: SocketAddr, mut log: Log) -> Result<(), BoxErro
     let mut next_tick = Instant::now() + TICK_EVERY;
     loop {
         while let Ok((offer, reply)) = offers_rx.try_recv() {
-            let answer = pipe.accept_offer(&offer);
+            let answer = pipe.accept_offer(&offer, None);
             match &answer {
                 Ok((id, _)) => log.write("offer", &format!(r#","peer":{}"#, id.0))?,
                 Err(e) => log.with_text("note", None, &format!("bad offer: {e}"))?,
@@ -177,6 +178,8 @@ fn webrtc(udp: SocketAddr, http: SocketAddr, mut log: Log) -> Result<(), BoxErro
                     log.write("closed", &format!(r#","peer":{}"#, id.0))?;
                     seqs.retain(|(p, _)| *p != id);
                 }
+                // Lab runs always signal their offer.
+                PipeEvent::Unknown { .. } => {}
             }
         }
         if Instant::now() >= next_tick {

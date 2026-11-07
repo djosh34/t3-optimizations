@@ -104,6 +104,7 @@ fn ticks_cross_both_ways_then_close() -> TestResult {
     let mut pipe = Pipe::bind(Config {
         bind: "127.0.0.1:0".parse()?,
         advertise: None,
+        cert: None,
     })?;
     let mut client = Client::new()?;
 
@@ -115,7 +116,7 @@ fn ticks_cross_both_ways_then_close() -> TestResult {
         ..Default::default()
     });
     let (offer, pending) = change.apply().ok_or("no offer")?;
-    let (peer, answer) = pipe.accept_offer(&offer.to_sdp_string())?;
+    let (peer, answer) = pipe.accept_offer(&offer.to_sdp_string(), None)?;
     assert!(
         answer.contains("a=ice-lite"),
         "answer is not ICE-lite:\n{answer}"
@@ -191,7 +192,8 @@ fn bad_offer_is_an_error() -> TestResult {
     let mut pipe = Pipe::bind(Config {
         bind: "127.0.0.1:0".parse()?,
         advertise: None,
+        cert: None,
     })?;
-    assert!(pipe.accept_offer("not sdp").is_err());
+    assert!(pipe.accept_offer("not sdp", None).is_err());
     Ok(())
 }
