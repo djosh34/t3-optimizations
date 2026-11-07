@@ -153,7 +153,7 @@ pub fn run(cfg: Config) -> Result<(), Error> {
 
 /// Logs a line with the Unix time in milliseconds, so it lines up with the
 /// lab's other logs.
-fn log(msg: impl std::fmt::Display) {
+pub(crate) fn log(msg: impl std::fmt::Display) {
     eprintln!("sidecar: {} {msg}", unix_ms());
 }
 
@@ -356,7 +356,14 @@ impl App {
             .pipe
             .accept_offer(sdp, local)
             .map_err(|e| ApiError::Bad(e.to_string()))?;
-        d.peers.insert(generation, (peer, restart));
+        // A phone whose answer was lost posts its offer again: the
+        // connection the first one made is dead to it, and nothing else
+        // would ever close it.
+        if let Some((old, _)) = d.peers.insert(generation, (peer, restart))
+            && old != peer
+        {
+            self.pipe.close(old);
+        }
         d.record.generation = d.record.generation.max(generation);
         if fingerprint.is_some() {
             d.record.fingerprint = fingerprint;

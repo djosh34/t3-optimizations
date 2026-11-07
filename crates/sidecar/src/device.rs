@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use pipe::PeerId;
 use sync_core::{Class, Config, Millis, Server};
 
+use crate::app::log;
 use crate::store::DeviceRecord;
 use crate::world::{Kind, Obj, World};
 
@@ -54,14 +55,17 @@ impl Device {
         for id in ids {
             let Some(obj) = world.get(id) else { continue };
             let class = class_of(world, id, obj, self.focus.as_deref());
-            // The world checks ids and meta sizes; an error here would be a
-            // bug there, and the object is left out.
-            if self
+            // The world checks ids and meta sizes; an error here is a bug
+            // there, and the object is left out.
+            match self
                 .server
                 .set(id, class, obj.order, obj.meta.clone(), obj.content.clone())
-                .is_ok()
             {
-                self.dirty = true;
+                Ok(()) => self.dirty = true,
+                Err(e) => log(format!(
+                    "device {}: object {id} left out: {e}",
+                    self.record.id
+                )),
             }
         }
     }

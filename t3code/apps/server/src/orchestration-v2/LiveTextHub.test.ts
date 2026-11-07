@@ -1,5 +1,5 @@
 import { it } from "@effect/vitest";
-import { OrchestrationV2TurnItem } from "@t3tools/contracts";
+import { type OrchestrationV2LiveTextFrame, OrchestrationV2TurnItem } from "@t3tools/contracts";
 import * as Effect from "effect/Effect";
 import * as Fiber from "effect/Fiber";
 import * as Schema from "effect/Schema";
@@ -42,8 +42,8 @@ function assistantItem(id: string, text: string, streaming: boolean): LiveTextIt
   return item;
 }
 
-const texts = (frames: ReadonlyArray<{ readonly item: LiveTextItem }>) =>
-  frames.map((frame) => [frame.item.id, frame.item.text]);
+const texts = (frames: ReadonlyArray<OrchestrationV2LiveTextFrame>) =>
+  frames.map((frame) => [frame.item.id, isLiveTextItem(frame.item) ? frame.item.text : null]);
 
 describe("LiveTextHub", () => {
   it.effect("sends partial text the paragraph buffer holds back, latest per frame", () =>
