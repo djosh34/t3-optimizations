@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 
-import type { Engine } from "./engine";
+import type { Engine, EngineStatus } from "./engine";
 import { updateEvents } from "./serviceWorker";
 import { type PromptInfo, type PromptState, shimEvents } from "./shim";
 
@@ -47,6 +47,10 @@ function progress(engine: Engine) {
 
 interface Sample {
   readonly at: number;
+  /** Taken here, not in render: the React Compiler caches calls on the same engine. */
+  readonly status: EngineStatus | null;
+  readonly have: number;
+  readonly total: number;
   readonly up: number;
   readonly down: number;
   /** Wire bytes per second since the sample before. */
@@ -58,6 +62,8 @@ interface Sample {
 function useSample(engine: Engine | null): Sample {
   const [sample, setSample] = useState<Sample>(() => ({
     at: Date.now(),
+    status: engine?.status() ?? null,
+    ...(engine ? progress(engine) : { have: 0, total: 0 }),
     up: 0,
     down: 0,
     upRate: 0,
@@ -68,11 +74,19 @@ function useSample(engine: Engine | null): Sample {
     const t = setInterval(() => {
       setSample((last) => {
         const at = Date.now();
-        const s = engine?.status().stats;
-        const up = s?.sentWireBytes ?? 0;
-        const down = s?.receivedWireBytes ?? 0;
+        const status = engine?.status() ?? null;
+        const up = status?.stats.sentWireBytes ?? 0;
+        const down = status?.stats.receivedWireBytes ?? 0;
         const dt = Math.max(0.001, (at - last.at) / 1000);
-        return { at, up, down, upRate: (up - last.up) / dt, downRate: (down - last.down) / dt };
+        return {
+          at,
+          status,
+          ...(engine ? progress(engine) : { have: 0, total: 0 }),
+          up,
+          down,
+          upRate: (up - last.up) / dt,
+          downRate: (down - last.down) / dt,
+        };
       });
     }, 1_000);
     return () => clearInterval(t);
@@ -95,7 +109,7 @@ export function StatusLine({ engine }: { engine: Engine | null }) {
   const prompt = useSyncExternalStore(subscribeShim, () => shimEvents.prompt);
   const update = useSyncExternalStore(subscribeUpdate, () => updateEvents.waiting);
   const sample = useSample(engine);
-  if (engine === null) {
+  if (engine === null || sample.status === null) {
     return (
       <div className={BAR} data-testid="t3opt-status">
         <span>not paired</span>
@@ -105,7 +119,7 @@ export function StatusLine({ engine }: { engine: Engine | null }) {
   }
   return (
     <Connected
-      engine={engine}
+      status={sample.status}
       sample={sample}
       open={open}
       setOpen={setOpen}
@@ -119,7 +133,7 @@ function UpdateButton() {
   return (
     <button
       type="button"
-      className="ml-2 shrink-0 rounded-lg border-0 bg-update px-2 py-0.75 text-update-foreground"
+      className="ml-2 shrink-0 rounded-lg border-0 bg-primary px-2 py-0.75 text-primary-foreground"
       data-testid="t3opt-update"
       onClick={(e) => {
         e.stopPropagation();
@@ -132,19 +146,18 @@ function UpdateButton() {
 }
 
 function Connected(props: {
-  engine: Engine;
+  status: EngineStatus;
   sample: Sample;
   open: boolean;
   setOpen: (open: boolean) => void;
   prompt: PromptInfo | null;
   update: boolean;
 }) {
-  const { engine, sample } = props;
-  const status = engine.status();
+  const { sample, status } = props;
   const { link, stats } = status;
   const silent = link.lastDataAt === null ? null : Math.max(0, sample.at - link.lastDataAt);
   const live = silent !== null && silent < 3_000;
-  const { have, total } = progress(engine);
+  const { have, total } = sample;
   const synced = total === 0 ? 0 : Math.floor((have / total) * 100);
   const heard = live ? "live" : silent === null ? "not heard yet" : `heard ${ago(silent)} ago`;
   // A confirmed prompt stays on the line for a while, then makes room.

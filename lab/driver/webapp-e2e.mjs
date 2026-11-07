@@ -132,6 +132,23 @@ async function openSidebar() {
   await sleep(800);
 }
 
+/**
+ * The phone loses its content but keeps its token: the sync store's content,
+ * and the client's own thread cache, as when iOS clears the site's data. The
+ * deletion completes once the page closes its connection, on the reload.
+ */
+// The page stops writing first, as a killed page would: browsers evict
+// storage while the app is closed, never under a running page.
+async function loseCache() {
+  await page.evaluate(async () => {
+    const { store } = window.t3opt;
+    store.commit = () => new Promise(() => {});
+    store.set = () => new Promise(() => {});
+    await store.clearContent();
+    indexedDB.deleteDatabase("t3code:connection-runtime");
+  });
+}
+
 async function swVersion() {
   return page.evaluate(async () => {
     const r = await fetch("/__sw");
@@ -239,7 +256,7 @@ await step("prompt-on-case70", async () => {
 await step("thread-fills-newest-first", async () => {
   // The phone lost its content; the new page connects on the clean link (a
   // handshake at 50% loss takes minutes) and syncs everything on case 50.
-  await page.evaluate(() => window.t3opt.store.clearContent());
+  await loseCache();
   await reload();
   await page.waitForFunction(() => window.t3opt?.engine?.status().link.lastDataAt != null, null, {
     timeout: 120_000,
@@ -354,17 +371,22 @@ await step("update", async () => {
   await button.click();
   // The page reloads into the new version; a check during the reload fails.
   await page.waitForFunction(
-    (v) =>
-      fetch("/__sw")
-        .then((r) => r.json())
-        .then((j) => j.version !== v)
-        .catch(() => false),
+    async (v) => {
+      try {
+        const j = await (await fetch("/__sw")).json();
+        return typeof j.version === "string" && j.version !== v;
+      } catch {
+        return false;
+      }
+    },
     before,
     { timeout: 120_000, polling: 1_000 },
   );
   await appReady();
   await shot("updated");
-  return `${before} to ${await swVersion()}`;
+  const after = await swVersion();
+  if (typeof before !== "string" || after === before) throw new Error(`still ${after}`);
+  return `${before} to ${after}`;
 });
 
 await step("deleted-while-sidecar-down", async () => {
@@ -388,7 +410,7 @@ await step("deleted-while-sidecar-down", async () => {
 });
 
 await step("cache-lost-token-kept", async () => {
-  await page.evaluate(() => window.t3opt.store.clearContent());
+  await loseCache();
   await openThread(cfg.threadId);
   await waitText(cfg.replyEnd, 120_000);
 });
