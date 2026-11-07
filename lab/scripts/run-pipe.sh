@@ -19,13 +19,15 @@ for seed in 1 2; do
   done
 done
 
-# Each run's stderr stays in <run>.err only when the run failed.
+# Each run's stderr stays in <run>.err only when the run failed. A failed
+# run makes xargs, and so this script, fail before the summary.
 printf '%s\n' "${runs[@]}" | xargs -P "$jobs" -L 1 sh -c '
   err="'"$out"'/$0-$1-s$2.err"
   if sudo ./bin/lab run --profile "$0" --client "$1" --seed "$2" --out "'"$out"'" --name "$0-$1-s$2" >/dev/null 2>"$err"; then
     rm "$err"
   else
-    echo "run $0 $1 seed $2 failed, see $err"
+    echo "run $0 $1 seed $2 failed, see $err" >&2
+    exit 1
   fi
 '
 ./bin/lab pipe-summary "$out"
