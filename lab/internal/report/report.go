@@ -79,9 +79,13 @@ type Report struct {
 	PromptConfirmationS *float64 `json:"promptConfirmationS"`
 	TimeToFirstTextS    *float64 `json:"timeToFirstTextS"`
 	CompleteS           *float64 `json:"completeS"`
-	MaxLagS             float64  `json:"maxLagS"`
-	MedianLagS          float64  `json:"medianLagS"`
-	P95LagS             float64  `json:"p95LagS"`
+	// AgentGotPromptS is when the prompt reached the agent.
+	AgentGotPromptS *float64 `json:"agentGotPromptS"`
+	// The lag fields are nil when the agent produced no text: there was
+	// nothing to fall behind on, which is not the same as no lag.
+	MaxLagS             *float64 `json:"maxLagS"`
+	MedianLagS          *float64 `json:"medianLagS"`
+	P95LagS             *float64 `json:"p95LagS"`
 	LongestSilenceS     float64  `json:"longestSilenceS"`
 	ShownChars          int      `json:"shownChars"`
 	ProducedChars       int      `json:"producedChars"`
@@ -156,7 +160,7 @@ func Build(in Input) Report {
 	}
 	r.WireDownBytes, r.WireUpBytes = in.WireDown, in.WireUp
 
-	produced := producedSamples(in.Agent, &approvalAsked)
+	produced, gotPrompt := producedSamples(in.Agent, &approvalAsked)
 	if !approvalAsked.IsZero() && !approvalShown.IsZero() {
 		r.ApprovalShownAfterS = ptr(secs(approvalShown.Sub(approvalAsked)))
 	}
@@ -185,13 +189,23 @@ func Build(in Input) Report {
 			break
 		}
 	}
-	r.Lag = lagSeries(sent, in.End, shown, produced)
-	var lags []float64
-	for _, p := range r.Lag {
-		lags = append(lags, p.LagS)
+	if !gotPrompt.IsZero() {
+		r.AgentGotPromptS = ptr(secs(gotPrompt.Sub(sent)))
 	}
-	r.MaxLagS, r.MedianLagS, r.P95LagS = quantiles(lags)
-	r.LongestSilenceS = longestSilence(in.End, shown, produced)
+	r.Lag = lagSeries(sent, in.End, shown, produced)
+	if len(produced) > 0 {
+		var lags []float64
+		for _, p := range r.Lag {
+			lags = append(lags, p.LagS)
+		}
+		maxV, median, p95 := quantiles(lags)
+		r.MaxLagS, r.MedianLagS, r.P95LagS = ptr(maxV), ptr(median), ptr(p95)
+	}
+	end := in.End
+	if r.CompleteS != nil {
+		end = sent.Add(time.Duration(*r.CompleteS * float64(time.Second)))
+	}
+	r.LongestSilenceS = longestSilence(sent, end, shown)
 	return r
 }
 
@@ -201,14 +215,17 @@ type sample struct {
 }
 
 // producedSamples returns the agent's text events of the measured turn and
-// sets approvalAsked to when it asked for the approval.
-func producedSamples(log []agent.LogEvent, approvalAsked *time.Time) []sample {
-	var out []sample
+// when the measured prompt reached the agent, and sets approvalAsked to when
+// the agent asked for the approval.
+func producedSamples(log []agent.LogEvent, approvalAsked *time.Time) (out []sample, gotPrompt time.Time) {
 	measured := false
 	for _, ev := range log {
 		switch ev.Ev {
 		case "prompt":
 			measured = strings.Contains(ev.Prompt, agent.MeasuredPrompt)
+			if measured && gotPrompt.IsZero() {
+				gotPrompt = at(ev.T)
+			}
 		case "text":
 			if measured {
 				out = append(out, sample{at(ev.T), ev.N})
@@ -219,7 +236,7 @@ func producedSamples(log []agent.LogEvent, approvalAsked *time.Time) []sample {
 			}
 		}
 	}
-	return out
+	return out, gotPrompt
 }
 
 // countAt is the count of the last sample at or before t.
@@ -262,31 +279,18 @@ func lagSeries(sent, end time.Time, shown, produced []sample) []LagPoint {
 	return out
 }
 
-// longestSilence is the longest time the phone showed nothing new while
-// text it had not shown yet existed.
-func longestSilence(end time.Time, shown, produced []sample) float64 {
-	longest := 0.0
-	last := sample{}
-	consider := func(until time.Time) {
-		pt, ok := producedTime(produced, last.n+1)
-		if !ok || !pt.Before(until) {
-			return
-		}
-		start := pt
-		if last.t.After(start) {
-			start = last.t
-		}
-		longest = max(longest, secs(until.Sub(start)))
-	}
+// longestSilence is the longest time after the prompt was sent in which the
+// phone showed no new reply text, up to the end of the reply or the run.
+func longestSilence(sent, end time.Time, shown []sample) float64 {
+	longest, last, lastN := 0.0, sent, 0
 	for _, s := range shown {
-		if s.n <= last.n {
+		if s.n <= lastN {
 			continue
 		}
-		consider(s.t)
-		last = s
+		longest = max(longest, secs(s.t.Sub(last)))
+		last, lastN = s.t, s.n
 	}
-	consider(end)
-	return longest
+	return max(longest, secs(end.Sub(last)))
 }
 
 func quantiles(values []float64) (maxV, median, p95 float64) {
@@ -301,9 +305,17 @@ func quantiles(values []float64) (maxV, median, p95 float64) {
 
 // Headline is a one-line summary.
 func (r Report) Headline() string {
-	return fmt.Sprintf("%s %s %s seed %d: %s, first text %s, prompt confirmed %s, max lag %.1fs, longest silence %.1fs",
+	return fmt.Sprintf("%s %s %s seed %d: %s, first text %s, prompt confirmed %s, max lag %s, longest silence %.1fs",
 		r.Profile, r.Client, r.Kind, r.Seed, r.Status,
-		fmtSecs(r.TimeToFirstTextS), fmtSecs(r.PromptConfirmationS), r.MaxLagS, r.LongestSilenceS)
+		fmtSecs(r.TimeToFirstTextS), fmtSecs(r.PromptConfirmationS), fmtLag(r.MaxLagS), r.LongestSilenceS)
+}
+
+// fmtLag shows a lag, or that the agent produced nothing to lag behind.
+func fmtLag(v *float64) string {
+	if v == nil {
+		return "no text produced"
+	}
+	return fmt.Sprintf("%.1fs", *v)
 }
 
 func fmtSecs(v *float64) string {
@@ -343,10 +355,11 @@ func (r Report) Markdown() string {
 		row("App loaded after the switch", fmtSecs(r.AppLoadS))
 	}
 	row("Prompt confirmation", fmtSecs(r.PromptConfirmationS))
+	row("Prompt reached the agent", fmtSecs(r.AgentGotPromptS))
 	row("Time to first text", fmtSecs(r.TimeToFirstTextS))
 	row("Whole reply shown", fmtSecs(r.CompleteS))
 	row("Reply shown / produced / total (chars)", fmt.Sprintf("%d / %d / %d", r.ShownChars, r.ProducedChars, r.ReplyChars))
-	row("Newest-text lag: max / median / p95", fmt.Sprintf("%.1f s / %.1f s / %.1f s", r.MaxLagS, r.MedianLagS, r.P95LagS))
+	row("Newest-text lag: max / median / p95", fmt.Sprintf("%s / %s / %s", fmtLag(r.MaxLagS), fmtLag(r.MedianLagS), fmtLag(r.P95LagS)))
 	row("Longest silence", fmt.Sprintf("%.1f s", r.LongestSilenceS))
 	row("Approval shown after it was asked", fmtSecs(r.ApprovalShownAfterS))
 	row("Bytes on the wire down / up", fmt.Sprintf("%d / %d", r.WireDownBytes, r.WireUpBytes))
@@ -394,13 +407,14 @@ func Summary(dir string) error {
 	slices.SortStableFunc(reports, func(a, b Report) int {
 		return cmp.Or(order(a.Profile)-order(b.Profile), strings.Compare(b.Kind, a.Kind), strings.Compare(a.Client, b.Client))
 	})
-	fmt.Println("| Profile | Grade | Client | Start | Status | Prompt confirmed | First text | Max lag | Longest silence | Shown/produced/total | Wire down/up (B) | Duplicate reply bytes |")
-	fmt.Println("|---|---|---|---|---|---|---|---|---|---|---|---|")
+	fmt.Println("| Profile | Grade | Client | Start | Status | Prompt confirmed | Prompt reached agent | First text | Max lag | Longest silence | Shown/produced/total | Wire down/up (B) | Reply received/duplicates (B) |")
+	fmt.Println("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
 	for _, r := range reports {
-		fmt.Printf("| [%s](%s/report.md) | %s | %s | %s | %s | %s | %s | %.1f s | %.1f s | %d/%d/%d | %d/%d | %d |\n",
+		fmt.Printf("| [%s](%s/report.md) | %s | %s | %s | %s | %s | %s | %s | %s | %.1fs | %d/%d/%d | %d/%d | %d/%d |\n",
 			r.Profile, r.Name(), r.Grade, r.Client, r.Kind, r.Status,
-			fmtSecs(r.PromptConfirmationS), fmtSecs(r.TimeToFirstTextS), r.MaxLagS, r.LongestSilenceS,
-			r.ShownChars, r.ProducedChars, r.ReplyChars, r.WireDownBytes, r.WireUpBytes, r.DuplicateReplyBytes)
+			fmtSecs(r.PromptConfirmationS), fmtSecs(r.AgentGotPromptS), fmtSecs(r.TimeToFirstTextS),
+			fmtLag(r.MaxLagS), r.LongestSilenceS, r.ShownChars, r.ProducedChars, r.ReplyChars,
+			r.WireDownBytes, r.WireUpBytes, r.ReplyBytesReceived, r.DuplicateReplyBytes)
 	}
 	return nil
 }

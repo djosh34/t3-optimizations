@@ -46,7 +46,7 @@ The lab needs root for `ip`, `tc` and docker, and does nothing else as root: the
 
 1. Cleanup removes what earlier labs left behind (anything named `t3lab*` whose lab process is gone). Running labs are left alone, so several runs can share the host.
 2. The lab creates the server namespace and a veth pair with GSO off, so netem sees wire-sized packets. It starts the phone container with no network, moves one veth end into the container's namespace and names it `t3lab<id>phone`. Playwright talks to WebKit over `docker exec`, so its control traffic never crosses the shaped link.
-3. In the server namespace it starts the forked t3 server from `t3code/` with `--base-dir` in the run directory, a home dir of its own and `PATH` without the host's provider CLIs. Its settings turn Codex and Claude off and add the fake agent as provider `lab`, so no prompt can reach a real model. It serves the baseline client build (`T3CODE_STATIC_DIR`). The lab front terminates TLS with a fresh self-signed certificate, like `tailscale serve` in production; the page is a secure context, so service workers work.
+3. In the server namespace it starts the forked t3 server from `t3code/` with `--base-dir` set to a fresh temp dir (deleted after the run), a home dir of its own and `PATH` without the host's provider CLIs. Its settings turn Codex and Claude off and add the fake agent as provider `lab`, so no prompt can reach a real model. It serves the baseline client build (`T3CODE_STATIC_DIR`). The lab front terminates TLS with a fresh self-signed certificate, like `tailscale serve` in production; the page is a secure context, so service workers work.
 4. The t3 CLI adds the project, starts the "Lab thread" with a short warm-up turn and mints a pairing URL. The phone pairs, opens the thread, and sends one turn with an image attached.
 5. The lab applies the profile with `tc netem` on both veth ends (server end: down, phone end: up), then tells the phone to type the measured prompt.
 6. The fake agent streams the reply. Outages, flapping and the address change happen on the profile's schedule. The phone approves the approval request when it shows.
@@ -119,11 +119,12 @@ Each run writes `report.json` and `report.md`, plus the raw `phone.jsonl` (the d
 - **Status**: `done` (the phone shows the whole reply), `not done by deadline`, or for cold runs `app never loaded by deadline` / `prompt never sent by deadline`.
 - **Prompt confirmation**: from pressing Enter to the server's success reply for the command that carries the prompt reaching the page.
 - **Time to first text**: from pressing Enter to the first reply text on screen.
-- **Newest-text lag**: every second, how old the oldest text is that the agent produced and the phone does not show yet; 0 when the phone shows everything produced. Reported as a series and as max, median and p95. When the prompt never reached the agent, nothing was produced and the lag stays 0: check the produced count.
-- **Longest silence**: the longest time the phone showed nothing new while there was text it had not shown.
+- **Prompt reached the agent**: from pressing Enter to the fake agent receiving the prompt.
+- **Newest-text lag**: every second, how old the oldest text is that the agent produced and the phone does not show yet; 0 when the phone shows everything produced. Reported as a series and as max, median and p95. When the agent produced no text, because the prompt never reached it, there is no lag to report and the report says "no text produced".
+- **Longest silence**: the longest time after pressing Enter in which the phone showed no new reply text, up to the end of the reply or of the run. A phone that showed nothing has a silence as long as the run.
 - **Bytes on the wire**: what crossed the server's end of the link after the switch, down and up, with TCP, TLS and every other request the page makes (the web client also posts its traces to the server).
-- **Bytes the app received / sent**: WebSocket payloads after decompression.
-- **Duplicates**: reply text the application received more than once. t3 v0.1.7 resends the whole message text as it grows, so this is never 0 for the baseline.
+- **Bytes the app received / sent**: WebSocket payloads after decompression, from the switch to the end.
+- **Reply received / duplicates**: how much reply text the application received over WebSocket, and how much of it it had already received. A string in a frame counts when at least 3/4 of it is pieces of the reply (8 letters and digits or more), so message text with t3's image marker inside counts and a setting like `approval-required` does not.
 
 The phone reads the reply from the page's text. It matches pieces of at least 8 letters and digits against the reply, ignoring whitespace and punctuation, and counts what it has seen once even after the row scrolls away.
 

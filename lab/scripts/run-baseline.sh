@@ -35,9 +35,11 @@ for p in "${profiles[@]}"; do
 done
 
 # One run, tried twice: a lab error (not a bad result) gets a second attempt.
+# A run that fails both times leaves no report, so no older one stands in.
 one() {
   local profile=$1 client=$2 kind=$3
   local name="$profile-$client-$kind"
+  rm -rf "${dest:?}/$name"
   for attempt in 1 2; do
     rm -rf "${raw:?}/$name"
     if sudo ./bin/lab run --profile "$profile" --client "$client" --kind "$kind" --seed 1 \
@@ -54,17 +56,23 @@ one() {
 export -f one
 export raw dest
 
-printf '%s\n' "${runs[@]}" | xargs -P "$jobs" -L 1 bash -c 'one "$@"' _ || true
+status=0
+printf '%s\n' "${runs[@]}" | xargs -P "$jobs" -L 1 bash -c 'one "$@"' _ || status=$?
 
 {
   echo "# Baseline reports"
   echo
   echo "The untouched t3code v0.1.7 web client over WebSocket, with compression (\`websocket\`) and"
   echo "without it like the unchanged iOS app (\`websocket-nodeflate\`). Seed 1. See [lab/README.md](../../README.md)"
-  echo "for the profiles and what each measure means."
+  echo "for the profiles and what each measure means. All runs ran at commit $(git describe --always --dirty --abbrev=12)."
   echo
   echo "Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's"
   echo "userspace stack (issue #7), so production numbers differ."
   echo
   ./bin/lab summary "$dest"
 } >"$dest/README.md"
+
+if [[ $status -ne 0 ]]; then
+  echo "some runs failed twice; see the logs in $raw" >&2
+fi
+exit "$status"

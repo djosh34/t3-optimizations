@@ -102,6 +102,7 @@ func Run(ctx context.Context, dev, listen, connect string) error {
 	for ctx.Err() == nil {
 		conn, err := dialer.DialContext(ctx, "tcp", connect)
 		if err != nil {
+			fmt.Fprintf(os.Stderr, "tunnel: dial %s: %v\n", connect, err)
 			time.Sleep(time.Second)
 			continue
 		}

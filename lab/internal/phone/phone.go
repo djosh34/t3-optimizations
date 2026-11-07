@@ -13,7 +13,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -36,8 +35,7 @@ type Config struct {
 	// Reply is the normalized text of the measured reply.
 	Reply string `json:"reply"`
 	// Kind is warm or cold.
-	Kind       string `json:"kind"`
-	HomeScreen bool   `json:"homeScreen"`
+	Kind string `json:"kind"`
 }
 
 // Event is one line the driver prints.
@@ -57,7 +55,6 @@ type Stats struct {
 	TxBytes             int64 `json:"txBytes,omitempty"`
 	ReplyBytes          int64 `json:"replyBytes,omitempty"`
 	DuplicateReplyBytes int64 `json:"duplicateReplyBytes,omitempty"`
-	WSOpened            int   `json:"wsOpened,omitempty"`
 }
 
 // EnsureImage builds the driver image if docker does not have it yet.
@@ -150,9 +147,4 @@ func (d *Driver) Send(command string) error {
 // Wait waits for the driver to exit; call it after Events is closed.
 func (d *Driver) Wait() error {
 	return <-d.done
-}
-
-// Screenshots lists the PNG files the driver wrote to dir.
-func Screenshots(dir string) ([]string, error) {
-	return filepath.Glob(filepath.Join(dir, "*.png"))
 }

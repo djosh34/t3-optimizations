@@ -45,13 +45,11 @@ func TestBuild(t *testing.T) {
 	check("prompt confirmation", r.PromptConfirmationS, 0.5)
 	check("first text", r.TimeToFirstTextS, 3)
 	check("complete", r.CompleteS, 20)
+	check("prompt reached the agent", r.AgentGotPromptS, 0)
 	// After 6 s the phone shows 50; character 51 was produced at 6 s. At 19 s
 	// it is 13 s old.
-	if r.MaxLagS != 13 {
-		t.Errorf("max lag %v, want 13", r.MaxLagS)
-	}
-	// From 6 s, when character 51 existed and the phone had just shown 50,
-	// to 20 s.
+	check("max lag", r.MaxLagS, 13)
+	// From 6 s, when the phone showed 50, to 20 s.
 	if r.LongestSilenceS != 14 {
 		t.Errorf("longest silence %v, want 14", r.LongestSilenceS)
 	}
@@ -75,8 +73,26 @@ func TestBuildNothingShown(t *testing.T) {
 	if r.Status != StatusNotDone || r.TimeToFirstTextS != nil || r.PromptConfirmationS != nil {
 		t.Fatalf("got %+v", r)
 	}
-	if r.LongestSilenceS != 899 {
-		t.Errorf("longest silence %v, want 899", r.LongestSilenceS)
+	if r.LongestSilenceS != 900 {
+		t.Errorf("longest silence %v, want 900", r.LongestSilenceS)
+	}
+	if r.MaxLagS == nil || *r.MaxLagS != 899 {
+		t.Errorf("max lag %v, want 899", r.MaxLagS)
+	}
+}
+
+// The prompt never reached the agent: the phone showed nothing for the
+// whole run, and there is no lag to report.
+func TestBuildPromptLost(t *testing.T) {
+	base := time.UnixMilli(1_000_000)
+	r := Build(Input{
+		Kind:     "warm",
+		Switched: base, End: base.Add(15 * time.Minute),
+		Reply: "abc",
+		Phone: []phone.Event{{T: base.UnixMilli(), Ev: "prompt-sent"}},
+	})
+	if r.MaxLagS != nil || r.AgentGotPromptS != nil || r.LongestSilenceS != 900 {
+		t.Fatalf("max lag %v, agent got prompt %v, longest silence %v", r.MaxLagS, r.AgentGotPromptS, r.LongestSilenceS)
 	}
 }
 

@@ -144,8 +144,17 @@ type scenario struct {
 	deadline time.Duration
 }
 
-func (s *scenario) execute(ctx context.Context, repo, staticDir, phoneDir string) (report.Input, error) {
+func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir string) (in report.Input, err error) {
 	o, u, lab := s.o, s.u, s.lab
+	// A lab process that exits before the lab stops it fails the run, and
+	// the run's error says why.
+	ctx, fail := context.WithCancelCause(parent)
+	defer func() {
+		if err != nil && ctx.Err() != nil && parent.Err() == nil {
+			err = context.Cause(ctx)
+		}
+		fail(nil)
+	}()
 	if err := phone.EnsureImage(ctx, filepath.Join(o.LabDir, "driver")); err != nil {
 		return report.Input{}, err
 	}
@@ -181,11 +190,11 @@ func (s *scenario) execute(ctx context.Context, repo, staticDir, phoneDir string
 			{lab.ServerNS, "--listen", netlab.ServerAddr + ":" + tunnelPort, "tunnel-server.log"},
 			{lab.PhoneNS, "--connect", netlab.ServerAddr + ":" + tunnelPort, "tunnel-phone.log"},
 		} {
-			wait, err := s.startLabProcess(procs, side.ns, side.log, "tunnel", "--dev", lab.TunnelIf(), side.flag, side.addr)
+			exited, err := s.startLabProcess(procs, side.ns, side.log, "tunnel", "--dev", lab.TunnelIf(), side.flag, side.addr)
 			if err != nil {
 				return report.Input{}, err
 			}
-			waits = append(waits, wait)
+			waits = append(waits, watch(procs, fail, side.log, exited))
 		}
 		origin = "https://" + netlab.TunnelServerAddr + ":" + frontPort
 	}
@@ -201,16 +210,16 @@ func (s *scenario) execute(ctx context.Context, repo, staticDir, phoneDir string
 	if err != nil {
 		return report.Input{}, err
 	}
-	waits = append(waits, server.Wait)
+	waits = append(waits, watch(procs, fail, "t3 server", server.Exited()), server.RemoveBaseDir)
 	frontArgs := []string{"front", "--listen", ":" + frontPort, "--upstream", fmt.Sprintf("127.0.0.1:%d", t3server.Port)}
 	if o.Client == "websocket-nodeflate" {
 		frontArgs = append(frontArgs, "--no-deflate")
 	}
-	wait, err := s.startLabProcess(procs, lab.ServerNS, "front.log", frontArgs...)
+	exited, err := s.startLabProcess(procs, lab.ServerNS, "front.log", frontArgs...)
 	if err != nil {
 		return report.Input{}, err
 	}
-	waits = append(waits, wait)
+	waits = append(waits, watch(procs, fail, "front", exited))
 
 	// Setup runs on the clean link; a hang there is a lab fault, not a result.
 	setupCtx, cancelSetup := context.WithTimeout(ctx, setupTimeout)
@@ -299,8 +308,9 @@ func (s *scenario) execute(ctx context.Context, repo, staticDir, phoneDir string
 	}, nil
 }
 
-// startLabProcess runs a lab subcommand as the user in a namespace.
-func (s *scenario) startLabProcess(ctx context.Context, ns, logName string, args ...string) (func() error, error) {
+// startLabProcess runs a lab subcommand as the user in a namespace. The
+// channel receives its exit error once.
+func (s *scenario) startLabProcess(ctx context.Context, ns, logName string, args ...string) (<-chan error, error) {
 	log, err := s.u.Create(filepath.Join(s.runDir, logName))
 	if err != nil {
 		return nil, err
@@ -311,14 +321,27 @@ func (s *scenario) startLabProcess(ctx context.Context, ns, logName string, args
 	if err := cmd.Start(); err != nil {
 		return nil, errors.Join(err, log.Close())
 	}
-	return func() error {
-		err := cmd.Wait()
-		if ctx.Err() != nil {
+	exited := make(chan error, 1)
+	go func() { exited <- errors.Join(cmd.Wait(), log.Close()) }()
+	return exited, nil
+}
+
+// watch fails the run when a process exits before procs ends, and returns
+// a function that waits for the exit.
+func watch(procs context.Context, fail context.CancelCauseFunc, name string, exited <-chan error) func() error {
+	result := make(chan error, 1)
+	go func() {
+		err := <-exited
+		if procs.Err() != nil {
 			// Stopped by the lab.
-			err = nil
+			result <- nil
+			return
 		}
-		return errors.Join(err, log.Close())
-	}, nil
+		err = fmt.Errorf("%s exited during the run: %v", name, err)
+		fail(err)
+		result <- err
+	}()
+	return func() error { return <-result }
 }
 
 // waitReady waits until the phone is paired, has the thread open and has sent
@@ -340,7 +363,7 @@ func (s *scenario) waitReady(ctx context.Context, driver *phone.Driver, record f
 		case <-timeout:
 			return fmt.Errorf("phone not ready after 5 minutes on a clean link (see %s)", filepath.Join(s.runDir, "driver.log"))
 		case <-ctx.Done():
-			return ctx.Err()
+			return context.Cause(ctx)
 		}
 	}
 }

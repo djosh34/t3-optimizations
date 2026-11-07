@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -54,11 +53,17 @@ type Server struct {
 // AgentLog is the fake agent's production log in a run dir.
 func AgentLog(runDir string) string { return filepath.Join(runDir, "agent.jsonl") }
 
-// Start starts the server and waits until it is ready.
+// Start starts the server and waits until it is ready. Its base dir is a
+// fresh temp dir; RemoveBaseDir deletes it after the server stopped.
 func Start(ctx context.Context, cfg Config) (*Server, error) {
+	u := cfg.User
+	out, err := u.Command(ctx, "", []string{"PATH=/usr/bin:/bin"}, "/", "mktemp", "-d", "-t", "t3lab-base-XXXXXX").Output()
+	if err != nil {
+		return nil, fmt.Errorf("mktemp: %w", err)
+	}
 	s := &Server{
 		cfg:     cfg,
-		baseDir: filepath.Join(cfg.RunDir, "t3-base"),
+		baseDir: strings.TrimSpace(string(out)),
 		work:    filepath.Join(cfg.RunDir, "workspace"),
 		home:    filepath.Join(cfg.RunDir, "home"),
 		done:    make(chan error, 1),
@@ -67,7 +72,6 @@ func Start(ctx context.Context, cfg Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	u := cfg.User
 	if err := u.WriteFile(filepath.Join(s.baseDir, "userdata", "settings.json"), settings); err != nil {
 		return nil, err
 	}
@@ -83,7 +87,7 @@ func Start(ctx context.Context, cfg Config) (*Server, error) {
 	}
 	cmd := u.Command(ctx, cfg.NS, s.env(), s.work, cfg.Node, s.bin(),
 		"serve", "--base-dir", s.baseDir, "--port", strconv.Itoa(Port), "--host", "127.0.0.1")
-	out, err := cmd.StdoutPipe()
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, errors.Join(err, log.Close())
 	}
@@ -93,7 +97,7 @@ func Start(ctx context.Context, cfg Config) (*Server, error) {
 	}
 	ready := make(chan struct{})
 	go func() {
-		lines := bufio.NewScanner(out)
+		lines := bufio.NewScanner(stdout)
 		signalled := false
 		for lines.Scan() {
 			if _, err := fmt.Fprintln(log, lines.Text()); err != nil {
@@ -117,15 +121,12 @@ func Start(ctx context.Context, cfg Config) (*Server, error) {
 	}
 }
 
-// Wait waits for the server to exit after its context ended.
-func (s *Server) Wait() error {
-	err := <-s.done
-	var exit *exec.ExitError
-	if errors.As(err, &exit) {
-		// Stopped by the lab's SIGTERM.
-		return nil
-	}
-	return err
+// Exited receives the server's exit error once, when it exits.
+func (s *Server) Exited() <-chan error { return s.done }
+
+// RemoveBaseDir deletes the server's data after it stopped.
+func (s *Server) RemoveBaseDir() error {
+	return s.cfg.User.Command(context.Background(), "", []string{"PATH=/usr/bin:/bin"}, "/", "rm", "-rf", "--", s.baseDir).Run()
 }
 
 func (s *Server) bin() string { return filepath.Join(s.cfg.T3Code, "apps", "server", "src", "bin.ts") }

@@ -24,8 +24,10 @@ function normalize(text) {
   return text.replace(/[^A-Za-z0-9]/g, "");
 }
 
-// What the application received over WebSocket, after decompression.
-const stats = { rxBytes: 0, txBytes: 0, replyBytes: 0, duplicateReplyBytes: 0, wsOpened: 0 };
+// What the application received over WebSocket, after decompression. The
+// byte counts start again when the profile is applied, like the lab's wire
+// counts.
+const stats = { rxBytes: 0, txBytes: 0, replyBytes: 0, duplicateReplyBytes: 0 };
 const received = new Uint8Array(reply.length);
 const promptRequestIds = new Set();
 let confirmed = false;
@@ -70,7 +72,6 @@ function parseFrames(text) {
 
 function watchSockets(page) {
   page.on("websocket", (ws) => {
-    stats.wsOpened++;
     emit("ws-open");
     ws.on("close", () => emit("ws-close"));
     ws.on("framesent", ({ payload }) => {
@@ -187,7 +188,6 @@ async function screenshot(page, name) {
 async function openThread(page) {
   const threadUrl = `${cfg.origin}/${cfg.environmentId}/${encodeURIComponent(cfg.threadId)}`;
   await page.goto(threadUrl, { waitUntil: "commit", timeout: 0 });
-  return threadUrl;
 }
 
 async function waitForText(page, text, timeout) {
@@ -206,11 +206,7 @@ async function focusComposer(page, timeout) {
 
 const device = devices["iPhone 17 Pro"];
 const browser = await webkit.launch();
-const context = await browser.newContext({
-  ...device,
-  ...(cfg.homeScreen ? { viewport: { width: 402, height: 874 } } : {}),
-  ignoreHTTPSErrors: true,
-});
+const context = await browser.newContext({ ...device, ignoreHTTPSErrors: true });
 let page = await context.newPage();
 watchSockets(page);
 
@@ -260,6 +256,8 @@ const go = await nextCommand();
 if (go !== "go") {
   emit("note", { text: `expected go, got ${go}` });
 }
+stats.rxBytes = 0;
+stats.txBytes = 0;
 void nextCommand().then(() => {
   stopping = true;
   stopRequested();
