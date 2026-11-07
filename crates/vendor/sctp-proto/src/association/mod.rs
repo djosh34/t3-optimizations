@@ -59,6 +59,10 @@ use std::collections::HashMap;
 use std::time::Instant;
 use thiserror::Error;
 
+/// t3-optimizations patch: the congestion window to start with, see
+/// `Association::new`.
+const INITIAL_CWND: u32 = 1 << 20;
+
 pub(crate) mod state;
 pub(crate) mod stats;
 pub(crate) mod stream;
@@ -444,10 +448,13 @@ impl Association {
         // config.rs to get max_payload_size from INITIAL_MTU.
         let mtu = max_payload_size + COMMON_HEADER_SIZE + DATA_CHUNK_HEADER_SIZE;
 
-        // RFC 4960 Sec 7.2.1
-        // The initial cwnd before DATA transmission or after a sufficiently
-        // long idle period MUST be set to min(4*MTU, max (2*MTU, 4380bytes)).
-        let cwnd = (4 * mtu).min((2 * mtu).max(4380));
+        // t3-optimizations patch: the window starts at 1 MiB instead of
+        // RFC 4960's min(4*MTU, max(2*MTU, 4380 bytes)). The application
+        // paces what it sends. A window of a few kilobytes grows only on
+        // SACKs, which a lossy link loses, and chunks stay counted in it
+        // until they are acked or abandoned: at 8 kB/s and 50% loss in the
+        // lab it held 42 kB back and the RTT rose to 6.7 s (issue #44).
+        let cwnd = INITIAL_CWND;
 
         Association {
             side,

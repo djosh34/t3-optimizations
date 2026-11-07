@@ -205,8 +205,9 @@ fn run() -> Result<(), Error> {
     emit(
         "note",
         json!({"text": format!(
-            "native phone: {} ICE restarts, {} new connections, loss up {:.0}%",
-            r.ice_restarts, r.generations, stats.loss * 100.0
+            "native phone: {} ICE restarts, {} new connections, loss up {:.0}%, {} packets it could not read{}",
+            r.ice_restarts, r.generations, stats.loss * 100.0, phone.undecodable,
+            phone.last_error.as_deref().map(|e| format!(" (last: {e})")).unwrap_or_default()
         )}),
     );
     emit(

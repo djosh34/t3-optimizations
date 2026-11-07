@@ -133,6 +133,9 @@ pub struct NativePhone {
     last_restart: Option<Instant>,
     ice_up_since: Option<Instant>,
     reconnects: Reconnects,
+    /// Packets the phone could not read, and the last error.
+    pub undecodable: u64,
+    pub last_error: Option<String>,
 }
 
 impl NativePhone {
@@ -179,6 +182,8 @@ impl NativePhone {
             last_restart: None,
             ice_up_since: None,
             reconnects: Reconnects::default(),
+            undecodable: 0,
+            last_error: None,
         })
     }
 
@@ -231,6 +236,8 @@ impl NativePhone {
             last_restart: None,
             ice_up_since: None,
             reconnects: Reconnects::default(),
+            undecodable: 0,
+            last_error: None,
         })
     }
 
@@ -378,8 +385,13 @@ impl NativePhone {
 
     /// Stores what a packet brought, then acks it.
     fn receive(&mut self, data: &[u8]) {
-        let Ok(r) = self.phone.receive(now_ms(), data) else {
-            return;
+        let r = match self.phone.receive(now_ms(), data) {
+            Ok(r) => r,
+            Err(e) => {
+                self.undecodable += 1;
+                self.last_error = Some(format!("{e:?} ({} bytes)", data.len()));
+                return;
+            }
         };
         for key in &r.changed {
             if let Some(saved) = self.phone.save_object(*key) {

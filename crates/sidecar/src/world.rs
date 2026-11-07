@@ -466,9 +466,25 @@ impl World {
                 .contains_key(&("turnItems".into(), id.to_owned()))
         });
         if !known {
-            self.put_entity(thread, "turnItems", item);
+            // A live item carries the provider's own ordinal (201, say),
+            // not t3's (2000002), which t3 gives it when it stores it. It is
+            // the item being written now, so it goes after every stored one
+            // until then; otherwise an older message stayed the tail and the
+            // live text went out behind everything else.
+            let after = state
+                .entities
+                .iter()
+                .filter(|((coll, _), _)| coll == "turnItems")
+                .filter_map(|(_, e)| e["ordinal"].as_u64())
+                .max()
+                .map_or(0, |o| o + 1);
+            let mut item = item.clone();
+            if let Some(o) = item.as_object_mut() {
+                o.insert("ordinal".into(), after.into());
+            }
+            self.put_entity(thread, "turnItems", &item);
         } else {
-            self.note_assistant(thread, item, &key);
+            // Its place is t3's, from the stored item.
             self.put_text(thread, &key);
         }
     }
@@ -556,6 +572,8 @@ impl World {
         };
         let state = self.threads.entry(thread.to_owned()).or_default();
         let old_tail = state.assistant.values().next_back().cloned();
+        // t3's ordinal takes the place of a provisional one.
+        state.assistant.retain(|_, k| k != key);
         state.assistant.insert(ordinal, key.to_owned());
         let new_tail = state.assistant.values().next_back().cloned();
         if old_tail != new_tail {
@@ -799,6 +817,34 @@ mod tests {
             ),
         );
         assert_eq!(content(&w, text), "An open paragraph.");
+    }
+
+    #[test]
+    fn a_live_item_is_the_tail_before_t3_stores_it() {
+        let mut w = World::default();
+        w.apply_event(
+            "t1",
+            &event(
+                "turn-item.updated",
+                item("old", 1_000_003, "Earlier reply.", false, "1"),
+            ),
+        );
+        // The provider's own ordinal is far below t3's.
+        w.apply_live(&json!({"item": item("new", 201, "The sync loop starts", true, "2")}));
+        let new = object_id(&["text", "t1", "m-new"]);
+        assert_eq!(w.tail("t1"), Some(new));
+        // More live text, then t3 stores it with its own ordinal.
+        w.apply_live(&json!({"item": item("new", 201, "The sync loop starts from", true, "3")}));
+        assert_eq!(w.tail("t1"), Some(new));
+        w.apply_event(
+            "t1",
+            &event(
+                "turn-item.updated",
+                item("new", 2_000_002, "The sync", true, "4"),
+            ),
+        );
+        assert_eq!(w.tail("t1"), Some(new));
+        assert_eq!(content(&w, new), "The sync loop starts from");
     }
 
     #[test]

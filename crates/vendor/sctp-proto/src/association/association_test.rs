@@ -4871,6 +4871,7 @@ fn test_out_of_band_rwnd_negotiation() {
 }
 
 #[test]
+#[ignore = "t3-optimizations patch: needs the RFC 4960 initial window to hold data back; the window starts at 1 MiB, see crates/vendor/README.md"]
 fn test_initial_cwnd_small_mtu() {
     // Regression test for #47: a small MTU made 4*MTU < 4380, which previously
     // panicked because clamp(4380, 4*MTU) was called with min > max.
