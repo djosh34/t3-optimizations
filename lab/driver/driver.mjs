@@ -30,19 +30,23 @@ const received = new Uint8Array(reply.length);
 const promptRequestIds = new Set();
 let confirmed = false;
 
-// Counts reply text the application received more than once. Every string in
-// a frame that is a piece of the reply counts; the first copy of each
-// character is new, later copies are duplicates.
+// Counts reply text the application received more than once. A string in a
+// frame counts when at least 3/4 of it is pieces of the reply: message text
+// with t3's image marker inside counts, a setting like "approval-required"
+// does not. The first copy of each character is new, later copies are
+// duplicates.
 function countReplyText(value) {
   if (typeof value === "string") {
     const text = normalize(value);
-    if (text.length < 16) return;
-    const at = reply.indexOf(text);
-    if (at < 0) return;
-    stats.replyBytes += text.length;
-    for (let i = at; i < at + text.length; i++) {
-      if (received[i]) stats.duplicateReplyBytes++;
-      received[i] = 1;
+    const pieces = replyPieces(text);
+    const length = pieces.reduce((sum, [, n]) => sum + n, 0);
+    if (length === 0 || length * 4 < text.length * 3) return;
+    for (const [at, n] of pieces) {
+      stats.replyBytes += n;
+      for (let i = at; i < at + n; i++) {
+        if (received[i]) stats.duplicateReplyBytes++;
+        received[i] = 1;
+      }
     }
   } else if (Array.isArray(value)) {
     value.forEach(countReplyText);
@@ -101,13 +105,12 @@ function watchSockets(page) {
 const seen = new Uint8Array(reply.length);
 const lastRowText = new Map();
 
-function mark(at, length) {
-  for (let i = at; i < at + length; i++) seen[i] = 1;
-}
-
-// Marks the pieces of a row's text that appear in the reply. Pieces under 8
-// characters are skipped: too short to place reliably.
-function markRow(text) {
+// The pieces of text that appear in the reply, in order, as [position,
+// length]. Pieces under 8 characters are skipped: too short to place
+// reliably. Text the reply does not have, such as t3's image marker, is
+// stepped over.
+function replyPieces(text) {
+  const pieces = [];
   let rest = text;
   let from = 0;
   while (rest.length >= 8) {
@@ -120,12 +123,19 @@ function markRow(text) {
     }
     if (lo >= 8) {
       const at = reply.indexOf(rest.slice(0, lo), from);
-      mark(at, lo);
+      pieces.push([at, lo]);
       from = at + lo;
       rest = rest.slice(lo);
     } else {
       rest = rest.slice(1);
     }
+  }
+  return pieces;
+}
+
+function markRow(text) {
+  for (const [at, n] of replyPieces(text)) {
+    for (let i = at; i < at + n; i++) seen[i] = 1;
   }
 }
 

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
 type lockedBuffer struct {
@@ -129,5 +130,47 @@ func TestReplyIsASCII(t *testing.T) {
 		if r > 127 {
 			t.Fatalf("reply has non-ASCII rune %q; the agent splits text by bytes", r)
 		}
+	}
+}
+
+// When the server goes away while the agent waits for an approval, the agent
+// must exit instead of waiting for an answer that cannot come.
+func TestEOFDuringApproval(t *testing.T) {
+	clientToAgent, agentIn := io.Pipe()
+	agentOut, agentToClient := io.Pipe()
+	done := make(chan error, 1)
+	go func() {
+		done <- Serve(context.Background(), Config{CharsPerSecond: 1_000_000, Log: io.Discard}, clientToAgent, agentToClient)
+	}()
+	enc := json.NewEncoder(agentIn)
+	for _, msg := range []map[string]any{
+		{"jsonrpc": "2.0", "id": 1, "method": "session/new", "params": map[string]any{}},
+		{"jsonrpc": "2.0", "id": 2, "method": "session/prompt", "params": map[string]any{
+			"sessionId": "s", "prompt": []any{map[string]any{"type": "text", "text": MeasuredPrompt}},
+		}},
+	} {
+		if err := enc.Encode(msg); err != nil {
+			t.Fatal(err)
+		}
+	}
+	lines := bufio.NewScanner(agentOut)
+	lines.Buffer(make([]byte, 1<<20), 1<<24)
+	for lines.Scan() {
+		if strings.Contains(lines.Text(), "session/request_permission") {
+			break
+		}
+	}
+	go func() {
+		for lines.Scan() {
+		}
+	}()
+	agentIn.Close()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("serve: %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("agent still waiting for the approval after its input closed")
 	}
 }

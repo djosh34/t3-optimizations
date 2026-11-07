@@ -4,14 +4,17 @@
 package userproc
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -62,46 +65,64 @@ func (u User) Command(ctx context.Context, ns string, env []string, dir, name st
 	return cmd
 }
 
-// MkdirAll creates dir and its missing parents, owned by the user.
+// MkdirAll creates dir and its missing parents as the user.
 func (u User) MkdirAll(dir string) error {
-	dir, err := filepath.Abs(dir)
-	if err != nil {
-		return err
+	var stderr bytes.Buffer
+	cmd := u.Command(context.Background(), "", userEnv, "/", "mkdir", "-p", "--", dir)
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("mkdir %s: %w: %s", dir, err, strings.TrimSpace(stderr.String()))
 	}
-	if _, err := os.Stat(dir); err == nil {
-		return nil
-	}
-	if err := u.MkdirAll(filepath.Dir(dir)); err != nil {
-		return err
-	}
-	if err := os.Mkdir(dir, 0o755); err != nil && !errors.Is(err, os.ErrExist) {
-		return err
-	}
-	return os.Chown(dir, u.UID, u.GID)
+	return nil
 }
 
-// WriteFile writes a file owned by the user.
-func (u User) WriteFile(path string, data []byte) error {
-	if err := u.MkdirAll(filepath.Dir(path)); err != nil {
-		return err
-	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
-		return err
-	}
-	return os.Chown(path, u.UID, u.GID)
-}
+var userEnv = []string{"PATH=/usr/bin:/bin"}
 
-// Create creates a file owned by the user and opens it for writing.
-func (u User) Create(path string) (*os.File, error) {
+// Create opens path for writing. The lab runs as root, so a process running
+// as the user writes the file: root never opens files in the user's
+// directories.
+func (u User) Create(path string) (io.WriteCloser, error) {
 	if err := u.MkdirAll(filepath.Dir(path)); err != nil {
 		return nil, err
 	}
-	f, err := os.Create(path)
+	f := &userFile{path: path}
+	f.cmd = u.Command(context.Background(), "", userEnv, "/", "/bin/sh", "-c", `exec cat > "$1"`, "sh", path)
+	f.cmd.Stderr = &f.stderr
+	stdin, err := f.cmd.StdinPipe()
 	if err != nil {
 		return nil, err
 	}
-	if err := f.Chown(u.UID, u.GID); err != nil {
-		return nil, errors.Join(fmt.Errorf("chown %s: %w", path, err), f.Close())
+	f.stdin = stdin
+	if err := f.cmd.Start(); err != nil {
+		return nil, fmt.Errorf("open %s: %w", path, err)
 	}
 	return f, nil
+}
+
+type userFile struct {
+	path   string
+	cmd    *exec.Cmd
+	stdin  io.WriteCloser
+	stderr bytes.Buffer
+}
+
+func (f *userFile) Write(p []byte) (int, error) { return f.stdin.Write(p) }
+
+// Close ends the file and reports any error the writer had.
+func (f *userFile) Close() error {
+	err := f.stdin.Close()
+	if werr := f.cmd.Wait(); werr != nil {
+		err = errors.Join(err, fmt.Errorf("write %s: %w: %s", f.path, werr, strings.TrimSpace(f.stderr.String())))
+	}
+	return err
+}
+
+// WriteFile writes a file as the user.
+func (u User) WriteFile(path string, data []byte) error {
+	f, err := u.Create(path)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(data)
+	return errors.Join(err, f.Close())
 }

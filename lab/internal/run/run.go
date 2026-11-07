@@ -3,15 +3,16 @@ package run
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/djosh34/t3-optimizations/lab/internal/agent"
@@ -53,6 +54,9 @@ type Options struct {
 	Node string
 }
 
+// setupTimeout bounds the warm-up turn and the pairing, before the profile.
+const setupTimeout = 10 * time.Minute
+
 const frontPort = "8443"
 const tunnelPort = "7000"
 
@@ -82,14 +86,22 @@ func Run(ctx context.Context, o Options) (report.Report, error) {
 	if err := netlab.Cleanup(ctx); err != nil {
 		return report.Report{}, fmt.Errorf("cleanup of old labs: %w", err)
 	}
-	idBytes := make([]byte, 2)
-	if _, err := rand.Read(idBytes); err != nil {
+	lab, err := netlab.Claim()
+	if err != nil {
 		return report.Report{}, err
 	}
-	lab := netlab.New(hex.EncodeToString(idBytes))
-	if err := lab.Claim(); err != nil {
-		return report.Report{}, err
+	// The reaper is its own session, so it outlives this process if it is
+	// killed, and then deletes the lab's namespaces and container.
+	reaper := exec.Command(o.LabExe, "reap", "--id", lab.ID, "--pid", strconv.Itoa(os.Getpid()))
+	reaper.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+	if err := reaper.Start(); err != nil {
+		return report.Report{}, errors.Join(err, lab.Delete(ctx))
 	}
+	go func() {
+		if err := reaper.Wait(); err != nil {
+			fmt.Fprintf(os.Stderr, "lab: reaper: %v\n", err)
+		}
+	}()
 	// The run's own context may be cancelled by Ctrl-C; cleanup still runs.
 	defer func() {
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
@@ -200,7 +212,10 @@ func (s *scenario) execute(ctx context.Context, repo, staticDir, phoneDir string
 	}
 	waits = append(waits, wait)
 
-	threadID, pairURL, err := server.Setup(ctx, origin)
+	// Setup runs on the clean link; a hang there is a lab fault, not a result.
+	setupCtx, cancelSetup := context.WithTimeout(ctx, setupTimeout)
+	defer cancelSetup()
+	threadID, pairURL, err := server.Setup(setupCtx, origin)
 	if err != nil {
 		return report.Input{}, err
 	}

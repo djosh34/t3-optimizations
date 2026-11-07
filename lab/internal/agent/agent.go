@@ -84,9 +84,12 @@ func Serve(ctx context.Context, cfg Config, in io.Reader, out io.Writer) error {
 		cancels: map[string]context.CancelFunc{},
 	}
 	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 	var wg sync.WaitGroup
-	defer wg.Wait()
+	// When input ends, no answer can arrive: stop open turns, then wait.
+	defer func() {
+		cancel()
+		wg.Wait()
+	}()
 	scanner := bufio.NewScanner(in)
 	scanner.Buffer(make([]byte, 1<<20), 64<<20)
 	for scanner.Scan() {

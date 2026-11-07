@@ -7,6 +7,8 @@ package netlab
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,6 +18,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/djosh34/t3-optimizations/lab/internal/profile"
 )
@@ -47,7 +50,7 @@ type Lab struct {
 	tunnelIf  string
 }
 
-// New names a lab. id is four hex digits.
+// New names a lab. id is six hex digits.
 func New(id string) *Lab {
 	return &Lab{
 		ID:        id,
@@ -77,13 +80,52 @@ func run(ctx context.Context, name string, args ...string) error {
 	return err
 }
 
-// Claim records this process as the lab's owner, so a cleanup in another
-// lab process leaves it alone.
-func (l *Lab) Claim() error {
+// Claim records this process as the owner of a new lab and returns it. The
+// id is taken exclusively, so two labs never share one, and a cleanup in
+// another lab process leaves this one alone.
+func Claim() (*Lab, error) {
 	if err := os.MkdirAll(ownerDir, 0o755); err != nil {
-		return err
+		return nil, err
 	}
-	return os.WriteFile(filepath.Join(ownerDir, l.ID), []byte(strconv.Itoa(os.Getpid())), 0o644)
+	for range 10 {
+		id := make([]byte, 3)
+		if _, err := rand.Read(id); err != nil {
+			return nil, err
+		}
+		l := New(hex.EncodeToString(id))
+		f, err := os.OpenFile(filepath.Join(ownerDir, l.ID), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
+		if errors.Is(err, os.ErrExist) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		_, err = f.WriteString(strconv.Itoa(os.Getpid()))
+		if err := errors.Join(err, f.Close()); err != nil {
+			return nil, err
+		}
+		return l, nil
+	}
+	return nil, errors.New("no free lab id after 10 tries")
+}
+
+// Reap waits until the lab's owner process ends, then deletes what the lab
+// left. The lab starts it as a separate process, so its namespaces and
+// container go away even when the lab is killed. A lab that cleaned up
+// itself removed its owner file, and then there is nothing to do.
+func Reap(ctx context.Context, id string, pid int) error {
+	owner := filepath.Join(ownerDir, id)
+	proc := filepath.Join("/proc", strconv.Itoa(pid))
+	for {
+		if _, err := os.Stat(owner); err != nil {
+			return nil
+		}
+		if _, err := os.Stat(proc); err != nil {
+			fmt.Fprintf(os.Stderr, "lab: lab %s ended without cleaning up; removing what it left\n", id)
+			return deleteID(ctx, id)
+		}
+		time.Sleep(time.Second)
+	}
 }
 
 // CreateServer creates the server namespace and the veth pair. Both ends
@@ -286,7 +328,7 @@ func netnsNames(ctx context.Context) ([]string, error) {
 	return names, nil
 }
 
-var idPattern = regexp.MustCompile("^" + Prefix + "([0-9a-f]{4})")
+var idPattern = regexp.MustCompile("^" + Prefix + "([0-9a-f]{6})")
 
 // Cleanup removes what earlier labs left behind: everything with the t3lab
 // prefix whose owning process is gone. Labs still running are left alone.

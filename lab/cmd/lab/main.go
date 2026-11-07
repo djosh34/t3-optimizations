@@ -31,6 +31,7 @@ The lab runs these itself:
   lab fakeagent   the scripted ACP agent the t3 server starts
   lab front       the HTTPS origin in the server namespace
   lab tunnel      one end of the TCP outer path
+  lab reap        removes a lab's leftovers when the lab process dies
 `
 
 func main() {
@@ -69,6 +70,8 @@ func dispatch(ctx context.Context, cmd string, args []string) error {
 		return frontCmd(ctx, args)
 	case "tunnel":
 		return tunnelCmd(ctx, args)
+	case "reap":
+		return reapCmd(args)
 	}
 	fmt.Fprint(os.Stderr, usage)
 	return fmt.Errorf("unknown command %q", cmd)
@@ -166,4 +169,16 @@ func tunnelCmd(ctx context.Context, args []string) error {
 		return errors.New("give exactly one of --listen and --connect")
 	}
 	return tunnel.Run(ctx, *dev, *listen, *connect)
+}
+
+// reapCmd ignores Ctrl-C: it must outlive the lab it watches.
+func reapCmd(args []string) error {
+	fs := flag.NewFlagSet("reap", flag.ContinueOnError)
+	id := fs.String("id", "", "lab id")
+	pid := fs.Int("pid", 0, "the lab's process id")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	signal.Ignore(os.Interrupt, syscall.SIGTERM)
+	return netlab.Reap(context.Background(), *id, *pid)
 }
