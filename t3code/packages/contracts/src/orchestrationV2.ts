@@ -3619,7 +3619,8 @@ export type OrchestrationV2CommandOutputFrame = typeof OrchestrationV2CommandOut
  * t3-optimizations sidecar; the first frame of each item may come before any persisted event.
  */
 export const OrchestrationV2SubscribeLiveTextInput = Schema.Struct({});
-export type OrchestrationV2SubscribeLiveTextInput = typeof OrchestrationV2SubscribeLiveTextInput.Type;
+export type OrchestrationV2SubscribeLiveTextInput =
+  typeof OrchestrationV2SubscribeLiveTextInput.Type;
 
 export const OrchestrationV2LiveTextFrame = Schema.Struct({
   item: OrchestrationV2TurnItem,
