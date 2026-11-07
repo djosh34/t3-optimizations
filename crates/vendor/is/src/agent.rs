@@ -1230,13 +1230,17 @@ impl IceAgent {
         let mut any_pruned = false;
         let nominated_send = self.nominated_send;
         self.candidate_pairs.retain(|p| {
-            let keep = if self.ice_lite {
-                // t3-optimizations patch: the pair we send on stays, however
-                // long the remote's checks are lost. A pair made again from a
-                // later check is not nominated (keepalives carry no
-                // USE-CANDIDATE), so pruning it left nothing to send on until
-                // the remote restarted ICE.
-                Some(p.id()) == nominated_send || p.is_ice_lite_alive(now)
+            // t3-optimizations patch: the pair we send on stays, however long
+            // the other side's checks or answers are lost. On a lossy link
+            // upstream pruned it often: an ice-lite agent made a new pair from
+            // the next check without nominating it (keepalives carry no
+            // USE-CANDIDATE), and a full agent dropped the path and the data
+            // arriving on it. Either way nothing went through until ICE
+            // restarted, which takes seconds at heavy loss.
+            let keep = if Some(p.id()) == nominated_send {
+                true
+            } else if self.ice_lite {
+                p.is_ice_lite_alive(now)
             } else {
                 p.is_still_possible(now, &self.timing_config)
             };

@@ -186,6 +186,7 @@ pub(crate) mod test {
     }
 
     #[test]
+    #[ignore = "t3-optimizations patch: an agent keeps the pair it sends on, so silence never disconnects it; see crates/vendor/README.md"]
     pub fn host_host_disconnect() {
         let mut a1 = TestAgent::new(info_span!("L"));
         let mut a2 = TestAgent::new(info_span!("R"));
@@ -467,6 +468,7 @@ pub(crate) mod test {
     }
 
     #[test]
+    #[ignore = "t3-optimizations patch: an agent keeps the pair it sends on, so silence never disconnects it; see crates/vendor/README.md"]
     pub fn re_adding_invalidated_local_candidate() {
         let mut a1 = TestAgent::new(info_span!("L"));
         let mut a2 = TestAgent::new(info_span!("R"));
@@ -512,6 +514,7 @@ pub(crate) mod test {
     }
 
     #[test]
+    #[ignore = "t3-optimizations patch: an agent keeps the pair it sends on, so silence never disconnects it; see crates/vendor/README.md"]
     pub fn re_adding_invalidated_remote_candidate() {
         let mut a1 = TestAgent::new(info_span!("L"));
         let mut a2 = TestAgent::new(info_span!("R"));
@@ -680,7 +683,7 @@ pub(crate) mod test {
     // }
 
     #[test]
-    #[ignore = "t3-optimizations patch: an ice-lite agent keeps the pair it sends on, so it never disconnects; see crates/vendor/README.md"]
+    #[ignore = "t3-optimizations patch: an agent keeps the pair it sends on, so silence never disconnects it; see crates/vendor/README.md"]
     pub fn ice_lite_disconnect_reconnect() {
         // init_log();
 
@@ -1100,6 +1103,7 @@ pub(crate) mod test {
     }
 
     #[test]
+    #[ignore = "t3-optimizations patch: an agent keeps the pair it sends on, so silence never disconnects it; see crates/vendor/README.md"]
     fn new_candidates_after_disconnected_should_transition_to_checking() {
         let _guard = tracing_subscriber::fmt()
             .with_env_filter("trace")

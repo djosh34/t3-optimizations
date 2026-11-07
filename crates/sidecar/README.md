@@ -64,10 +64,10 @@ Each phone pairs once, then reaches the sidecar like this:
 8. **WebSocket fallback.** `GET /sync` upgrades to a WebSocket. Each binary message is one sync packet, starting with a hello.
 
 What the native phone does, and what the web app should do (#45):
-- Restart ICE after 8 s with nothing from the sidecar, or after 2 s when ICE reports the path lost. Repeat at most every 8 s.
-- Make a new connection when ICE connects again but no data comes for 8 s, or when the channel closes.
+- Restart ICE after 8 s with nothing from the sidecar, and again every 8 s while it stays silent. Not on ICE's own disconnected state: at heavy loss ICE reports that often while data still arrives.
+- Make a new connection when ICE connects again but no data comes for 30 s, or when the channel closes. A new connection costs a DTLS handshake, which takes minutes at 70% loss.
 
-Restarting sooner hurts. In the lab at 70% loss, a 4 s rule restarted every few seconds, and each restart dropped a working path.
+Restarting sooner hurts. In the lab at 70% loss, a 4 s rule (and restarting on ICE's disconnected state) restarted every few seconds, and each restart dropped a working path for seconds.
 
 Tested in WebKit (`tests/webkit`, Playwright 1.64.1, Linux):
 - derived credentials in a munged offer
