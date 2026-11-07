@@ -7,11 +7,14 @@ import type { Pairing } from "./store";
 /** With nothing from the sidecar for this long, restart ICE, and again each time it passes. */
 const RESTART_AFTER_MS = 8_000;
 /**
- * Silent this long although ICE connected during the silence: the path works
- * but the connection does not (the sidecar restarted). An outage never
- * connects ICE, so it is recovered on the same connection.
+ * Silent this long while ICE was connected for `DEAD_ICE_UP_MS` of it: the
+ * path works but the connection does not (the sidecar restarted). An outage
+ * never connects ICE, so it is recovered on the same connection. A starved
+ * link at 70% loss can be silent for half a minute with ICE up, and a new
+ * connection there costs minutes of handshake, so both bounds are long.
  */
-const DEAD_AFTER_MS = 30_000;
+const DEAD_AFTER_MS = 60_000;
+const DEAD_ICE_UP_MS = 20_000;
 /** A first WebRTC connection whose ICE has not connected by then falls back to the WebSocket. */
 const FALLBACK_AFTER_MS = 20_000;
 /** WebRTC is tried again this often while it failed to connect. */
@@ -106,8 +109,8 @@ interface Rtc {
   iceUpSince: number | null;
   /** ICE connected once: UDP gets through, a slow handshake is loss, not a block. */
   iceEverUp: boolean;
-  /** ICE connected while the sidecar was silent. */
-  iceUpInSilence: boolean;
+  /** How long ICE was connected while the sidecar was silent, up to `iceUpSince`. */
+  iceUpInSilenceMs: number;
   lastRestartAt: number | null;
 }
 
@@ -231,8 +234,8 @@ export class Link {
     this.lastDataAt = now;
     this.lastDataOn = on;
     if (this.rtc) {
-      this.rtc.iceUpSince = null;
-      this.rtc.iceUpInSilence = false;
+      if (this.rtc.iceUpSince !== null) this.rtc.iceUpSince = now;
+      this.rtc.iceUpInSilenceMs = 0;
     }
     if (this.trying !== `${this.transport} live`) this.set(`${this.transport} live`);
     this.hooks.onPacket(new Uint8Array(data));
@@ -291,7 +294,7 @@ export class Link {
       createdAt: Date.now(),
       iceUpSince: null,
       iceEverUp: false,
-      iceUpInSilence: false,
+      iceUpInSilenceMs: 0,
       lastRestartAt: null,
     };
     this.rtc = rtc;
@@ -322,10 +325,8 @@ export class Link {
       if (state === "connected" || state === "completed") {
         rtc.iceUpSince ??= Date.now();
         rtc.iceEverUp = true;
-        if (this.lastDataAt !== null && Date.now() - this.lastDataAt >= RESTART_AFTER_MS) {
-          rtc.iceUpInSilence = true;
-        }
       } else {
+        if (rtc.iceUpSince !== null) rtc.iceUpInSilenceMs += Date.now() - rtc.iceUpSince;
         rtc.iceUpSince = null;
       }
       this.hooks.onChange();
@@ -354,6 +355,7 @@ export class Link {
     if (!key || this.keptAnswer === null) return;
     rtc.restart += 1;
     rtc.lastRestartAt = Date.now();
+    if (rtc.iceUpSince !== null) rtc.iceUpInSilenceMs += rtc.lastRestartAt - rtc.iceUpSince;
     rtc.iceUpSince = null;
     this.iceRestarts += 1;
     this.set(`webrtc ICE restart ${rtc.restart}`);
@@ -451,7 +453,8 @@ export class Link {
     if (rtc.dc.readyState !== "open") return;
     const silentFor = now - (this.lastDataAt ?? rtc.createdAt);
     if (silentFor < RESTART_AFTER_MS) return;
-    if (rtc.iceUpInSilence && silentFor >= DEAD_AFTER_MS) {
+    const iceUp = rtc.iceUpInSilenceMs + (rtc.iceUpSince === null ? 0 : now - rtc.iceUpSince);
+    if (silentFor >= DEAD_AFTER_MS && iceUp >= DEAD_ICE_UP_MS) {
       this.tryRtc();
       return;
     }

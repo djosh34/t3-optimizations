@@ -45,6 +45,10 @@ const JITTER_MARGINS: f64 = 3.0;
 /// A decision needs this many RTT samples: the lowest of three rarely sits
 /// in the jitter's upper tail.
 const DECISION_SAMPLES: u32 = 3;
+/// A single RTT sample above twice the base plus a second counts as growth
+/// without waiting for `DECISION_SAMPLES`.
+const FAR_ABOVE_FACTOR: f64 = 2.0;
+const FAR_ABOVE_MARGIN_MS: f64 = 1_000.0;
 /// On RTT growth the rate goes to this fraction of the send capacity or of
 /// itself, whichever is lower, but never below half of what it was.
 const DRAIN: f64 = 0.75;
@@ -337,7 +341,13 @@ impl RateControl {
         }
         let base = self.min_rtt();
         let interval = base.unwrap_or(500.0).max(300.0);
-        if self.fresh_count < DECISION_SAMPLES {
+        // One sample this far above the base is a full queue beyond doubt; at
+        // heavy loss samples are rare, and waiting for three lets it grow.
+        let far_above = match (self.fresh_min, base) {
+            (Some(f), Some(b)) => f > FAR_ABOVE_FACTOR * b + FAR_ABOVE_MARGIN_MS,
+            _ => false,
+        };
+        if self.fresh_count < DECISION_SAMPLES && !far_above {
             let silence = (SILENCE_RTTS * self.srtt.unwrap_or(0.0)).max(SILENCE_MIN as f64);
             let silent = self
                 .last_heard
@@ -553,6 +563,26 @@ mod tests {
             "rate {} did not grow from {slow}",
             rc.rate()
         );
+    }
+
+    #[test]
+    fn one_sample_far_above_the_base_lowers_the_rate() {
+        let mut rc = RateControl::new(RateConfig::default(), 0);
+        let mut t = 0;
+        for _ in 0..30 {
+            t += 300;
+            rc.on_heard(t);
+            rc.on_rtt(t, 50.0, t);
+            rc.note_limited(t);
+            rc.decide(t);
+        }
+        let before = rc.rate();
+        t += 300;
+        rc.on_heard(t);
+        rc.on_rtt(t, 2_500.0, t);
+        rc.note_limited(t);
+        rc.decide(t);
+        assert!(rc.rate() < before, "rate {} stayed at {before}", rc.rate());
     }
 
     #[test]
