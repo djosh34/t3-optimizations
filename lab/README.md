@@ -124,7 +124,7 @@ Each run writes `report.json` and `report.md`, plus the raw `phone.jsonl` (the d
 - **Longest silence**: the longest time after pressing Enter in which the phone showed no new reply text, up to the end of the reply or of the run. A phone that showed nothing has a silence as long as the run.
 - **Bytes on the wire**: what crossed the server's end of the link after the switch, down and up, with TCP, TLS and every other request the page makes (the web client also posts its traces to the server).
 - **Bytes the app received / sent**: WebSocket payloads after decompression, from the switch to the end.
-- **Reply received / duplicates**: how much reply text the application received over WebSocket, and how much of it it had already received. A string in a frame counts when at least 3/4 of it is pieces of the reply (8 letters and digits or more), so message text with t3's image marker inside counts and a setting like `approval-required` does not.
+- **Reply received / duplicates**: how much reply text the application received over WebSocket, and how much of it it had already received. t3 sends each assistant message with its whole text so far, so the lab counts the text of assistant messages created after the prompt was sent. Because every update repeats the text before it, duplicates are above 0 even on a clean link: about 700 of 1,596 characters on profile A.
 
 The phone reads the reply from the page's text. It matches pieces of at least 8 letters and digits against the reply, ignoring whitespace and punctuation, and counts what it has seen once even after the row scrolls away.
 

@@ -316,13 +316,17 @@ func deleteID(ctx context.Context, id string) error {
 	return errors.Join(errs...)
 }
 
-// TempDirPattern is the mktemp template for a lab's temp dirs.
-func TempDirPattern(id string) string { return Prefix + id + "-base-XXXXXX" }
+// TempDir holds the labs' temp dirs. It is fixed, not $TMPDIR, so the user
+// who creates them and root who cleans up look in the same place.
+const TempDir = "/tmp"
+
+// TempDirPattern is the mktemp template for a lab's temp dirs in TempDir.
+func TempDirPattern(id string) string { return filepath.Join(TempDir, Prefix+id+"-base-XXXXXX") }
 
 // removeTempDirs deletes a lab's temp dirs, each as the user who owns it, so
 // root never deletes inside a user's directory.
 func removeTempDirs(ctx context.Context, id string) error {
-	dirs, err := filepath.Glob(filepath.Join(os.TempDir(), Prefix+id+"-base-*"))
+	dirs, err := filepath.Glob(filepath.Join(TempDir, Prefix+id+"-base-*"))
 	if err != nil {
 		return err
 	}
@@ -373,7 +377,7 @@ func Cleanup(ctx context.Context) error {
 		return err
 	}
 	names = append(names, strings.Fields(containers)...)
-	tempDirs, err := filepath.Glob(filepath.Join(os.TempDir(), Prefix+"*-base-*"))
+	tempDirs, err := filepath.Glob(filepath.Join(TempDir, Prefix+"*-base-*"))
 	if err != nil {
 		return err
 	}

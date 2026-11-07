@@ -60,7 +60,7 @@ func AgentLog(runDir string) string { return filepath.Join(runDir, "agent.jsonl"
 // fresh temp dir named after the lab, which netlab deletes with the lab.
 func Start(ctx context.Context, cfg Config) (*Server, error) {
 	u := cfg.User
-	out, err := u.Command(ctx, "", []string{"PATH=/usr/bin:/bin"}, "/", "mktemp", "-d", "-t", netlab.TempDirPattern(cfg.LabID)).Output()
+	out, err := u.Command(ctx, "", []string{"PATH=/usr/bin:/bin"}, "/", "mktemp", "-d", netlab.TempDirPattern(cfg.LabID)).Output()
 	if err != nil {
 		return nil, fmt.Errorf("mktemp: %w", err)
 	}
