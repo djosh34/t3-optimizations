@@ -121,10 +121,10 @@ Each run writes `report.json` and `report.md`, plus the raw `phone.jsonl` (the d
 - **Time to first text**: from pressing Enter to the first reply text on screen.
 - **Prompt reached the agent**: from pressing Enter to the fake agent receiving the prompt.
 - **Newest-text lag**: every second, how old the oldest text is that the agent produced and the phone does not show yet; 0 when the phone shows everything produced. Reported as a series and as max, median and p95. When the agent produced no text, because the prompt never reached it, there is no lag to report and the report says "no text produced".
-- **Longest silence**: the longest time after pressing Enter in which the phone showed no new reply text, up to the end of the reply or of the run. A phone that showed nothing has a silence as long as the run.
+- **Longest silence**: the longest time after pressing Enter in which the phone showed no new reply text, up to the end of the reply or of the run. A phone that showed nothing has a silence as long as the run. A cold run that never loaded the app sent no prompt, so it reports "n/a, no prompt sent".
 - **Bytes on the wire**: what crossed the server's end of the link after the switch, down and up, with TCP, TLS and every other request the page makes (the web client also posts its traces to the server).
 - **Bytes the app received / sent**: WebSocket payloads after decompression, from the switch to the end.
-- **Reply received / duplicates**: how much reply text the application received over WebSocket, and how much of it it had already received. t3 sends each assistant message with its whole text so far, so the lab counts the text of assistant messages created after the prompt was sent. Because every update repeats the text before it, duplicates are above 0 even on a clean link: about 700 of 1,596 characters on profile A.
+- **Reply received / duplicates**: how much reply text the application received over WebSocket, and how much of it it had already received. t3 sends each assistant message with its whole text so far, so the lab counts the text of assistant messages created after the prompt was sent. Because every update repeats the text before it, duplicates are above 0 even on a clean link: on profile A the app received 2,294 characters of reply text for the 1,596-character reply, 698 of them duplicates.
 
 The phone reads the reply from the page's text. It matches pieces of at least 8 letters and digits against the reply, ignoring whitespace and punctuation, and counts what it has seen once even after the row scrolls away.
 

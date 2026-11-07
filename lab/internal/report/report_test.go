@@ -39,7 +39,7 @@ func TestBuild(t *testing.T) {
 	check := func(name string, got *float64, want float64) {
 		t.Helper()
 		if got == nil || *got != want {
-			t.Errorf("%s = %v, want %v", name, got, want)
+			t.Errorf("%s = %s, want %v", name, fmtSecs(got), want)
 		}
 	}
 	check("prompt confirmation", r.PromptConfirmationS, 0.5)
@@ -50,9 +50,7 @@ func TestBuild(t *testing.T) {
 	// it is 13 s old.
 	check("max lag", r.MaxLagS, 13)
 	// From 6 s, when the phone showed 50, to 20 s.
-	if *r.LongestSilenceS != 14 {
-		t.Errorf("longest silence %v, want 14", r.LongestSilenceS)
-	}
+	check("longest silence", r.LongestSilenceS, 14)
 	if r.DuplicateReplyBytes != 50 || r.ProducedChars != 100 || r.ShownChars != 100 {
 		t.Errorf("duplicates %d, produced %d, shown %d", r.DuplicateReplyBytes, r.ProducedChars, r.ShownChars)
 	}
@@ -73,11 +71,11 @@ func TestBuildNothingShown(t *testing.T) {
 	if r.Status != StatusNotDone || r.TimeToFirstTextS != nil || r.PromptConfirmationS != nil {
 		t.Fatalf("got %+v", r)
 	}
-	if *r.LongestSilenceS != 900 {
-		t.Errorf("longest silence %v, want 900", r.LongestSilenceS)
+	if r.LongestSilenceS == nil || *r.LongestSilenceS != 900 {
+		t.Errorf("longest silence %s, want 900", fmtSecs(r.LongestSilenceS))
 	}
 	if r.MaxLagS == nil || *r.MaxLagS != 899 {
-		t.Errorf("max lag %v, want 899", r.MaxLagS)
+		t.Errorf("max lag %s, want 899", fmtSecs(r.MaxLagS))
 	}
 }
 
@@ -91,8 +89,8 @@ func TestBuildPromptLost(t *testing.T) {
 		Reply: "abc",
 		Phone: []phone.Event{{T: base.UnixMilli(), Ev: "prompt-sent"}},
 	})
-	if r.MaxLagS != nil || r.AgentGotPromptS != nil || *r.LongestSilenceS != 900 {
-		t.Fatalf("max lag %v, agent got prompt %v, longest silence %v", r.MaxLagS, r.AgentGotPromptS, r.LongestSilenceS)
+	if r.MaxLagS != nil || r.AgentGotPromptS != nil || r.LongestSilenceS == nil || *r.LongestSilenceS != 900 {
+		t.Fatalf("max lag %s, agent got prompt %s, longest silence %s", fmtSecs(r.MaxLagS), fmtSecs(r.AgentGotPromptS), fmtSecs(r.LongestSilenceS))
 	}
 }
 
@@ -100,6 +98,6 @@ func TestBuildColdNeverLoaded(t *testing.T) {
 	base := time.UnixMilli(1_000_000)
 	r := Build(Input{Kind: "cold", Switched: base, End: base.Add(time.Minute), Reply: "abc"})
 	if r.Status != StatusNeverLoaded || r.LongestSilenceS != nil {
-		t.Fatalf("status %q", r.Status)
+		t.Fatalf("status %q, longest silence %s", r.Status, fmtSecs(r.LongestSilenceS))
 	}
 }

@@ -61,6 +61,9 @@ func dispatch(ctx context.Context, cmd string, args []string) error {
 		}
 		return nil
 	case "render":
+		if len(args) == 0 {
+			return errors.New("usage: lab render <run dir>...")
+		}
 		return report.Render(args)
 	case "summary":
 		if len(args) != 1 {
