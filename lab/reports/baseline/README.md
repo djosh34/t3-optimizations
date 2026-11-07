@@ -2,10 +2,12 @@
 
 The untouched t3code v0.1.7 web client over WebSocket, with compression (`websocket`) and
 without it like the unchanged iOS app (`websocket-nodeflate`). Seed 1. See [lab/README.md](../../README.md)
-for the profiles and what each measure means. All runs ran at commit 95709024129b.
+for the profiles and what each measure means.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's
 userspace stack (issue #7), so production numbers differ.
+
+Lab commit of these runs: 3be906ff21e3, cc6b9676f812.
 
 | Profile | Grade | Client | Start | Status | Prompt confirmed | Prompt reached agent | First text | Max lag | Longest silence | Shown/produced/total | Wire down/up (B) | Reply received/duplicates (B) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -23,24 +25,24 @@ userspace stack (issue #7), so production numbers differ.
 | [C](C-websocket-nodeflate-cold/report.md) | graded | websocket-nodeflate | cold | done | 8.6s | 0.8s | 14.2s | 17.0s | 14.4s | 1596/1596/1596 | 3247450/408767 | 2294/698 |
 | [D](D-websocket-warm/report.md) | graded | websocket | warm | not done by deadline | 27.4s | 15.0s | 36.9s | 873.9s | 862.3s | 397/1077/1596 | 35092/220811 | 397/0 |
 | [D](D-websocket-nodeflate-warm/report.md) | graded | websocket-nodeflate | warm | not done by deadline | 13.1s | 6.1s | never | 892.8s | 899.2s | 0/1077/1596 | 60239/363523 | 0/0 |
-| [D](D-websocket-cold/report.md) | graded | websocket | cold | app never loaded by deadline | never | never | never | no text produced | 0.0s | 0/0/1596 | 113156/39300 | 0/0 |
-| [D](D-websocket-nodeflate-cold/report.md) | graded | websocket-nodeflate | cold | app never loaded by deadline | never | never | never | no text produced | 0.0s | 0/0/1596 | 54282/10677 | 0/0 |
+| [D](D-websocket-cold/report.md) | graded | websocket | cold | app never loaded by deadline | never | never | never | no text produced | n/a, no prompt sent | 0/0/1596 | 113156/39300 | 0/0 |
+| [D](D-websocket-nodeflate-cold/report.md) | graded | websocket-nodeflate | cold | app never loaded by deadline | never | never | never | no text produced | n/a, no prompt sent | 0/0/1596 | 54282/10677 | 0/0 |
 | [E](E-websocket-warm/report.md) | graded | websocket | warm | not done by deadline | never | never | never | no text produced | 899.4s | 0/0/1596 | 2397/1938 | 0/0 |
 | [E](E-websocket-nodeflate-warm/report.md) | graded | websocket-nodeflate | warm | not done by deadline | never | never | never | no text produced | 899.4s | 0/0/1596 | 5902/25880 | 0/0 |
-| [E](E-websocket-cold/report.md) | graded | websocket | cold | app never loaded by deadline | never | never | never | no text produced | 0.0s | 0/0/1596 | 3002/911 | 0/0 |
-| [E](E-websocket-nodeflate-cold/report.md) | graded | websocket-nodeflate | cold | app never loaded by deadline | never | never | never | no text produced | 0.0s | 0/0/1596 | 7167/27189 | 0/0 |
+| [E](E-websocket-cold/report.md) | graded | websocket | cold | app never loaded by deadline | never | never | never | no text produced | n/a, no prompt sent | 0/0/1596 | 3002/911 | 0/0 |
+| [E](E-websocket-nodeflate-cold/report.md) | graded | websocket-nodeflate | cold | app never loaded by deadline | never | never | never | no text produced | n/a, no prompt sent | 0/0/1596 | 7167/27189 | 0/0 |
 | [E-iid](E-iid-websocket-warm/report.md) | fault | websocket | warm | not done by deadline | never | never | never | no text produced | 899.5s | 0/0/1596 | 2382/2204 | 0/0 |
 | [E-iid](E-iid-websocket-nodeflate-warm/report.md) | fault | websocket-nodeflate | warm | not done by deadline | never | never | never | no text produced | 899.4s | 0/0/1596 | 6384/5739 | 0/0 |
 | [F](F-websocket-warm/report.md) | diagnostic | websocket | warm | not done by deadline | never | never | never | no text produced | 899.4s | 0/0/1596 | 1612/824 | 0/0 |
 | [F](F-websocket-nodeflate-warm/report.md) | diagnostic | websocket-nodeflate | warm | not done by deadline | never | never | never | no text produced | 899.3s | 0/0/1596 | 1613/1981 | 0/0 |
 | [case70](case70-websocket-warm/report.md) | graded | websocket | warm | not done by deadline | never | never | never | no text produced | 899.3s | 0/0/1596 | 2238/6271 | 0/0 |
 | [case70](case70-websocket-nodeflate-warm/report.md) | graded | websocket-nodeflate | warm | not done by deadline | never | 14.4s | never | 884.5s | 899.4s | 0/1077/1596 | 11167/21773 | 0/0 |
-| [case70](case70-websocket-cold/report.md) | graded | websocket | cold | app never loaded by deadline | never | never | never | no text produced | 0.0s | 0/0/1596 | 4147/2379 | 0/0 |
-| [case70](case70-websocket-nodeflate-cold/report.md) | graded | websocket-nodeflate | cold | app never loaded by deadline | never | never | never | no text produced | 0.0s | 0/0/1596 | 3001/2754 | 0/0 |
+| [case70](case70-websocket-cold/report.md) | graded | websocket | cold | app never loaded by deadline | never | never | never | no text produced | n/a, no prompt sent | 0/0/1596 | 4147/2379 | 0/0 |
+| [case70](case70-websocket-nodeflate-cold/report.md) | graded | websocket-nodeflate | cold | app never loaded by deadline | never | never | never | no text produced | n/a, no prompt sent | 0/0/1596 | 3001/2754 | 0/0 |
 | [case50](case50-websocket-warm/report.md) | graded | websocket | warm | not done by deadline | 3.5s | 0.7s | 15.9s | 888.2s | 883.5s | 397/1077/1596 | 11180/33014 | 397/0 |
 | [case50](case50-websocket-nodeflate-warm/report.md) | graded | websocket-nodeflate | warm | not done by deadline | 32.4s | 31.3s | never | 867.6s | 899.2s | 0/1077/1596 | 32205/121616 | 0/0 |
-| [case50](case50-websocket-cold/report.md) | graded | websocket | cold | app never loaded by deadline | never | never | never | no text produced | 0.0s | 0/0/1596 | 32790/41196 | 0/0 |
-| [case50](case50-websocket-nodeflate-cold/report.md) | graded | websocket-nodeflate | cold | app never loaded by deadline | never | never | never | no text produced | 0.0s | 0/0/1596 | 17357/4421 | 0/0 |
+| [case50](case50-websocket-cold/report.md) | graded | websocket | cold | app never loaded by deadline | never | never | never | no text produced | n/a, no prompt sent | 0/0/1596 | 32790/41196 | 0/0 |
+| [case50](case50-websocket-nodeflate-cold/report.md) | graded | websocket-nodeflate | cold | app never loaded by deadline | never | never | never | no text produced | n/a, no prompt sent | 0/0/1596 | 17357/4421 | 0/0 |
 | [loss30](loss30-websocket-warm/report.md) | fault | websocket | warm | done | 1.0s | 0.8s | 11.3s | 18.1s | 18.3s | 1596/1596/1596 | 20882/56565 | 2294/698 |
 | [loss30](loss30-websocket-nodeflate-warm/report.md) | fault | websocket-nodeflate | warm | not done by deadline | 4.7s | 2.0s | never | 896.9s | 899.3s | 0/1077/1596 | 186614/454974 | 0/0 |
 | [loss90](loss90-websocket-warm/report.md) | fault | websocket | warm | not done by deadline | never | never | never | no text produced | 899.5s | 0/0/1596 | 608/959 | 0/0 |
@@ -69,8 +71,5 @@ userspace stack (issue #7), so production numbers differ.
 | [addrchange](addrchange-websocket-nodeflate-warm/report.md) | fault | websocket-nodeflate | warm | not done by deadline | 0.7s | 0.7s | 11.2s | 888.2s | 888.0s | 397/1077/1596 | 78063/52952 | 397/0 |
 | [derp](derp-websocket-warm/report.md) | fault | websocket | warm | done | 1.0s | 0.9s | 11.3s | 17.0s | 17.0s | 1596/1596/1596 | 62891/164790 | 2294/698 |
 | [derp](derp-websocket-nodeflate-warm/report.md) | fault | websocket-nodeflate | warm | done | 2.0s | 1.2s | 12.0s | 17.7s | 17.7s | 1596/1596/1596 | 161780/199897 | 2294/698 |
-
-These runs failed twice with a lab error and have no report:
-
-- soak-websocket-nodeflate-warm
-- soak-websocket-warm
+| [soak](soak-websocket-warm/report.md) | fault | websocket | warm | not done by deadline | 15.2s | 2.7s | never | 3596.2s | 3599.0s | 0/1077/125238 | 41021/175939 | 0/0 |
+| [soak](soak-websocket-nodeflate-warm/report.md) | fault | websocket-nodeflate | warm | not done by deadline | 11.2s | 1.9s | never | 3596.0s | 3598.9s | 0/1077/125238 | 59299/241268 | 0/0 |
