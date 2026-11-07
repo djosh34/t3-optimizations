@@ -1,0 +1,148 @@
+# Chaos lab
+
+The lab runs a t3 client over a shaped, faulty link and measures what the phone sees. The first client is the untouched t3code v0.1.7 web client over WebSocket, the baseline every later outcome is compared with. Its reports are in [reports/baseline](reports/baseline/README.md).
+
+## Run it
+
+Once, as yourself:
+
+```sh
+make setup                              # from the repo root: t3code dependencies
+lab/scripts/build-baseline-client.sh    # the v0.1.7 web client, into ~/.cache/t3lab
+cd lab && go build -o bin/lab ./cmd/lab
+```
+
+Then, from `lab/`:
+
+```sh
+sudo ./bin/lab run --profile E --seed 7 --client websocket
+sudo ./bin/lab run --profile case70 --seed 7 --client websocket-nodeflate --kind cold
+./bin/lab profiles                      # every profile
+sudo ./bin/lab cleanup                  # remove leftovers of labs that died
+scripts/run-baseline.sh 3               # every baseline run, 3 at a time, into reports/baseline
+```
+
+`run` flags:
+
+- `--client`: `websocket` (the web client as Safari runs it, with WebSocket compression) or `websocket-nodeflate` (no compression, like the unchanged iOS app, which never negotiates it; issue #7).
+- `--kind`: `warm` (default) starts connected on a clean link and then switches to the profile. `cold` sets everything up on the clean link, closes the page, switches to the profile, and then opens the app again.
+- `--seed`: seeds netem. The same seed gives the same fault sequence. Timings still differ from run to run, because the browser and the server do not run in lockstep.
+- `--deadline`: overrides the run's deadline (15 minutes, 60 for `soak`). A run that is not done by then reports "not done by deadline" instead of waiting.
+- `--out`, `--name`: where the run directory goes (default `reports/runs/<time>-<profile>-<client>-<kind>-s<seed>`, ignored by git).
+- `--node`: the node binary for the t3 server. The default is `node` on root's `PATH`.
+
+The lab needs root for `ip`, `tc` and docker, and does nothing else as root: the t3 server, the HTTPS front, the tunnel, the browser and every file it writes run as, or belong to, the user who ran `sudo`.
+
+## What a run does
+
+```
+ phone container (docker, --network none)          server namespace t3lab<id>srv
+ ┌──────────────────────────────────┐             ┌───────────────────────────────────┐
+ │ WebKit, driven by driver.mjs     │   veth      │ lab front: HTTPS :8443            │
+ │ via `docker exec`                ├─netem──────►│   └─► forked t3 server :3780      │
+ │ 10.231.0.2                       │◄──────netem─┤        └─► lab fakeagent (ACP)    │
+ └──────────────────────────────────┘ 10.231.0.1  └───────────────────────────────────┘
+```
+
+1. Cleanup removes what earlier labs left behind (anything named `t3lab*` whose lab process is gone). Running labs are left alone, so several runs can share the host.
+2. The lab creates the server namespace and a veth pair with GSO off, so netem sees wire-sized packets. It starts the phone container with no network, moves one veth end into the container's namespace and names it `t3lab<id>phone`. Playwright talks to WebKit over `docker exec`, so its control traffic never crosses the shaped link.
+3. In the server namespace it starts the forked t3 server from `t3code/` with `--base-dir` set to a fresh temp dir (deleted after the run), a home dir of its own and `PATH` without the host's provider CLIs. Its settings turn Codex and Claude off and add the fake agent as provider `lab`, so no prompt can reach a real model. It serves the baseline client build (`T3CODE_STATIC_DIR`). The lab front terminates TLS with a fresh self-signed certificate, like `tailscale serve` in production; the page is a secure context, so service workers work.
+4. The t3 CLI adds the project, starts the "Lab thread" with a short warm-up turn and mints a pairing URL. The phone pairs, opens the thread, and sends one turn with an image attached.
+5. The lab applies the profile with `tc netem` on both veth ends (server end: down, phone end: up), then tells the phone to type the measured prompt.
+6. The fake agent streams the reply. Outages, flapping and the address change happen on the profile's schedule. The phone approves the approval request when it shows.
+7. The run ends when the phone shows the whole reply, or at the deadline. The lab deletes the container and the namespaces, also on Ctrl-C and on errors.
+
+### The fake agent
+
+`lab fakeagent` is an ACP agent over stdio that the t3 server starts like any local agent. For the measured prompt (64 bytes) it streams a fixed reply of 2,040 characters at 50 characters per second, 5 characters every 100 ms:
+
+- two long paragraphs, so the server's paragraph buffering shows,
+- an approval request after them; the reply stops until the phone answers,
+- an image (a 48x48 PNG); t3 v0.1.7 shows images from agents as the text `[ACP image (image/png)]`, so the image the thread really holds is the one the phone attached in setup,
+- a paragraph, then a code block that is never closed.
+
+It logs when it produced each character (`agent.jsonl`). All lags are measured from that moment, not from when the server published the text.
+
+## The two graded cases
+
+The plan's pass numbers apply to these two cases ([issue #18](https://github.com/djosh34/t3-optimizations/issues/18)):
+
+| | case 70 | case 50 |
+|---|---|---|
+| Rate, each direction | 10 kbit/s | 100 kbit/s |
+| Loss, each direction | 70% independent random | 50% independent random |
+| One-way delay | 300 ms, normal jitter ±50 ms (RTT about 600 ms) | same |
+| Queue | 20 packets | 50 packets |
+| Start | warm | warm |
+| Prompt | 64 bytes, typed once the profile is applied | same |
+| Reply | the fake agent's reply above, 50 characters/s | same |
+| Deadline | 15 minutes | 15 minutes |
+| Pass | prompt confirmed within 10 s | newest text never more than 5 s behind |
+
+## Profiles
+
+Rates are per direction (down / up when they differ). Delay is one-way with normal jitter. A to F come from [issue #15](https://github.com/djosh34/t3-optimizations/issues/15); the rest cover every fault type of issue #18. Outages silence both directions by dropping packets at each end's ingress, so packets in flight are lost too.
+
+| Profile | Grade | Rate | Delay | Loss | Queue | Other faults |
+|---|---|---|---|---|---|---|
+| A | graded | 10 Mbit/s / 1 Mbit/s | 35 ± 10 ms | 0.15% | 128 | |
+| B | graded | 512 / 128 kbit/s | 500 ± 100 ms | bursty, 4.8% | 64 | down 2 s every 120 s |
+| C | graded | 200 / 114 kbit/s | 450 ± 50 ms | bursty, 2% | 32 | |
+| D | graded | 64 / 32 kbit/s | 4000 ± 500 ms | bursty, 16.7% | 64 | down 6 s every 60 s |
+| E | graded | 1 kbit/s | 2000 ± 500 ms | bursty, 75% | 2 | down 10 s every 60 s |
+| E-iid | fault | 1 kbit/s | 2000 ± 500 ms | 75% | 2 | down 10 s every 60 s |
+| F | diagnostic | 64 bit/s | 2000 ± 500 ms | bursty, 75% | 2 | down 20 s every 30 s |
+| case70 | graded | 10 kbit/s | 300 ± 50 ms | 70% | 20 | |
+| case50 | graded | 100 kbit/s | 300 ± 50 ms | 50% | 50 | |
+| loss30 | fault | 100 kbit/s | 300 ± 50 ms | 30% | 50 | |
+| loss90 | fault | 100 kbit/s | 300 ± 50 ms | 90% | 50 | |
+| burst90 | fault | 100 kbit/s | 300 ± 50 ms | bursty, 90%, runs of 20 | 50 | |
+| rate100 | fault | 800 bit/s (100 B/s) | 300 ± 50 ms | none | 4 | |
+| rtt3000 | fault | 200 kbit/s | 1500 ± 300 ms | 1% | 64 | |
+| reorder | fault | 100 kbit/s | 300 ± 50 ms | 10% | 50 | 25% reordered |
+| duplicate | fault | 100 kbit/s | 300 ± 50 ms | 5% | 50 | 20% duplicated |
+| corrupt | fault | 100 kbit/s | 300 ± 50 ms | none | 50 | 10% corrupted |
+| asym | fault | 200 kbit/s / 2 kbit/s | 150 ± 20 / 400 ± 100 ms | 1% / 50% | 32 / 8 | |
+| outage10 | fault | 200 kbit/s | 150 ± 20 ms | 1% | 32 | one 10 s outage at 10 s |
+| outage60 | fault | 200 kbit/s | 150 ± 20 ms | 1% | 32 | one 60 s outage at 10 s |
+| flap | fault | 200 kbit/s | 150 ± 20 ms | 1% | 32 | down 5 s every 15 s |
+| addrchange | fault | 200 kbit/s | 150 ± 20 ms | 1% | 32 | the phone's address changes at 15 s |
+| derp | fault | 200 kbit/s | 150 ± 20 ms | 10% | 32 | all traffic in one TCP connection |
+| soak | fault | 100 kbit/s | 300 ± 50 ms | 50% | 50 | a 55-minute reply, 60-minute deadline |
+
+"Bursty" is netem's Gilbert-Elliott model; the percentage is the mean loss. Profile F cannot carry even one connection check in its 10 s up windows, so it is diagnostic: always run and reported, never graded. `derp` carries the phone's packets through a TUN device and one TCP connection across the shaped link (MTU 1280), like a Tailscale DERP relay; loss on the link then stalls everything in the tunnel.
+
+## The report
+
+Each run writes `report.json` and `report.md`, plus the raw `phone.jsonl` (the driver's events) and `agent.jsonl` (the agent's production log), the server, front and driver logs, and the phone's screenshots in `phone/`.
+
+- **Status**: `done` (the phone shows the whole reply), `not done by deadline`, or for cold runs `app never loaded by deadline` / `prompt never sent by deadline`.
+- **Prompt confirmation**: from pressing Enter to the server's success reply for the command that carries the prompt reaching the page.
+- **Time to first text**: from pressing Enter to the first reply text on screen.
+- **Prompt reached the agent**: from pressing Enter to the fake agent receiving the prompt.
+- **Newest-text lag**: every second, how old the oldest text is that the agent produced and the phone does not show yet; 0 when the phone shows everything produced. Reported as a series and as max, median and p95. When the agent produced no text, because the prompt never reached it, there is no lag to report and the report says "no text produced".
+- **Longest silence**: the longest time after pressing Enter in which the phone showed no new reply text, up to the end of the reply or of the run. A phone that showed nothing has a silence as long as the run. A cold run that never loaded the app sent no prompt, so it reports "n/a, no prompt sent".
+- **Bytes on the wire**: what crossed the server's end of the link after the switch, down and up, with TCP, TLS and every other request the page makes (the web client also posts its traces to the server).
+- **Bytes the app received / sent**: WebSocket payloads after decompression, from the switch to the end.
+- **Reply received / duplicates**: how much reply text the application received over WebSocket, and how much of it it had already received. t3 sends each assistant message with its whole text so far, so the lab counts the text of assistant messages created after the prompt was sent. Because every update repeats the text before it, duplicates are above 0 even on a clean link: on profile A the app received 2,294 characters of reply text for the 1,596-character reply, 698 of them duplicates.
+
+The phone reads the reply from the page's text. It matches pieces of at least 8 letters and digits against the reply, ignoring whitespace and punctuation, and counts what it has seen once even after the row scrolls away.
+
+The lab's TCP is the kernel's, over a veth pair. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ. Every report says so.
+
+## CI
+
+The `lab-smoke` job runs profiles A, outage10 and case70 for 3 minutes each with the same setup: namespaces, the forked server, WebKit in the same image. A must finish; the other two must produce a report. The reports are uploaded as an artifact.
+
+## Code
+
+- `cmd/lab`: the command.
+- `internal/run`: one run, from setup to report.
+- `internal/netlab`: namespaces, veths, netem, outages, cleanup.
+- `internal/profile`: the profiles and their netem arguments.
+- `internal/t3server`: the forked t3 server and its setup through the t3 CLI.
+- `internal/agent`: the fake agent and its reply.
+- `internal/front`: the HTTPS front.
+- `internal/tunnel`: the TCP outer path.
+- `internal/phone`, `driver/`: the container and the Playwright driver (Playwright 1.64.1, image `mcr.microsoft.com/playwright:v1.64.1-noble`).
+- `internal/report`: the measures, JSON and Markdown.

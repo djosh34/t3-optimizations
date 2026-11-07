@@ -1,0 +1,120 @@
+# case70, websocket, warm start, seed 1
+
+Profile case70 (graded): graded: 70% loss, 10 kbit/s. Commit cc6b9676f812.
+
+Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
+
+**Status: not done by deadline** after 900 s (deadline 15m0s).
+
+| Measure | Value |
+|---|---|
+| Prompt confirmation | never |
+| Prompt reached the agent | never |
+| Time to first text | never |
+| Whole reply shown | never |
+| Reply shown / produced / total (chars) | 0 / 0 / 1596 |
+| Newest-text lag: max / median / p95 | no text produced / no text produced / no text produced |
+| Longest silence | 899.3s |
+| Approval shown after it was asked | never |
+| Bytes on the wire down / up | 2238 / 6271 |
+| Bytes the app received / sent | 1948 / 1377 |
+| Reply text received / of it duplicates | 0 / 0 |
+| WebSockets opened after the switch | 0 |
+
+## Newest-text lag over time
+
+Every 10 s after the prompt was sent.
+
+| After (s) | Lag (s) | Shown | Produced |
+|---|---|---|---|
+| 0 | 0.0 | 0 | 0 |
+| 10 | 0.0 | 0 | 0 |
+| 20 | 0.0 | 0 | 0 |
+| 30 | 0.0 | 0 | 0 |
+| 40 | 0.0 | 0 | 0 |
+| 50 | 0.0 | 0 | 0 |
+| 60 | 0.0 | 0 | 0 |
+| 70 | 0.0 | 0 | 0 |
+| 80 | 0.0 | 0 | 0 |
+| 90 | 0.0 | 0 | 0 |
+| 100 | 0.0 | 0 | 0 |
+| 110 | 0.0 | 0 | 0 |
+| 120 | 0.0 | 0 | 0 |
+| 130 | 0.0 | 0 | 0 |
+| 140 | 0.0 | 0 | 0 |
+| 150 | 0.0 | 0 | 0 |
+| 160 | 0.0 | 0 | 0 |
+| 170 | 0.0 | 0 | 0 |
+| 180 | 0.0 | 0 | 0 |
+| 190 | 0.0 | 0 | 0 |
+| 200 | 0.0 | 0 | 0 |
+| 210 | 0.0 | 0 | 0 |
+| 220 | 0.0 | 0 | 0 |
+| 230 | 0.0 | 0 | 0 |
+| 240 | 0.0 | 0 | 0 |
+| 250 | 0.0 | 0 | 0 |
+| 260 | 0.0 | 0 | 0 |
+| 270 | 0.0 | 0 | 0 |
+| 280 | 0.0 | 0 | 0 |
+| 290 | 0.0 | 0 | 0 |
+| 300 | 0.0 | 0 | 0 |
+| 310 | 0.0 | 0 | 0 |
+| 320 | 0.0 | 0 | 0 |
+| 330 | 0.0 | 0 | 0 |
+| 340 | 0.0 | 0 | 0 |
+| 350 | 0.0 | 0 | 0 |
+| 360 | 0.0 | 0 | 0 |
+| 370 | 0.0 | 0 | 0 |
+| 380 | 0.0 | 0 | 0 |
+| 390 | 0.0 | 0 | 0 |
+| 400 | 0.0 | 0 | 0 |
+| 410 | 0.0 | 0 | 0 |
+| 420 | 0.0 | 0 | 0 |
+| 430 | 0.0 | 0 | 0 |
+| 440 | 0.0 | 0 | 0 |
+| 450 | 0.0 | 0 | 0 |
+| 460 | 0.0 | 0 | 0 |
+| 470 | 0.0 | 0 | 0 |
+| 480 | 0.0 | 0 | 0 |
+| 490 | 0.0 | 0 | 0 |
+| 500 | 0.0 | 0 | 0 |
+| 510 | 0.0 | 0 | 0 |
+| 520 | 0.0 | 0 | 0 |
+| 530 | 0.0 | 0 | 0 |
+| 540 | 0.0 | 0 | 0 |
+| 550 | 0.0 | 0 | 0 |
+| 560 | 0.0 | 0 | 0 |
+| 570 | 0.0 | 0 | 0 |
+| 580 | 0.0 | 0 | 0 |
+| 590 | 0.0 | 0 | 0 |
+| 600 | 0.0 | 0 | 0 |
+| 610 | 0.0 | 0 | 0 |
+| 620 | 0.0 | 0 | 0 |
+| 630 | 0.0 | 0 | 0 |
+| 640 | 0.0 | 0 | 0 |
+| 650 | 0.0 | 0 | 0 |
+| 660 | 0.0 | 0 | 0 |
+| 670 | 0.0 | 0 | 0 |
+| 680 | 0.0 | 0 | 0 |
+| 690 | 0.0 | 0 | 0 |
+| 700 | 0.0 | 0 | 0 |
+| 710 | 0.0 | 0 | 0 |
+| 720 | 0.0 | 0 | 0 |
+| 730 | 0.0 | 0 | 0 |
+| 740 | 0.0 | 0 | 0 |
+| 750 | 0.0 | 0 | 0 |
+| 760 | 0.0 | 0 | 0 |
+| 770 | 0.0 | 0 | 0 |
+| 780 | 0.0 | 0 | 0 |
+| 790 | 0.0 | 0 | 0 |
+| 800 | 0.0 | 0 | 0 |
+| 810 | 0.0 | 0 | 0 |
+| 820 | 0.0 | 0 | 0 |
+| 830 | 0.0 | 0 | 0 |
+| 840 | 0.0 | 0 | 0 |
+| 850 | 0.0 | 0 | 0 |
+| 860 | 0.0 | 0 | 0 |
+| 870 | 0.0 | 0 | 0 |
+| 880 | 0.0 | 0 | 0 |
+| 890 | 0.0 | 0 | 0 |
+| 899 | 0.0 | 0 | 0 |

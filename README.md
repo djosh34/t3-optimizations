@@ -18,7 +18,7 @@ A Cargo workspace (Rust stable, see `crates/rust-toolchain.toml`). `sync-core` h
 
 ### `lab/`
 
-A Go module (Go 1.27) for the chaos lab, which runs t3 clients over shaped and faulty links.
+A Go module (Go 1.27) for the chaos lab, which runs t3 clients over shaped and faulty links and measures what the phone sees. See [lab/README.md](lab/README.md); the WebSocket baseline is in [lab/reports/baseline](lab/reports/baseline/README.md).
 
 ## Checks
 
@@ -48,4 +48,4 @@ CI (`.github/workflows/ci.yml`) runs on every PR and on `main`, with four jobs t
 - `rust`: the Rust checks.
 - `go`: the Go checks.
 - `t3code`: `vp install`, `vp check`, `vp run -r typecheck`, and the web and server unit tests.
-- `lab-smoke`: a short chaos lab run (a placeholder until the lab exists).
+- `lab-smoke`: three short chaos lab runs of the baseline client.
