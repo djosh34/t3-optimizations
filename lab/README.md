@@ -24,7 +24,7 @@ scripts/run-baseline.sh 3               # every baseline run, 3 at a time, into 
 
 `run` flags:
 
-- `--client`: `websocket` (the web client as Safari runs it, with WebSocket compression) or `websocket-nodeflate` (no compression, like the unchanged iOS app, which never negotiates it; issue #7).
+- `--client`: `websocket` (the web client as Safari runs it, with WebSocket compression) or `websocket-nodeflate` (no compression, like the unchanged iOS app, which never negotiates it; issue #7). The pipe clients `pipe`, `pipe-unpatched` and `udp` run ticks instead of the t3 web client; see [Pipe runs](#pipe-runs).
 - `--kind`: `warm` (default) starts connected on a clean link and then switches to the profile. `cold` sets everything up on the clean link, closes the page, switches to the profile, and then opens the app again.
 - `--seed`: seeds netem. The same seed gives the same fault sequence. Timings still differ from run to run, because the browser and the server do not run in lockstep.
 - `--deadline`: overrides the run's deadline (15 minutes, 60 for `soak`). A run that is not done by then reports "not done by deadline" instead of waiting.
@@ -45,7 +45,7 @@ The lab needs root for `ip`, `tc` and docker, and does nothing else as root: the
 ```
 
 1. Cleanup removes what earlier labs left behind (anything named `t3lab*` whose lab process is gone). Running labs are left alone, so several runs can share the host.
-2. The lab creates the server namespace and a veth pair with GSO off, so netem sees wire-sized packets. It starts the phone container with no network, moves one veth end into the container's namespace and names it `t3lab<id>phone`. Playwright talks to WebKit over `docker exec`, so its control traffic never crosses the shaped link.
+2. The lab creates the server namespace and a veth pair with GSO off, so netem sees wire-sized packets. Both ends have fixed MAC addresses and permanent neighbor entries for each other: with ARP over the shaped link, a neighbor entry fails now and then at heavy loss and the kernel drops what it queued for it, which a real phone link does not do. (The WebSocket baseline of issue #42 was measured before this fix.) It starts the phone container with no network, moves one veth end into the container's namespace and names it `t3lab<id>phone`. Playwright talks to WebKit over `docker exec`, so its control traffic never crosses the shaped link.
 3. In the server namespace it starts the forked t3 server from `t3code/` with `--base-dir` set to a fresh temp dir (deleted after the run), a home dir of its own and `PATH` without the host's provider CLIs. Its settings turn Codex and Claude off and add the fake agent as provider `lab`, so no prompt can reach a real model. It serves the baseline client build (`T3CODE_STATIC_DIR`). The lab front terminates TLS with a fresh self-signed certificate, like `tailscale serve` in production; the page is a secure context, so service workers work.
 4. The t3 CLI adds the project, starts the "Lab thread" with a short warm-up turn and mints a pairing URL. The phone pairs, opens the thread, and sends one turn with an image attached.
 5. The lab applies the profile with `tc netem` on both veth ends (server end: down, phone end: up), then tells the phone to type the measured prompt.
@@ -95,6 +95,7 @@ Rates are per direction (down / up when they differ). Delay is one-way with norm
 | case70 | graded | 10 kbit/s | 300 ± 50 ms | 70% | 20 | |
 | case50 | graded | 100 kbit/s | 300 ± 50 ms | 50% | 50 | |
 | loss30 | fault | 100 kbit/s | 300 ± 50 ms | 30% | 50 | |
+| loss70 | fault | 100 kbit/s | 300 ± 50 ms | 70% | 50 | |
 | loss90 | fault | 100 kbit/s | 300 ± 50 ms | 90% | 50 | |
 | burst90 | fault | 100 kbit/s | 300 ± 50 ms | bursty, 90%, runs of 20 | 50 | |
 | rate100 | fault | 800 bit/s (100 B/s) | 300 ± 50 ms | none | 4 | |
@@ -130,9 +131,26 @@ The phone reads the reply from the page's text. It matches pieces of at least 8 
 
 The lab's TCP is the kernel's, over a veth pair. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ. Every report says so.
 
+## Pipe runs
+
+A pipe run tests the transport alone, before any protocol is built on it (issue #49): each end sends a 25-byte tick every 100 ms, and the report shows how the ticks crossed the link. Its reports are in [reports/pipe](reports/pipe/README.md).
+
+```sh
+lab/scripts/build-pipe-lab.sh           # once, as yourself: lab/bin/pipe-lab and pipe-lab-unpatched
+sudo ./bin/lab run --profile loss70 --seed 1 --client pipe
+scripts/run-pipe.sh 3                   # every pipe run, 3 at a time, into reports/pipe
+./bin/lab pipe-summary reports/pipe     # the table of reports/pipe/README.md
+```
+
+- `pipe`: a WebRTC data channel from WebKit (unordered, `maxRetransmits: 0`) to `pipe-lab webrtc` (`crates/pipe`), the server side on str0m with the patched SCTP layer (`crates/vendor/README.md`). The page loads from the lab front, which also passes the SDP offer to `pipe-lab` over HTTP; the data channel runs on UDP port 12444.
+- `pipe-unpatched`: the same with sctp-proto as published on crates.io.
+- `udp`: plain UDP between node in the phone container and `pipe-lab udp`: the best any transport can do on the link.
+
+The run starts the pipe on the clean link, lets ticks flow for 3 s, switches to the profile and measures for 2 minutes (`--deadline` changes that). Pipe runs are warm only. The report gives for each direction the ticks sent and received after the switch, the longest gap between two arrivals (counted from the switch to the end of the run), the gaps over 2 s, and the age of the ticks when they arrived (arrival minus send time; both ends share the host's clock). Raw logs: `phone.jsonl` (driver) and `server.jsonl` (`pipe-lab`).
+
 ## CI
 
-The `lab-smoke` job runs profiles A, outage10 and case70 for 3 minutes each with the same setup: namespaces, the forked server, WebKit in the same image. A must finish; the other two must produce a report. The reports are uploaded as an artifact.
+The `lab-smoke` job runs profiles A, outage10 and case70 for 3 minutes each with the same setup: namespaces, the forked server, WebKit in the same image. A must finish; the other two must produce a report. It then runs `--client pipe` on case50 for 30 s, which must carry ticks both ways. The reports are uploaded as an artifact.
 
 ## Code
 
@@ -144,5 +162,6 @@ The `lab-smoke` job runs profiles A, outage10 and case70 for 3 minutes each with
 - `internal/agent`: the fake agent and its reply.
 - `internal/front`: the HTTPS front.
 - `internal/tunnel`: the TCP outer path.
-- `internal/phone`, `driver/`: the container and the Playwright driver (Playwright 1.64.1, image `mcr.microsoft.com/playwright:v1.64.1-noble`).
+- `internal/phone`, `driver/`: the container and the Playwright drivers, `driver.mjs` for the t3 web client and `pipe.mjs` for pipe runs (Playwright 1.64.1, image `mcr.microsoft.com/playwright:v1.64.1-noble`).
 - `internal/report`: the measures, JSON and Markdown.
+- `internal/pipereport`: the measures of pipe runs.
