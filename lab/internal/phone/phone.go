@@ -39,6 +39,17 @@ type Config struct {
 	Kind string `json:"kind"`
 }
 
+// PipeConfig is the config of the pipe driver, driver/pipe.mjs.
+type PipeConfig struct {
+	// Mode is webrtc or udp.
+	Mode string `json:"mode"`
+	// Origin serves the page and takes the SDP offer (webrtc).
+	Origin string `json:"origin,omitempty"`
+	// UDPHost and UDPPort are the server's tick socket (udp).
+	UDPHost string `json:"udpHost,omitempty"`
+	UDPPort int    `json:"udpPort,omitempty"`
+}
+
 // Event is one line the driver prints.
 type Event struct {
 	T    int64  `json:"t"`
@@ -46,6 +57,9 @@ type Event struct {
 	N    int    `json:"n,omitempty"`
 	Text string `json:"text,omitempty"`
 	Name string `json:"name,omitempty"`
+	// Seq and Sent are a pipe tick's sequence number and send time (Unix ms).
+	Seq  *int64 `json:"seq,omitempty"`
+	Sent int64  `json:"sent,omitempty"`
 	Stats
 }
 
@@ -95,10 +109,11 @@ type Driver struct {
 	done   chan error
 }
 
-// StartDriver runs the driver in the container. Its config goes to
-// driver-config.json in outDir, the container's /out: the soak reply is too
-// long for one command-line argument. Its stderr goes to logPath.
-func StartDriver(ctx context.Context, lab *netlab.Lab, u userproc.User, cfg Config, outDir, logPath string) (*Driver, error) {
+// StartDriver runs a driver script of lab/driver, such as driver.mjs, in the
+// container. Its config goes to driver-config.json in outDir, the
+// container's /out: the soak reply is too long for one command-line
+// argument. Its stderr goes to logPath.
+func StartDriver(ctx context.Context, lab *netlab.Lab, u userproc.User, script string, cfg any, outDir, logPath string) (*Driver, error) {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
@@ -110,7 +125,7 @@ func StartDriver(ctx context.Context, lab *netlab.Lab, u userproc.User, cfg Conf
 	if err != nil {
 		return nil, err
 	}
-	cmd := exec.CommandContext(ctx, "docker", "exec", "-i", lab.Container, "node", "/lab/driver.mjs", "/out/driver-config.json")
+	cmd := exec.CommandContext(ctx, "docker", "exec", "-i", lab.Container, "node", "/lab/"+script, "/out/driver-config.json")
 	cmd.Stderr = log
 	stdin, err := cmd.StdinPipe()
 	if err != nil {

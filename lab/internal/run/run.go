@@ -19,6 +19,7 @@ import (
 	"github.com/djosh34/t3-optimizations/lab/internal/agent"
 	"github.com/djosh34/t3-optimizations/lab/internal/netlab"
 	"github.com/djosh34/t3-optimizations/lab/internal/phone"
+	"github.com/djosh34/t3-optimizations/lab/internal/pipereport"
 	"github.com/djosh34/t3-optimizations/lab/internal/profile"
 	"github.com/djosh34/t3-optimizations/lab/internal/report"
 	"github.com/djosh34/t3-optimizations/lab/internal/t3server"
@@ -39,7 +40,8 @@ const soakParts = 450
 type Options struct {
 	Profile profile.Profile
 	Seed    int64
-	// Client is websocket or websocket-nodeflate.
+	// Client is websocket or websocket-nodeflate, or a pipe client: pipe,
+	// pipe-unpatched or udp.
 	Client string
 	// Kind is warm or cold.
 	Kind string
@@ -61,42 +63,55 @@ const setupTimeout = 10 * time.Minute
 const frontPort = "8443"
 const tunnelPort = "7000"
 
-// Run runs the scenario and writes its report.
-func Run(ctx context.Context, o Options) (report.Report, error) {
-	if o.Client != "websocket" && o.Client != "websocket-nodeflate" {
-		return report.Report{}, fmt.Errorf("unknown client %q: use websocket or websocket-nodeflate", o.Client)
+// Run runs the scenario, writes its report and returns the report's
+// headline.
+func Run(ctx context.Context, o Options) (string, error) {
+	pipe := pipereport.IsPipeClient(o.Client)
+	if o.Client != "websocket" && o.Client != "websocket-nodeflate" && !pipe {
+		return "", fmt.Errorf("unknown client %q: use websocket, websocket-nodeflate, pipe, pipe-unpatched or udp", o.Client)
 	}
 	if o.Kind != "warm" && o.Kind != "cold" {
-		return report.Report{}, fmt.Errorf("unknown kind %q: use warm or cold", o.Kind)
+		return "", fmt.Errorf("unknown kind %q: use warm or cold", o.Kind)
+	}
+	if pipe && o.Kind != "warm" {
+		return "", errors.New("pipe runs are warm only")
 	}
 	deadline := o.Deadline
 	if deadline == 0 {
 		deadline = o.Profile.Deadline()
+		if pipe {
+			deadline = PipeDeadline
+		}
 	}
 	u, err := userproc.Invoking()
 	if err != nil {
-		return report.Report{}, err
+		return "", err
 	}
 	repo := filepath.Dir(o.LabDir)
 	staticDir := filepath.Join(u.Home, ".cache", "t3lab", "baseline-client-"+BaselineCommit[:12], "dist")
-	if _, err := os.Stat(filepath.Join(staticDir, "index.html")); err != nil {
-		return report.Report{}, fmt.Errorf("no baseline client build at %s; run lab/scripts/build-baseline-client.sh as yourself first", staticDir)
+	var server string
+	if pipe {
+		if server, err = pipeServer(o.LabDir, o.Client); err != nil {
+			return "", err
+		}
+	} else if _, err := os.Stat(filepath.Join(staticDir, "index.html")); err != nil {
+		return "", fmt.Errorf("no baseline client build at %s; run lab/scripts/build-baseline-client.sh as yourself first", staticDir)
 	}
 	commit := buildCommit()
 
 	if err := netlab.Cleanup(ctx); err != nil {
-		return report.Report{}, fmt.Errorf("cleanup of old labs: %w", err)
+		return "", fmt.Errorf("cleanup of old labs: %w", err)
 	}
 	lab, err := netlab.Claim()
 	if err != nil {
-		return report.Report{}, err
+		return "", err
 	}
 	// The reaper is its own session, so it outlives this process if it is
 	// killed, and then deletes the lab's namespaces and container.
 	reaper := exec.Command(o.LabExe, "reap", "--id", lab.ID, "--pid", strconv.Itoa(os.Getpid()))
 	reaper.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	if err := reaper.Start(); err != nil {
-		return report.Report{}, errors.Join(err, lab.Delete(ctx))
+		return "", errors.Join(err, lab.Delete(ctx))
 	}
 	go func() {
 		if err := reaper.Wait(); err != nil {
@@ -120,21 +135,27 @@ func Run(ctx context.Context, o Options) (report.Report, error) {
 	runDir := filepath.Join(o.OutDir, name)
 	phoneDir := filepath.Join(runDir, "phone")
 	if err := u.MkdirAll(phoneDir); err != nil {
-		return report.Report{}, err
+		return "", err
 	}
 	fmt.Fprintf(os.Stderr, "lab: run %s in %s\n", lab.ID, runDir)
 
 	s := &scenario{o: o, u: u, lab: lab, runDir: runDir, deadline: deadline}
+	if pipe {
+		in, err := s.executePipe(ctx, server, phoneDir)
+		if err != nil {
+			return "", err
+		}
+		in.Commit = commit
+		r := pipereport.Build(in)
+		return r.Headline(), r.Write(runDir, u.WriteFile)
+	}
 	in, err := s.execute(ctx, repo, staticDir, phoneDir)
 	if err != nil {
-		return report.Report{}, err
+		return "", err
 	}
 	in.Commit = commit
 	r := report.Build(in)
-	if err := r.Write(runDir, u.WriteFile); err != nil {
-		return report.Report{}, err
-	}
-	return r, nil
+	return r.Headline(), r.Write(runDir, u.WriteFile)
 }
 
 type scenario struct {
@@ -231,7 +252,7 @@ func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir str
 	}
 	steps := agent.Script(agent.MeasuredPrompt, soak)
 	reply := agent.Normalize(agent.ReplyText(steps))
-	driver, err := phone.StartDriver(ctx, lab, u, phone.Config{
+	driver, err := phone.StartDriver(ctx, lab, u, "driver.mjs", phone.Config{
 		Origin: origin, PairURL: pairURL, ThreadID: threadID,
 		Prompt: agent.MeasuredPrompt, ImagePrompt: agent.ImagePrompt,
 		Image: base64.StdEncoding.EncodeToString(agent.Picture()),
@@ -312,11 +333,17 @@ func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir str
 // startLabProcess runs a lab subcommand as the user in a namespace. The
 // channel receives its exit error once.
 func (s *scenario) startLabProcess(ctx context.Context, ns, logName string, args ...string) (<-chan error, error) {
+	return s.startProcess(ctx, ns, logName, s.o.LabExe, args...)
+}
+
+// startProcess runs exe as the user in a namespace, with its output in
+// logName in the run dir. The channel receives its exit error once.
+func (s *scenario) startProcess(ctx context.Context, ns, logName, exe string, args ...string) (<-chan error, error) {
 	log, err := s.u.Create(filepath.Join(s.runDir, logName))
 	if err != nil {
 		return nil, err
 	}
-	cmd := s.u.Command(ctx, ns, []string{"PATH=/usr/bin:/bin"}, s.runDir, s.o.LabExe, args...)
+	cmd := s.u.Command(ctx, ns, []string{"PATH=/usr/bin:/bin"}, s.runDir, exe, args...)
 	cmd.Stdout = log
 	cmd.Stderr = log
 	if err := cmd.Start(); err != nil {

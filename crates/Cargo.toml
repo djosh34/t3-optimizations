@@ -1,3 +1,9 @@
 [workspace]
 resolver = "3"
-members = ["sync-core"]
+members = ["sync-core", "pipe"]
+# Vendored crates keep their own tests and lints; see vendor/README.md.
+exclude = ["vendor"]
+
+# str0m's SCTP layer, patched for lossy links. See vendor/README.md.
+[patch.crates-io]
+sctp-proto = { path = "vendor/sctp-proto" }
