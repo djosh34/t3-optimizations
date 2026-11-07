@@ -14,13 +14,20 @@ const manifest = JSON.parse(
   NodeFS.readFileSync(NodePath.join(dist, ".vite/manifest.json"), "utf8"),
 );
 
-// The entry and every route, with what they import statically: what the app
-// needs to open any screen without the network.
+// The entry and every route, with what they import, statically and lazily:
+// what the app needs to open any screen without the network. A lazy chunk
+// missing offline makes the client reload itself (src/main.tsx). Left to load
+// on first use: the file viewers, HEIC decoding and the code grammars.
+const lazyOnly = (key) => key.includes("src/components/files/") || key.includes("/heic-to/");
+const GRAMMARS = "/shiki/dist/langs.mjs";
 const seen = new Set();
 const visit = (key) => {
   if (seen.has(key) || !manifest[key]) return;
   seen.add(key);
-  for (const i of manifest[key].imports ?? []) visit(i);
+  const entry = manifest[key];
+  for (const i of entry.imports ?? []) visit(i);
+  if (key.endsWith(GRAMMARS)) return;
+  for (const i of entry.dynamicImports ?? []) if (!lazyOnly(i)) visit(i);
 };
 for (const [key, entry] of Object.entries(manifest)) {
   if (entry.isEntry || key.includes("src/routes/") || key.startsWith("src/t3opt/")) visit(key);
@@ -32,17 +39,16 @@ for (const key of seen) {
   for (const f of [...(entry.css ?? []), ...(entry.assets ?? [])]) files.add(f);
 }
 
-// The worker that highlights code blocks and diffs, with the chunks it
-// imports; without them a code block stays empty offline. Grammars and themes
-// load on first use (a chunk that lists more than 30 imports is such a map).
+// The worker that highlights diffs, with the chunks it imports (its own copy
+// of the highlighter, outside the manifest), but for its grammars.
 const IMPORT = /(?:import\(|from|import)\s*[`"'](\.\/[^`"']+\.(?:js|mjs|wasm))[`"']/g;
 const scanned = new Set();
 const addWithImports = (file) => {
   if (scanned.has(file)) return;
   scanned.add(file);
   files.add(file);
+  if (NodePath.posix.basename(file).startsWith("langs-")) return;
   const refs = [...NodeFS.readFileSync(NodePath.join(dist, file), "utf8").matchAll(IMPORT)];
-  if (refs.length > 30) return;
   for (const [, ref] of refs)
     addWithImports(NodePath.posix.join(NodePath.posix.dirname(file), ref));
 };

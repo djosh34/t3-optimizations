@@ -33,8 +33,19 @@ const device = devices["iPhone 17 Pro"];
 const browser = await webkit.launch();
 const context = await browser.newContext({ ...device, ignoreHTTPSErrors: true });
 const page = await context.newPage();
+// What makes the app reload itself, as the page logs it (src/t3opt): an
+// unexplained reload loses the typed prompt and the scroll position, so a step
+// fails on one; only the update step expects the new version to take control.
+const TAKEOVER = "t3opt: a new version took control";
+const reloadTriggers = [];
 page.on("console", (m) => {
-  if (m.type() === "error" || m.type() === "warning") console.error(`page ${m.type()}: ${m.text().slice(0, 500)}`);
+  const text = m.text();
+  if (text.startsWith("t3opt: a chunk failed to load") || text.startsWith(TAKEOVER)) reloadTriggers.push(text);
+  if (m.type() === "error" || m.type() === "warning") console.error(`page ${m.type()}: ${text.slice(0, 500)}`);
+});
+page.on("requestfailed", (r) => {
+  const u = new URL(r.url());
+  if (u.pathname.startsWith("/assets/")) console.error(`page asset failed: ${u.pathname} ${r.failure()?.errorText}`);
 });
 
 async function shot(name) {
@@ -53,10 +64,13 @@ async function shot(name) {
 }
 
 const results = [];
-async function step(name, run) {
+async function step(name, run, { takeover = false } = {}) {
   const started = Date.now();
+  reloadTriggers.length = 0;
   try {
     const detail = await run();
+    const unexpected = reloadTriggers.filter((t) => !(takeover && t.startsWith(TAKEOVER)));
+    if (unexpected.length > 0) throw new Error(`the app reloaded itself: ${unexpected[0]}`);
     results.push({ name, ok: true });
     emit("step", { name, text: `ok in ${((Date.now() - started) / 1000).toFixed(1)} s${detail ? `: ${detail}` : ""}` });
   } catch (error) {
@@ -92,27 +106,14 @@ async function waitText(text, timeout = 120_000) {
   await page.getByText(text, { exact: false }).first().waitFor({ state: "visible", timeout });
 }
 
-// The app can navigate by itself while the test does (it reloads after a
-// chunk failed to load, or when a new version takes control; the page logs
-// why). Either way the page that loads is the one the test asked for.
-async function navigate(go) {
-  try {
-    await go();
-  } catch (error) {
-    if (!/interrupted/i.test(String(error))) throw error;
-    console.error(`webapp-e2e: the app navigated during the test's own: ${String(error).split("\n")[0]}`);
-    await page.waitForLoadState("domcontentloaded", { timeout: 60_000 });
-  }
-}
-
 async function openThread(threadId) {
   const url = `${cfg.origin}/${cfg.environmentId}/${encodeURIComponent(threadId)}`;
-  await navigate(() => page.goto(url, { waitUntil: "commit", timeout: 60_000 }));
+  await page.goto(url, { waitUntil: "commit", timeout: 60_000 });
   await appReady();
 }
 
 async function reload() {
-  await navigate(() => page.reload({ waitUntil: "commit", timeout: 60_000 }));
+  await page.reload({ waitUntil: "commit", timeout: 60_000 });
 }
 
 const link = () => page.evaluate(() => window.t3opt?.engine?.status().link ?? null);
@@ -398,7 +399,7 @@ await step("update", async () => {
   const after = await swVersion();
   if (typeof before !== "string" || after === before) throw new Error(`still ${after}`);
   return `${before} to ${after}`;
-});
+}, { takeover: true });
 
 await step("deleted-while-sidecar-down", async () => {
   if (!newThreadId) throw new Error("no thread from add-project-and-thread");
