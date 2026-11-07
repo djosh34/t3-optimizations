@@ -2,6 +2,7 @@ package run
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,6 +21,11 @@ import (
 // the web app's place.
 const ClientSidecarNative = "sidecar-native"
 
+// ClientWebapp is the home-screen web app (t3code/apps/web/src/t3opt) in
+// WebKit, served by the sidecar behind the lab's HTTPS front, on the same
+// data channel.
+const ClientWebapp = "webapp"
+
 // The sidecar's ports in the server namespace.
 const (
 	sidecarHTTPPort = 8480
@@ -29,23 +35,32 @@ const (
 const sidecarPath = "WebRTC data channel (UDP, str0m with the patched SCTP layer) over a veth pair " +
 	"in the lab; the phone is crates/native-phone, not WebKit. In production the UDP goes through Tailscale."
 
+const webappPath = "WebRTC data channel from WebKit to the sidecar (UDP, str0m with the patched SCTP layer) " +
+	"over a veth pair in the lab; the app's HTTPS goes through the lab front. In production the UDP goes through Tailscale."
+
 // sidecarBinaries returns the sidecar and the native phone, built by
-// lab/scripts/build-sidecar.sh.
-func sidecarBinaries(labDir string) (sidecar, native string, err error) {
+// lab/scripts/build-sidecar.sh, and for the web app its build from
+// lab/scripts/build-webapp.sh.
+func sidecarBinaries(labDir string, webapp bool) (sidecar, native, web string, err error) {
 	sidecar = filepath.Join(labDir, "bin", "sidecar")
 	native = filepath.Join(labDir, "bin", "native-phone")
-	for _, path := range []string{sidecar, native} {
+	need := []string{sidecar, native}
+	if webapp {
+		web = filepath.Join(labDir, "bin", "webapp")
+		need = []string{sidecar, filepath.Join(web, "sw.js")}
+	}
+	for _, path := range need {
 		if _, err := os.Stat(path); err != nil {
-			return "", "", fmt.Errorf("no %s; run lab/scripts/build-sidecar.sh as yourself first", path)
+			return "", "", "", fmt.Errorf("no %s; run lab/scripts/build-sidecar.sh and lab/scripts/build-webapp.sh as yourself first", path)
 		}
 	}
-	return sidecar, native, nil
+	return sidecar, native, web, nil
 }
 
 // executeSidecar runs a t3 scenario through the sidecar: the forked server
-// and the sidecar in the server namespace, the native phone in the phone
-// container.
-func (s *scenario) executeSidecar(parent context.Context, repo, phoneDir, sidecarBin, nativeBin string) (in report.Input, err error) {
+// and the sidecar in the server namespace, the native phone or the web app
+// (webDir set) in the phone container.
+func (s *scenario) executeSidecar(parent context.Context, repo, phoneDir, sidecarBin, nativeBin, webDir string) (in report.Input, err error) {
 	o, u, lab := s.o, s.u, s.lab
 	ctx, fail := context.WithCancelCause(parent)
 	defer func() {
@@ -86,22 +101,49 @@ func (s *scenario) executeSidecar(parent context.Context, repo, phoneDir, sideca
 		return in, fmt.Errorf("no code in the pairing URL %q", pairURL)
 	}
 
-	exited, err := s.startProcess(procs.ctx, lab.ServerNS, "sidecar.log", sidecarBin,
-		"--t3-url", "http://127.0.0.1:"+strconv.Itoa(t3server.Port),
+	args := []string{
+		"--t3-url", "http://127.0.0.1:" + strconv.Itoa(t3server.Port),
 		"--t3-base-dir", server.BaseDir(),
 		"--t3-command", strings.Join(server.CLI(), " "),
 		"--data-dir", filepath.Join(s.runDir, "sidecar"),
 		"--http", fmt.Sprintf("%s:%d", netlab.ServerAddr, sidecarHTTPPort),
-		"--udp", fmt.Sprintf("%s:%d", netlab.ServerAddr, sidecarUDPPort))
+		"--udp", fmt.Sprintf("%s:%d", netlab.ServerAddr, sidecarUDPPort),
+	}
+	if webDir != "" {
+		args = append(args, "--web-dir", webDir)
+	}
+	exited, err := s.startProcess(procs.ctx, lab.ServerNS, "sidecar.log", sidecarBin, args...)
 	if err != nil {
 		return in, err
 	}
 	procs.watch("sidecar", exited)
+	reply := agent.Normalize(agent.ReplyText(agent.Script(agent.MeasuredPrompt, soak)))
+
+	if webDir != "" {
+		// The app needs a secure context (service worker, WebCrypto): the
+		// lab front gives the sidecar HTTPS, as tailscale serve does.
+		exited, err := s.startLabProcess(procs.ctx, lab.ServerNS, "front.log", "front",
+			"--listen", ":"+frontPort, "--upstream", fmt.Sprintf("%s:%d", netlab.ServerAddr, sidecarHTTPPort))
+		if err != nil {
+			return in, err
+		}
+		procs.watch("front", exited)
+		front := "https://" + netlab.ServerAddr + ":" + frontPort
+		driver, err := phone.StartDriver(ctx, lab, u, "driver.mjs", phone.Config{
+			Origin: front, PairURL: front + "/pair#token=" + code, ThreadID: threadID,
+			Prompt: agent.MeasuredPrompt, ImagePrompt: agent.ImagePrompt,
+			Image: base64.StdEncoding.EncodeToString(agent.Picture()),
+			Reply: reply, Kind: o.Kind, Webapp: true,
+		}, phoneDir, filepath.Join(s.runDir, "driver.log"))
+		if err != nil {
+			return in, err
+		}
+		return s.drive(ctx, driver, reply, webappPath)
+	}
 
 	if err := u.Install(nativeBin, filepath.Join(phoneDir, "native-phone")); err != nil {
 		return in, err
 	}
-	reply := agent.Normalize(agent.ReplyText(agent.Script(agent.MeasuredPrompt, soak)))
 	driver, err := phone.StartNative(ctx, lab, u, "native-phone", phone.NativeConfig{
 		Origin: origin, Code: code, ThreadID: threadID,
 		Prompt: agent.MeasuredPrompt, Reply: reply, Kind: o.Kind, Local: netlab.PhoneAddr,

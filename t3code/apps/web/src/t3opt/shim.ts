@@ -8,26 +8,12 @@ import type { Pairing } from "./store";
 
 type Json = Record<string, unknown>;
 
-/** Streams that are subscriptions or background work; their calls go at the background class. */
-const BACKGROUND_STREAMS = new Set([
-  "providerAuthSubscribe",
-  "providerInstallSubscribe",
-  "orchestration.subscribeCommandOutput",
-  "subscribeAuthAccess",
-  "subscribeServerLifecycle",
-  "scheduledTasksSubscribe",
-  "server.getStorageCleanupReport",
-  "server.getDatabaseStorage",
-  "subscribeTerminalMetadata",
-  "subscribePreviewEvents",
-  "subscribeDiscoveredLocalServers",
-  "subscribeDeviceState",
-  "subscribeResourceTelemetry",
-  "pullRequestsSubscribeRefreshes",
-  "subscribeVcsStatus",
-  "subscribeWorktreeSetup",
-  "subscribeProjectClones",
-]);
+/**
+ * Commands the client sends by itself, such as marking a thread as read.
+ * They go as calls at the background class, so they never hold up the
+ * owner's commands, which t3 applies in order.
+ */
+const AUTOMATIC_COMMANDS = new Set(["thread.visit"]);
 
 /** How the shim answers the client before the app is paired. */
 const UNPAIRED_AUTH = {
@@ -274,25 +260,18 @@ class RpcServer {
       }
       case "orchestration.dispatchCommand": {
         const command = payload as Json | null;
-        const isPrompt = command?.type === "message.dispatch";
+        if (AUTOMATIC_COMMANDS.has(String(command?.type))) break;
         const { seq, reply } = await this.engine.request("command", payload);
-        if (isPrompt) trackPrompt(this.engine, seq, reply);
+        if (command?.type === "message.dispatch") trackPrompt(this.engine, seq, reply);
         const r = readReply(await reply);
         this.exit(id, "exit" in r ? r.exit : die("a command has no stream"));
         return;
       }
     }
-    // Everything else: one call to the sidecar, one reply.
-    const stream = BACKGROUND_STREAMS.has(tag);
-    if (stream) {
-      this.streams.set(String(id), {
-        pending: null,
-        awaitingAck: false,
-        replaces: false,
-        stop() {},
-      });
-    }
-    const { reply } = await this.engine.request("call", { tag, payload }, stream);
+    // Everything else: one call to the sidecar, one reply, at the background
+    // class. The client makes many calls by itself (status, activity,
+    // subscriptions); only the owner's commands go first.
+    const { reply } = await this.engine.request("call", { tag, payload }, true);
     const r = readReply(await reply);
     if ("chunk" in r) {
       // The sidecar takes a stream's first chunk; the stream stays open here.
@@ -472,9 +451,9 @@ async function handleFetch(ctx: FetchContext, request: Request): Promise<Respons
     // The bounded snapshot's fields are the full one's and more.
     return json(200, await whenReady(engine, () => threadSnapshot(objects, threadId)));
   }
-  // Everything else goes to the forked server through the sidecar.
+  // Everything else goes to the forked server through the sidecar, at the
+  // background class like other calls.
   const bytes = new Uint8Array(await request.arrayBuffer());
-  const upload = bytes.length > 0 && request.method !== "GET";
   const { reply } = await engine.request(
     "call",
     {
@@ -486,7 +465,7 @@ async function handleFetch(ctx: FetchContext, request: Request): Promise<Respons
         ...(bytes.length > 0 ? { body: base64(bytes) } : {}),
       },
     },
-    upload,
+    true,
   );
   const r = (await reply) as Json | null;
   const http = r?.http as Json | undefined;
@@ -525,4 +504,73 @@ export function installShim(input: ShimInput): void {
   } as unknown as typeof WebSocket;
   Object.assign(Shimmed, { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 });
   window.WebSocket = Shimmed;
+  window.XMLHttpRequest = shimXhr(input);
+}
+
+/**
+ * XMLHttpRequest, which the client uploads attachments with (for their
+ * progress), with requests to the server's paths answered like fetches.
+ */
+function shimXhr(ctx: FetchContext): typeof XMLHttpRequest {
+  const Real = window.XMLHttpRequest;
+  return class ShimXhr extends Real {
+    private shimmed: { method: string; url: string; headers: Headers } | null = null;
+    private shimStatus = 0;
+    private shimText = "";
+    private shimAborted = false;
+
+    override open(method: string, url: string | URL, ...rest: unknown[]) {
+      const u = new URL(url, location.href);
+      if (!isServerPath(u)) {
+        this.shimmed = null;
+        (super.open as (...args: unknown[]) => void)(method, url, ...rest);
+        return;
+      }
+      this.shimmed = { method, url: u.toString(), headers: new Headers() };
+    }
+
+    override setRequestHeader(name: string, value: string) {
+      if (this.shimmed) this.shimmed.headers.set(name, value);
+      else super.setRequestHeader(name, value);
+    }
+
+    override get status() {
+      return this.shimmed ? this.shimStatus : super.status;
+    }
+
+    override get responseText() {
+      return this.shimmed ? this.shimText : super.responseText;
+    }
+
+    override abort() {
+      if (!this.shimmed) return super.abort();
+      this.shimAborted = true;
+      this.dispatchEvent(new ProgressEvent("abort"));
+    }
+
+    override send(body?: Document | XMLHttpRequestBodyInit | null) {
+      const shimmed = this.shimmed;
+      if (!shimmed) return super.send(body);
+      const request = new Request(shimmed.url, {
+        method: shimmed.method,
+        headers: shimmed.headers,
+        ...(body instanceof Document || body === null || body === undefined ? {} : { body }),
+      });
+      handleFetch(ctx, request).then(
+        async (response) => {
+          if (this.shimAborted) return;
+          this.shimStatus = response.status;
+          this.shimText = await response.text();
+          this.upload.dispatchEvent(
+            new ProgressEvent("progress", { lengthComputable: true, loaded: 1, total: 1 }),
+          );
+          this.dispatchEvent(new ProgressEvent("load"));
+          this.dispatchEvent(new ProgressEvent("loadend"));
+        },
+        () => {
+          if (!this.shimAborted) this.dispatchEvent(new ProgressEvent("error"));
+        },
+      );
+    }
+  };
 }

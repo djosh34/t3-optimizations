@@ -128,6 +128,7 @@ impl Endpoint {
         self.stats.received_packets += 1;
         self.stats.received_wire_bytes += (len + WIRE_OVERHEAD) as u64;
         self.stats.last_heard = Some(now);
+        self.rate.on_heard(now);
         let mut acked = Acked::default();
         if let Some(a) = &p.ack {
             acked = self.out.on_ack(&a.ranges);

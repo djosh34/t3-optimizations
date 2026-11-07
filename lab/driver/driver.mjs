@@ -210,6 +210,29 @@ async function focusComposer(page, timeout) {
   await page.locator('[data-testid="composer-editor"]:visible').first().click({ timeout });
 }
 
+// The sidecar's web app has no WebSocket to watch: its sync shim says where
+// the prompt is, and its engine counts the bytes.
+let lastPromptState = "";
+async function watchWebapp(page) {
+  const p = await page.evaluate(() => window.t3opt?.prompt?.() ?? null);
+  if (p === null || promptSentAt === undefined || p.at < promptSentAt - 1_000) return;
+  if (p.state !== lastPromptState) {
+    lastPromptState = p.state;
+    emit("note", { text: `prompt ${p.state}` });
+  }
+  if (!confirmed && p.state === "confirmed") {
+    confirmed = true;
+    emit("prompt-confirmed");
+  }
+}
+
+async function webappBytes(page) {
+  return page.evaluate(() => {
+    const s = window.t3opt?.engine?.status().stats;
+    return { rx: s?.receivedWireBytes ?? 0, tx: s?.sentWireBytes ?? 0 };
+  });
+}
+
 const device = devices["iPhone 17 Pro"];
 const browser = await webkit.launch();
 const context = await browser.newContext({ ...device, ignoreHTTPSErrors: true });
@@ -242,7 +265,15 @@ async function setup() {
   });
   await focusComposer(page, 60_000);
   await page.keyboard.type(cfg.imagePrompt);
-  await page.keyboard.press("Enter");
+  // The composer does not send while the image is still uploading, which
+  // through the sidecar takes a moment: Enter again until it is sent.
+  const editor = page.locator('[data-testid="composer-editor"]:visible').first();
+  for (let i = 0; i < 60; i++) {
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(2_000);
+    if (!((await editor.textContent().catch(() => "")) ?? "").includes(cfg.imagePrompt)) break;
+    await editor.click({ timeout: 10_000 }).catch(() => {});
+  }
   await waitForText(page, "I received the image", 120_000);
   await screenshot(page, "ready");
 }
@@ -264,6 +295,7 @@ if (go !== "go") {
 }
 stats.rxBytes = 0;
 stats.txBytes = 0;
+const webappStart = cfg.webapp ? await webappBytes(page).catch(() => ({ rx: 0, tx: 0 })) : null;
 void nextCommand().then(() => {
   stopping = true;
   stopRequested();
@@ -301,6 +333,7 @@ let shown = 0;
 let approvalVisible = false;
 while (!stopping) {
   try {
+    if (cfg.webapp) await untilStop(watchWebapp(page));
     const n = await untilStop(sampleText(page));
     if (typeof n === "number" && n !== shown) {
       shown = n;
@@ -329,6 +362,11 @@ while (!stopping) {
 }
 
 await screenshot(page, "end");
+if (webappStart !== null) {
+  const end = await webappBytes(page).catch(() => webappStart);
+  stats.rxBytes = end.rx - webappStart.rx;
+  stats.txBytes = end.tx - webappStart.tx;
+}
 emit("stats", stats);
 await browser.close();
 process.exit(0);

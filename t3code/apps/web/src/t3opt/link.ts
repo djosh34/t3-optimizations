@@ -16,6 +16,8 @@ const RTC_RETRY_MS = 10_000;
 const RTC_RETRY_ON_WS_MS = 60_000;
 /** A gap this long counts as a silence in the link reports. */
 const SILENCE_MS = 2_000;
+/** Bytes the browser may hold unsent before the phone makes its next packet. */
+const SEND_BUFFER = 1_200;
 const CERT_LIFETIME_MS = 365 * 24 * 3600 * 1000;
 
 export type Transport = "webrtc" | "websocket";
@@ -43,6 +45,8 @@ export interface LinkHooks {
   /** A new connection: the phone must send its hello and log again. */
   readonly onNewConnection: () => void;
   readonly onChange: () => void;
+  /** The send buffer drained: the phone may send again. */
+  readonly onWritable: () => void;
 }
 
 /** What the link keeps in storage. */
@@ -183,14 +187,23 @@ export class Link {
     setInterval(() => void this.watch(), 1_000);
   }
 
+  /**
+   * Whether a packet can go out now. WebKit's SCTP holds what its congestion
+   * window does not let out; packets that wait there only get older, so the
+   * phone makes the next one when the buffer is (nearly) empty again.
+   */
+  canSend(): boolean {
+    if (this.transport === "websocket") {
+      return this.ws?.readyState === WebSocket.OPEN && this.ws.bufferedAmount < SEND_BUFFER;
+    }
+    return this.rtc?.dc.readyState === "open" && this.rtc.dc.bufferedAmount < SEND_BUFFER;
+  }
+
   send(packet: Uint8Array<ArrayBuffer>): void {
-    // A full buffer is loss, which sync-core handles; a closed one too.
+    // A closed channel is loss, which sync-core handles.
     try {
-      if (this.transport === "websocket") {
-        if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(packet);
-      } else if (this.rtc?.dc.readyState === "open" && this.rtc.dc.bufferedAmount < 64_000) {
-        this.rtc.dc.send(packet);
-      }
+      if (this.transport === "websocket") this.ws?.send(packet);
+      else this.rtc?.dc.send(packet);
     } catch (error) {
       console.warn("t3opt: send failed", error);
     }
@@ -257,6 +270,8 @@ export class Link {
     const pc = new RTCPeerConnection({ certificates: [certificate] });
     const dc = pc.createDataChannel("sync", { ordered: false, maxRetransmits: 0 });
     dc.binaryType = "arraybuffer";
+    dc.bufferedAmountLowThreshold = SEND_BUFFER;
+    dc.onbufferedamountlow = () => this.hooks.onWritable();
     const rtc: Rtc = {
       pc,
       dc,
@@ -401,8 +416,11 @@ export class Link {
       if (now - this.lastRtcTry >= RTC_RETRY_MS) this.tryRtc();
       return;
     }
-    const gone = rtc.dc.readyState === "closed" || rtc.pc.connectionState === "failed";
-    if (gone) {
+    // Only a closed channel is gone. At heavy loss WebKit calls the
+    // connection failed when ICE checks are lost, while data still arrives;
+    // an ICE restart below handles that, a new connection would need a DTLS
+    // handshake that takes minutes at 70% loss.
+    if (rtc.dc.readyState === "closed") {
       this.tryRtc();
       return;
     }

@@ -9,7 +9,7 @@ import { createRoot } from "react-dom/client";
 
 import { Engine } from "./engine";
 import { registerServiceWorker } from "./serviceWorker";
-import { installShim, shimTrace } from "./shim";
+import { installShim, shimEvents, shimTrace } from "./shim";
 import { StatusLine } from "./StatusLine";
 import { Store } from "./store";
 
@@ -19,7 +19,13 @@ const REPORT_EVERY_MS = 60_000;
 declare global {
   interface Window {
     /** For the lab's driver and tests. */
-    t3opt?: { engine: Engine | null; store: Store; trace: string[] };
+    t3opt?: {
+      engine: Engine | null;
+      store: Store;
+      trace: string[];
+      /** The newest prompt's state, its sequence number as a string. */
+      prompt: () => { seq: string; state: string; at: number } | null;
+    };
   }
 }
 
@@ -90,7 +96,15 @@ export async function startT3opt(): Promise<void> {
     },
   });
   const started = engine === null ? null : await engine;
-  window.t3opt = { engine: started, store, trace: shimTrace };
+  window.t3opt = {
+    engine: started,
+    store,
+    trace: shimTrace,
+    prompt: () => {
+      const p = shimEvents.prompt;
+      return p === null ? null : { seq: String(p.seq), state: p.state, at: p.at };
+    },
+  };
   mountStatusLine(started);
   if (started !== null && pairing !== null) startReports(started, pairing.token, realFetch);
 }

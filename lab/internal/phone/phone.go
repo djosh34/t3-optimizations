@@ -37,6 +37,9 @@ type Config struct {
 	Reply string `json:"reply"`
 	// Kind is warm or cold.
 	Kind string `json:"kind"`
+	// Webapp is set for the sidecar's web app: the driver reads the prompt's
+	// state from the sync shim, as there is no WebSocket to watch.
+	Webapp bool `json:"webapp,omitempty"`
 }
 
 // PipeConfig is the config of the pipe driver, driver/pipe.mjs.

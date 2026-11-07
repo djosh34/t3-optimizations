@@ -88,6 +88,7 @@ export class Engine {
           engine.pump();
         },
         onChange: () => engine.statusChanged(),
+        onWritable: () => engine.pump(),
       },
       input.realFetch,
     );
@@ -190,7 +191,11 @@ export class Engine {
   /** Sends what the phone has to send now, and wakes when it next has. */
   pump(): void {
     const now = performance.now();
-    for (let p = this.phone.poll(now); p !== null; p = this.phone.poll(now)) this.link.send(p);
+    while (this.link.canSend()) {
+      const p = this.phone.poll(now);
+      if (p === null) break;
+      this.link.send(p);
+    }
     const at = this.phone.nextWakeup(now);
     if (this.pumpTimer !== null) clearTimeout(this.pumpTimer);
     this.pumpTimer = setTimeout(() => this.pump(), Math.max(1, Math.min(1_000, at - now)));

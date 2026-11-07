@@ -258,6 +258,37 @@ func (l *Lab) SetOutage(ctx context.Context, down bool) error {
 	return nil
 }
 
+// Block drops one kind of traffic between the phone and the server at each
+// end's ingress, or lets it through again: "udp" (the data channel) or
+// "https" (TCP to the server's port 8443, the lab front).
+func (l *Lab) Block(ctx context.Context, what string, on bool) error {
+	pref, match := "", []string{}
+	switch what {
+	case "udp":
+		pref, match = "2", []string{"protocol", "ip", "flower", "ip_proto", "udp"}
+	case "https":
+		pref = "3"
+	default:
+		return fmt.Errorf("block: unknown traffic %q", what)
+	}
+	for _, side := range []struct{ ns, dev, port string }{
+		{l.ServerNS, l.serverIf, "dst_port"}, {l.PhoneNS, l.phoneIf, "src_port"},
+	} {
+		m := match
+		if what == "https" {
+			m = []string{"protocol", "ip", "flower", "ip_proto", "tcp", side.port, "8443"}
+		}
+		args := []string{"-n", side.ns, "filter", "del", "dev", side.dev, "ingress", "pref", pref}
+		if on {
+			args = append([]string{"-n", side.ns, "filter", "add", "dev", side.dev, "ingress", "pref", pref}, append(m, "action", "drop")...)
+		}
+		if err := run(ctx, "tc", args...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // ChangePhoneAddr gives the phone a new address and removes the old one, so
 // its open connections break the way they do on a new NAT mapping.
 func (l *Lab) ChangePhoneAddr(ctx context.Context) error {

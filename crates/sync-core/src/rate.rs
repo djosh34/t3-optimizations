@@ -1,6 +1,6 @@
 //! How fast a side sends (issue #25): pace at a send rate, raise it while
-//! round-trip time stays flat, lower it only when round-trip time grows.
-//! Loss never lowers it. What arrived at the other side is measured from its
+//! round-trip time stays flat, lower it when round-trip time grows or
+//! nothing comes back at all while it sends. Loss never lowers it. What arrived at the other side is measured from its
 //! reports and kept apart, for the status line and the loss estimate.
 
 use std::collections::VecDeque;
@@ -56,6 +56,12 @@ const PROBE_INCREASE: f64 = 1.25;
 /// A sender that had nothing waiting for this long starts again from the
 /// initial rate: what it knew about the link may be stale.
 const IDLE_RESTART: Millis = 2_000;
+/// Sending with no packet from the other side for this many smoothed RTTs,
+/// and at least `SILENCE_MIN`, lowers the rate like RTT growth does. While
+/// data flows the other side acks several times a second, so at 70% loss
+/// 4 s without a packet is a link that carries nothing back.
+const SILENCE_RTTS: f64 = 4.0;
+const SILENCE_MIN: Millis = 4_000;
 /// Reports at least this far apart, and this many packets sent, give one
 /// sample of delivery rate and loss.
 const REPORT_SPAN: Millis = 1_000;
@@ -82,6 +88,8 @@ pub struct RateControl {
     /// slowly from sample to sample, so this measures the jitter alone.
     jitter: f64,
     last_rtt: Option<f64>,
+    /// When the last packet from the other side came in.
+    last_heard: Option<Millis>,
     /// The lowest RTT sample, and the number of samples, since the last
     /// decision.
     fresh_min: Option<f64>,
@@ -119,6 +127,7 @@ impl RateControl {
             rtt_window: VecDeque::new(),
             jitter: 0.0,
             last_rtt: None,
+            last_heard: None,
             fresh_min: None,
             fresh_count: 0,
             changed_at: now,
@@ -234,6 +243,11 @@ impl RateControl {
         self.next_decision
     }
 
+    /// Notes a packet from the other side.
+    pub fn on_heard(&mut self, now: Millis) {
+        self.last_heard = Some(now);
+    }
+
     /// Takes an RTT sample of a packet sent at `sent_at`.
     pub fn on_rtt(&mut self, now: Millis, sample: f64, sent_at: Millis) {
         let sample = sample.max(1.0);
@@ -309,8 +323,13 @@ impl RateControl {
 
     /// Raises or lowers the rate, about once per base round trip. RTT
     /// growth lowers it; with fresh samples and no growth, a sender that
-    /// had data waiting raises it; with no samples (an outage, or every
-    /// ack lost) it stays.
+    /// had data waiting raises it. With nothing heard for many round trips
+    /// while it sends, it goes down too: the link went down, or the rate is
+    /// so far above what a slower link takes that its queue drops the
+    /// other side's feedback as well (issue #45: after a switch from a clean
+    /// link to 10 kbit/s, the sidecar kept its clean-link rate and WebKit's
+    /// replies never got through). Lowering is safe in both cases; slow
+    /// start raises it again within a few round trips of the first sample.
     pub fn decide(&mut self, now: Millis) {
         if now < self.next_decision {
             return;
@@ -318,7 +337,19 @@ impl RateControl {
         let base = self.min_rtt();
         let interval = base.unwrap_or(500.0).max(300.0);
         if self.fresh_count < DECISION_SAMPLES {
-            // Too little feedback (an outage, or every ack lost): wait.
+            let silence = (SILENCE_RTTS * self.srtt.unwrap_or(0.0)).max(SILENCE_MIN as f64);
+            let silent = self
+                .last_heard
+                .is_some_and(|t| now.saturating_sub(t) as f64 >= silence);
+            if silent && self.limited && self.rate > self.cfg.floor {
+                self.rate = (self.rate * DRAIN).max(self.cfg.floor);
+                self.slow_start = true;
+                self.drain_from = None;
+                self.changed_at = now;
+                // The path may be another one now: its first samples are
+                // the new base, not RTT growth.
+                self.rtt_window.clear();
+            }
             self.next_decision = now + interval as Millis;
             return;
         }
@@ -484,6 +515,39 @@ mod tests {
             "rate {}",
             rc.rate()
         );
+    }
+
+    #[test]
+    fn sending_without_feedback_lowers_the_rate_and_feedback_raises_it() {
+        let mut rc = RateControl::new(RateConfig::default(), 0);
+        let mut t = 0;
+        for _ in 0..40 {
+            t += 300;
+            rc.on_heard(t);
+            rc.on_rtt(t, 20.0, t);
+            rc.note_limited(t);
+            rc.decide(t);
+        }
+        let fast = rc.rate();
+        assert!(fast > 10_000.0, "rate {fast} did not grow on a clean link");
+        // Nothing comes back for 10 s while data waits.
+        for _ in 0..33 {
+            t += 300;
+            rc.note_limited(t);
+            rc.decide(t);
+        }
+        let slow = rc.rate();
+        assert!(slow < fast / 10.0, "rate {slow} stayed near {fast}");
+        assert!(slow >= RateConfig::default().floor);
+        // Feedback again: slow start.
+        for _ in 0..10 {
+            t += 700;
+            rc.on_heard(t);
+            rc.on_rtt(t, 600.0, t);
+            rc.note_limited(t);
+            rc.decide(t);
+        }
+        assert!(rc.rate() > 2.0 * slow, "rate {} did not grow from {slow}", rc.rate());
     }
 
     #[test]
