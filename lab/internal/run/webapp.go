@@ -112,7 +112,7 @@ func RunWebappE2E(ctx context.Context, o E2EOptions) (headline string, failed in
 	if err != nil {
 		return "", 0, err
 	}
-	report := e2eReport(results, buildCommit(), o)
+	report := e2eReport(results, buildCommit(), o, countLines(filepath.Join(runDir, "sidecar", "link-reports.jsonl")))
 	if err := u.WriteFile(filepath.Join(runDir, "e2e.md"), []byte(report)); err != nil {
 		return "", 0, err
 	}
@@ -346,7 +346,16 @@ func (e *e2e) deleteOffline(ctx context.Context, thread string) error {
 	return e.startSidecar(ctx)
 }
 
-func e2eReport(results []stepResult, commit string, o E2EOptions) string {
+// countLines counts the lines of a file; 0 when there is none.
+func countLines(path string) int {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0
+	}
+	return strings.Count(string(data), "\n")
+}
+
+func e2eReport(results []stepResult, commit string, o E2EOptions, linkReports int) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# Web app end to end\n\nCommit %s, seed %d, outage %s. ", commit, o.Seed, o.Outage)
 	b.WriteString("WebKit (Playwright 1.64.1) at the iPhone 17 Pro's size in the lab's phone container; ")
@@ -356,6 +365,7 @@ func e2eReport(results []stepResult, commit string, o E2EOptions) string {
 	for _, r := range results {
 		fmt.Fprintf(&b, "| %s | %s |\n", r.name, strings.ReplaceAll(r.result, "|", "\\|"))
 	}
+	fmt.Fprintf(&b, "\nThe app posted %d link reports during the test; the sidecar logged them in `sidecar/link-reports.jsonl`.\n", linkReports)
 	b.WriteString("\nScreenshots are in `phone/`: each name once as the Safari tab (`-safari`) and once as the home-screen app (`-home-screen`).\n")
 	return b.String()
 }

@@ -7,11 +7,9 @@ import type { Pairing } from "./store";
 /** With nothing from the sidecar for this long, restart ICE, and again each time it passes. */
 const RESTART_AFTER_MS = 8_000;
 /**
- * Silent this long while ICE was connected for `DEAD_ICE_UP_MS` of it: the
- * path works but the connection does not (the sidecar restarted). An outage
- * never connects ICE, so it is recovered on the same connection. A starved
- * link at 70% loss can be silent for half a minute with ICE up, and a new
- * connection there costs minutes of handshake, so both bounds are long.
+ * Silent this long with ICE up for `DEAD_ICE_UP_MS` of it: the sidecar lost the
+ * connection. Both are long: a starved link at 70% loss can be silent with ICE up,
+ * and a new connection there costs minutes of handshake (README.md).
  */
 const DEAD_AFTER_MS = 60_000;
 const DEAD_ICE_UP_MS = 20_000;

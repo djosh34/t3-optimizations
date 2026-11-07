@@ -31,6 +31,7 @@ Fetches to the page's own `/api`, `/oauth` and `/.well-known` paths:
 
 - `/api/auth/session` and `/.well-known/t3/environment` come from synced objects; before pairing the session says "not authenticated", so the client shows its pairing screen.
 - `/api/auth/browser-session` (the pairing screen's code) goes to the sidecar's `/api/pair`, which exchanges the code with t3 and answers with a device id and token. The page then reloads and syncs.
+- An assistant text can arrive before its turn item: the newest text goes first, and its turn item, a kilobyte of JSON, waits behind the thread's status. The shim shows the text in a stand-in row, a copy of the thread's newest complete assistant item with this text, in the newest run, after every other item. The real item has the same id and takes its place.
 - The snapshot loaders (`/api/orchestration/shell`, `/api/orchestration/threads/:id` and `/bounded`) come from synced state. A thread shows as soon as its thread body is here; turn items and texts fill in as they arrive, a missing part of a text shown as `…`. Every turn item the phone has gets a row, by t3's own visibility rule, so `hasMoreHistory` is always false and history never needs the network.
 - The client's own traces are dropped.
 - Everything else goes to the forked server through the sidecar (`sidecar.http`); a request with a body, such as an image upload, at the background class.

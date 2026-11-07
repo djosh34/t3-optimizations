@@ -166,12 +166,9 @@ export function threadSnapshot(objects: Objects, threadId: string): ThreadSnapsh
 const standInCache = new WeakMap<Obj, Json>();
 
 /**
- * Turn items for assistant texts whose own turn item has not arrived. The
- * newest text goes first (the tail class) and its item, a kilobyte of JSON,
- * waits behind the thread's status; without an item the client has no row
- * to show the text in. A stand-in is a copy of the thread's newest complete
- * assistant item with this text, in the newest run, after every other item.
- * The real item has the same id and takes its place when it comes.
+ * Rows for assistant texts whose turn item (a kilobyte of JSON queued behind the
+ * thread's status) has not arrived: copies of the newest complete assistant item.
+ * The real item has the same id and takes the stand-in's place (README.md).
  */
 function standIns(
   objs: ReadonlyArray<Obj>,
