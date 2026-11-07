@@ -1,0 +1,13 @@
+{"t":1794013916071,"ev":"ws-open"}
+{"t":1794013916122,"ev":"ws-close"}
+{"t":1794013916644,"ev":"ws-open"}
+{"t":1794013917098,"ev":"paired"}
+{"t":1794013917161,"ev":"ws-close"}
+{"t":1794013917578,"ev":"ws-open"}
+{"t":1794013918148,"ev":"thread-open"}
+{"t":1794013922298,"ev":"screenshot","name":"ready"}
+{"t":1794013922312,"ev":"ready"}
+{"t":1794013922635,"ev":"app-loading"}
+{"t":1794014822317,"ev":"note","text":"app did not load: stopped"}
+{"t":1794014837320,"ev":"note","text":"screenshot end failed: page.screenshot: Timeout 15000ms exceeded.\nCall log:\n  - taking page screenshot\n  - waiting for fonts to load...\n"}
+{"t":1794014837320,"ev":"stats"}
