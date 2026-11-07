@@ -1,0 +1,89 @@
+/* The status line sits above the app; the app gets the height below it. */
+html.t3opt {
+  --t3opt-bar: calc(24px + env(safe-area-inset-top));
+}
+
+html.t3opt #root {
+  box-sizing: border-box;
+  padding-top: var(--t3opt-bar);
+}
+
+html.t3opt .h-dvh {
+  height: calc(100dvh - var(--t3opt-bar)) !important;
+}
+
+.t3opt-status {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 2147483000;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: var(--t3opt-bar);
+  padding: env(safe-area-inset-top) 10px 0;
+  overflow: hidden;
+  border: 0;
+  background: #1c1c1e;
+  color: #e5e5ea;
+  font:
+    500 11px/1 -apple-system,
+    system-ui,
+    sans-serif;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.t3opt-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff9f0a;
+}
+
+.t3opt-status[data-live="true"] .t3opt-dot {
+  background: #30d158;
+}
+
+.t3opt-update {
+  margin-left: auto;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 10px;
+  background: #0a84ff;
+  color: #fff;
+  font: inherit;
+}
+
+.t3opt-details {
+  position: fixed;
+  inset: var(--t3opt-bar) 0 auto 0;
+  z-index: 2147483000;
+  max-height: 70dvh;
+  overflow: auto;
+  padding: 12px 14px 16px;
+  background: #1c1c1e;
+  color: #e5e5ea;
+  font:
+    13px/1.4 -apple-system,
+    system-ui,
+    sans-serif;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
+}
+
+.t3opt-details dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 12px;
+  margin: 0;
+}
+
+.t3opt-details dt {
+  color: #8e8e93;
+}
+
+.t3opt-details dd {
+  margin: 0;
+}

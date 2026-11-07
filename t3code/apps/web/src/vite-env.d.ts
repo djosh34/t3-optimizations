@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_WS_URL: string;
   readonly VITE_HOSTED_APP_URL: string;
   readonly VITE_HOSTED_APP_CHANNEL: string;
+  /** "1" in the sidecar's build of the web app. */
+  readonly VITE_T3OPT: string;
   readonly VITE_RELEASE_CHANNEL: string;
   readonly VITE_CLERK_PUBLISHABLE_KEY: string;
   readonly VITE_CLERK_JWT_TEMPLATE: string;

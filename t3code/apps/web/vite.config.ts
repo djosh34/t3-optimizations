@@ -320,6 +320,8 @@ export default defineConfig(() => {
       "import.meta.env.T3CODE_FEATURE_SECRETS": JSON.stringify(configuredFeatureSecrets),
       "import.meta.env.VITE_RELEASE_CHANNEL": JSON.stringify(configuredReleaseChannel),
       "import.meta.env.APP_VERSION": JSON.stringify(configuredAppVersion),
+      // The sidecar's build of the web app (lab/scripts/build-webapp.sh).
+      "import.meta.env.VITE_T3OPT": JSON.stringify(process.env.T3OPT_BUILD === "1" ? "1" : ""),
     },
     resolve: {
       tsconfigPaths: true,

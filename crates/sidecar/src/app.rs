@@ -37,7 +37,8 @@ pub enum Fetched {
         mime: String,
         result: Result<Vec<u8>, String>,
     },
-    Descriptor(Result<Value, String>),
+    /// The environment descriptor and the sidecar's session.
+    Descriptor(Result<(Value, Value), String>),
     /// A phone's `sidecar.http` request.
     Http {
         device: String,
@@ -919,7 +920,10 @@ impl App {
                 }
             }
             Fetched::Descriptor(result) => match result {
-                Ok(v) => self.world.set_descriptor(&v),
+                Ok((descriptor, session)) => {
+                    self.world.set_descriptor(&descriptor);
+                    self.world.set_session(&session);
+                }
                 Err(e) => log(format!("environment descriptor: {e}")),
             },
             Fetched::Http {
@@ -1054,11 +1058,17 @@ fn spawn_fetcher(auth: Arc<Auth>, jobs: Receiver<Job>, to_main: Sender<Msg>) {
                     let result = auth.get(&url).map_err(|e| e.to_string());
                     Fetched::Image { id, mime, result }
                 }
-                Job::Descriptor => Fetched::Descriptor(
-                    auth.get("/.well-known/t3/environment")
-                        .and_then(|b| Ok(serde_json::from_slice::<Value>(&b)?))
-                        .map_err(|e| e.to_string()),
-                ),
+                Job::Descriptor => {
+                    let get = |path: &str| {
+                        auth.get(path)
+                            .and_then(|b| Ok(serde_json::from_slice::<Value>(&b)?))
+                    };
+                    Fetched::Descriptor(
+                        get("/.well-known/t3/environment")
+                            .and_then(|d| Ok((d, get("/api/auth/session")?)))
+                            .map_err(|e| e.to_string()),
+                    )
+                }
                 // A phone's request may be slow (an upload on a bad link
                 // took long to arrive, the reply takes long too); it gets
                 // its own thread, so fetches do not wait for it.

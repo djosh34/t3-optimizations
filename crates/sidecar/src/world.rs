@@ -15,8 +15,9 @@
 //! - Frame: a thread's snapshot fields and its visible rows, with local rows'
 //!   items left out (they are bodies).
 //! - Image: an attachment's bytes.
-//! - Config: the server's config (`server.getConfig`) and its environment
-//!   descriptor, which the web app needs before it shows anything.
+//! - Config: the server's config (`server.getConfig`), its environment
+//!   descriptor and the sidecar's auth session on it, which the web app
+//!   needs before it shows anything.
 //!
 //! Every object has a `meta` JSON that says what it is; see `crates/sidecar/README.md`.
 
@@ -53,6 +54,7 @@ pub struct Obj {
 
 const CONFIG: &str = "config";
 const DESCRIPTOR: &str = "descriptor";
+const SESSION: &str = "session";
 
 /// Projection collections whose bodies go with status in the current
 /// thread. Turn items that are not finished go there too.
@@ -222,7 +224,8 @@ impl World {
     }
 
     /// Whether everything the forked server has is here: the thread list,
-    /// a snapshot of every listed thread, the config and the descriptor.
+    /// a snapshot of every listed thread, the config, the descriptor and the
+    /// session.
     /// Until then, an object the world lacks may just not be loaded yet.
     pub fn complete(&self) -> bool {
         self.shell_loaded
@@ -230,7 +233,7 @@ impl World {
                 .shell_threads
                 .keys()
                 .all(|t| self.loaded_threads.contains(t))
-            && [CONFIG, DESCRIPTOR]
+            && [CONFIG, DESCRIPTOR, SESSION]
                 .iter()
                 .all(|c| self.objects.contains_key(&object_id(&[c])))
     }
@@ -257,6 +260,12 @@ impl World {
     /// The environment descriptor, from `/.well-known/t3/environment`.
     pub fn set_descriptor(&mut self, descriptor: &Value) {
         self.put_config(DESCRIPTOR, compact(descriptor));
+    }
+
+    /// The sidecar's session on the server, from `/api/auth/session`: the
+    /// web app shows the scopes and permissions it has through the sidecar.
+    pub fn set_session(&mut self, session: &Value) {
+        self.put_config(SESSION, compact(session));
     }
 
     fn put_config(&mut self, c: &str, content: Vec<u8>) {
@@ -1083,6 +1092,7 @@ mod tests {
         w.set_shell(&shell(json!([{"id": "t1"}, {"id": "t2"}])));
         w.set_config(&json!({"environment": {}}));
         w.set_descriptor(&json!({"environmentId": "e"}));
+        w.set_session(&json!({"authenticated": true}));
         w.set_thread("t1", &snap);
         assert!(!w.complete(), "t2 has no snapshot yet");
         w.set_thread("t2", &snap);
