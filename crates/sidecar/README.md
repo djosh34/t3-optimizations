@@ -39,8 +39,8 @@ Classes, per phone, follow [issue #16](https://github.com/djosh34/t3-optimizatio
 
 - **Tail:** the text of the open thread's newest assistant message.
 - **Status:** the open thread's frame, its `thread`, `runs`, `attempts`, `runtimeRequests`, `plans`, `subagents`, and turn items that are pending, running or waiting.
-- **History:** the rest of the open thread.
-- **ThreadList:** the thread list and the config objects.
+- **History:** the config objects first (the web app shows nothing before it has them), then the rest of the open thread.
+- **ThreadList:** the thread list.
 - **Background:** other threads.
 - **Image:** images.
 

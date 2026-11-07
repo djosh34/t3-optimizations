@@ -15,6 +15,33 @@ type Json = Record<string, unknown>;
  */
 const AUTOMATIC_COMMANDS = new Set(["thread.visit"]);
 
+/**
+ * Calls at the background class: subscriptions and the client's own reports.
+ * Other calls go first: a prompt waits for `server.refreshProviders`, an
+ * attachment for its upload URL.
+ */
+const BACKGROUND_CALLS = new Set([
+  "providerAuthSubscribe",
+  "providerInstallSubscribe",
+  "orchestration.subscribeCommandOutput",
+  "subscribeAuthAccess",
+  "subscribeServerLifecycle",
+  "scheduledTasksSubscribe",
+  "server.getStorageCleanupReport",
+  "server.getDatabaseStorage",
+  "subscribeTerminalMetadata",
+  "subscribePreviewEvents",
+  "subscribeDiscoveredLocalServers",
+  "subscribeDeviceState",
+  "subscribeResourceTelemetry",
+  "pullRequestsSubscribeRefreshes",
+  "subscribeVcsStatus",
+  "subscribeWorktreeSetup",
+  "subscribeProjectClones",
+  "server.reportClientActivity",
+  "preview.reportProfiles",
+]);
+
 /** How the shim answers the client before the app is paired. */
 const UNPAIRED_AUTH = {
   policy: "remote-reachable",
@@ -268,10 +295,9 @@ class RpcServer {
         return;
       }
     }
-    // Everything else: one call to the sidecar, one reply, at the background
-    // class. The client makes many calls by itself (status, activity,
-    // subscriptions); only the owner's commands go first.
-    const { reply } = await this.engine.request("call", { tag, payload }, true);
+    // Everything else: one call to the sidecar, one reply.
+    const background = BACKGROUND_CALLS.has(tag) || tag === "orchestration.dispatchCommand";
+    const { reply } = await this.engine.request("call", { tag, payload }, background);
     const r = readReply(await reply);
     if ("chunk" in r) {
       // The sidecar takes a stream's first chunk; the stream stays open here.

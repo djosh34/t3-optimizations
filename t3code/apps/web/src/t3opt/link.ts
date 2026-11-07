@@ -261,7 +261,7 @@ export class Link {
       console.warn("t3opt: WebRTC connection failed", error);
       this.rtc?.pc.close();
       this.rtc = null;
-      if (this.transport === "webrtc") this.set("webrtc failed, trying again");
+      if (this.transport === "webrtc") this.set("webrtc retrying");
     });
   }
 
@@ -275,10 +275,9 @@ export class Link {
     this.generation = generation;
     await this.storage.save({ generation });
     if (this.transport === "webrtc") {
-      this.set(
-        this.keptAnswer ? `webrtc connecting (generation ${generation})` : "webrtc signaling",
-      );
+      this.set(this.keptAnswer ? "webrtc connecting" : "webrtc signaling");
     }
+
     const pc = new RTCPeerConnection({ certificates: [certificate] });
     const dc = pc.createDataChannel("sync", { ordered: false, maxRetransmits: 0 });
     dc.binaryType = "arraybuffer";
@@ -356,7 +355,7 @@ export class Link {
     if (rtc.iceUpSince !== null) rtc.iceUpInSilenceMs += rtc.lastRestartAt - rtc.iceUpSince;
     rtc.iceUpSince = null;
     this.iceRestarts += 1;
-    this.set(`webrtc ICE restart ${rtc.restart}`);
+    this.set(`ICE restart ${rtc.restart}`);
     rtc.pc.restartIce();
     const offer = await rtc.pc.createOffer();
     const mine = await derive(key, this.pairing.device, "p", rtc.generation, rtc.restart);

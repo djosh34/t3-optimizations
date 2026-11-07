@@ -90,11 +90,15 @@ impl Device {
 
 /// The class of an object for a phone that has `focus` open (issue #16):
 /// the newest assistant text first, then approvals and status, then older
-/// messages, then the thread list (with the server's config), other
-/// threads, images.
+/// messages, then the thread list, other threads, images. The server's
+/// config goes first among the older messages.
 pub fn class_of(world: &World, id: u64, obj: &Obj, focus: Option<&str>) -> Class {
     match obj.kind {
-        Kind::Shell | Kind::Config => return Class::ThreadList,
+        Kind::Shell => return Class::ThreadList,
+        // The web app shows nothing before it has these. They go after the
+        // open thread's newest text and status, before its older messages
+        // (highest order first), without the repeats of the status class.
+        Kind::Config => return Class::History,
         Kind::Image => return Class::Image,
         Kind::Body | Kind::Text | Kind::Frame => {}
     }

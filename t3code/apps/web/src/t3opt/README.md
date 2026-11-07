@@ -25,7 +25,7 @@ A WebSocket to `/ws` is a `ShimSocket` that speaks the same Effect RPC JSON:
 - `orchestration.subscribeThread` also tells the sidecar which thread is open (`sidecar.focus`), so its newest text goes first.
 - `assets.createUrl` for a synced image answers with a `blob:` URL of its bytes.
 - `orchestration.dispatchCommand` goes out as a sync-core command; the status line follows a prompt from queued to sent to "server has it" to confirmed.
-- Every other call goes to the sidecar as one call and one reply. Subscriptions (`subscribeServerLifecycle` and the like) get the first value t3 sends and stay open; they go at the background class, the owner's calls at the urgent one.
+- Every other call goes to the sidecar as one call and one reply. Subscriptions (`subscribeServerLifecycle` and the like) get the first value t3 sends and stay open. Subscriptions, the client's own activity reports and commands it sends by itself (`thread.visit`) go at the background class; other calls go first, because an action may wait for them (a prompt waits for `server.refreshProviders`).
 
 Fetches to the page's own `/api`, `/oauth` and `/.well-known` paths:
 

@@ -237,9 +237,14 @@ await step("prompt-on-case70", async () => {
 });
 
 await step("thread-fills-newest-first", async () => {
-  await ask("shape case50");
+  // The phone lost its content; the new page connects on the clean link (a
+  // handshake at 50% loss takes minutes) and syncs everything on case 50.
   await page.evaluate(() => window.t3opt.store.clearContent());
   await reload();
+  await page.waitForFunction(() => window.t3opt?.engine?.status().link.lastDataAt != null, null, {
+    timeout: 120_000,
+  });
+  await ask("shape case50");
   // The end of the newest reply shows before the thread's first reply.
   const order = [];
   const until = Date.now() + 300_000;
