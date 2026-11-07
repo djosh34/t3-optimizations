@@ -1,6 +1,7 @@
 //! A str0m client in the browser's role connects to the pipe over loopback
 //! UDP, the way the lab's WebKit does: it offers an unordered data channel
-//! without retransmits, and both ends exchange ticks.
+//! without retransmits, both ends exchange ticks, and the client closes the
+//! channel.
 
 use std::io;
 use std::net::{SocketAddr, UdpSocket};
@@ -99,7 +100,7 @@ impl Client {
 }
 
 #[test]
-fn ticks_cross_both_ways() -> TestResult {
+fn ticks_cross_both_ways_then_close() -> TestResult {
     let mut pipe = Pipe::bind(Config {
         bind: "127.0.0.1:0".parse()?,
         advertise: None,
@@ -134,6 +135,7 @@ fn ticks_cross_both_ways() -> TestResult {
     let mut server_ticks = Vec::new();
     let mut server_open = false;
     let mut seq = 0;
+    let mut closing = false;
     while Instant::now() < deadline {
         pipe.poll(
             Instant::now() + Duration::from_millis(5),
@@ -146,6 +148,14 @@ fn ticks_cross_both_ways() -> TestResult {
                     server_open = true;
                 }
                 PipeEvent::Data(_, data) => server_ticks.extend(Tick::decode(&data)),
+                PipeEvent::Closed(id) if closing => {
+                    assert_eq!(id, peer);
+                    assert_eq!(pipe.open_peers(), vec![]);
+                    return Ok(());
+                }
+                PipeEvent::Closed(_) | PipeEvent::Failed(..) => {
+                    return Err(format!("server lost the peer early: {ev:?}").into());
+                }
                 _ => {}
             }
         }
@@ -158,13 +168,19 @@ fn ticks_cross_both_ways() -> TestResult {
             assert!(channel.write(true, &tick.encode())?);
             seq += 1;
         }
-        if client.ticks().len() == 3 && server_ticks.len() == 3 {
+        if let (false, 3, 3, Some(id)) = (
+            closing,
+            client.ticks().len(),
+            server_ticks.len(),
+            client.open_channel(),
+        ) {
             assert_eq!(pipe.open_peers(), vec![peer]);
-            return Ok(());
+            client.rtc.direct_api().close_data_channel(id);
+            closing = true;
         }
     }
     Err(format!(
-        "after 10 s: server open {server_open}, client got {:?}, server got {server_ticks:?}",
+        "after 10 s: server open {server_open}, closing {closing}, client got {:?}, server got {server_ticks:?}",
         client.ticks()
     )
     .into())

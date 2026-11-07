@@ -3,6 +3,7 @@
 package pipereport
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -103,42 +104,32 @@ func Build(in Input) Report {
 		WireDownBytes: in.WireDown,
 		WireUpBytes:   in.WireUp,
 	}
+	type note struct {
+		t          int64
+		side, text string
+	}
+	var notes []note
 	for _, side := range []struct {
 		name   string
 		events []Event
 	}{{"phone", in.Phone}, {"server", in.Server}} {
 		for _, ev := range side.events {
-			if !slices.Contains([]string{"state", "ice", "note", "open", "closed"}, ev.Ev) {
+			if !slices.Contains([]string{"state", "ice", "note", "open", "closed", "failed"}, ev.Ev) {
 				continue
 			}
 			text := ev.Ev
 			if ev.Text != "" {
 				text += " " + ev.Text
 			}
-			at := secs(time.UnixMilli(ev.T).Sub(in.Switched))
-			r.Notes = append(r.Notes, fmt.Sprintf("%+.1fs %s: %s", at, side.name, text))
+			notes = append(notes, note{ev.T, side.name, text})
 		}
 	}
-	slices.SortStableFunc(r.Notes, func(a, b string) int { return compareNoteTime(a, b) })
+	slices.SortStableFunc(notes, func(a, b note) int { return cmp.Compare(a.t, b.t) })
+	for _, n := range notes {
+		at := secs(time.UnixMilli(n.t).Sub(in.Switched))
+		r.Notes = append(r.Notes, fmt.Sprintf("%+.1fs %s: %s", at, n.side, n.text))
+	}
 	return r
-}
-
-// compareNoteTime orders notes by the time they start with.
-func compareNoteTime(a, b string) int {
-	var ta, tb float64
-	if _, err := fmt.Sscanf(a, "%fs", &ta); err != nil {
-		return 0
-	}
-	if _, err := fmt.Sscanf(b, "%fs", &tb); err != nil {
-		return 0
-	}
-	switch {
-	case ta < tb:
-		return -1
-	case ta > tb:
-		return 1
-	}
-	return 0
 }
 
 // direction measures the ticks the sender sent after the switch and what

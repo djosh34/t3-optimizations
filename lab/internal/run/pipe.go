@@ -52,36 +52,17 @@ func (s *scenario) executePipe(parent context.Context, server, phoneDir string) 
 		}
 		fail(nil)
 	}()
-	if err := phone.EnsureImage(ctx, filepath.Join(o.LabDir, "driver")); err != nil {
-		return in, err
-	}
-	if err := lab.CreateServer(ctx); err != nil {
-		return in, err
-	}
-	pid, err := phone.StartContainer(ctx, lab, s.u, filepath.Join(o.LabDir, "driver"), phoneDir)
+	procs, err := s.startLink(ctx, fail, phoneDir)
 	if err != nil {
 		return in, err
 	}
-	if err := lab.AttachPhone(ctx, pid); err != nil {
-		return in, err
-	}
-
-	procs, stopProcs := context.WithCancel(ctx)
-	var waits []func() error
-	defer func() {
-		stopProcs()
-		for _, wait := range waits {
-			if err := wait(); err != nil {
-				fmt.Fprintf(os.Stderr, "lab: process: %v\n", err)
-			}
-		}
-	}()
+	defer procs.stop()
 	start := func(log, exe string, args ...string) error {
-		exited, err := s.startProcess(procs, lab.ServerNS, log, exe, args...)
+		exited, err := s.startProcess(procs.ctx, lab.ServerNS, log, exe, args...)
 		if err != nil {
 			return err
 		}
-		waits = append(waits, watch(procs, fail, log, exited))
+		procs.watch(log, exited)
 		return nil
 	}
 

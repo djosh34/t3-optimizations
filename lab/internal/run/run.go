@@ -177,31 +177,11 @@ func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir str
 		}
 		fail(nil)
 	}()
-	if err := phone.EnsureImage(ctx, filepath.Join(o.LabDir, "driver")); err != nil {
-		return report.Input{}, err
-	}
-	if err := lab.CreateServer(ctx); err != nil {
-		return report.Input{}, err
-	}
-	pid, err := phone.StartContainer(ctx, lab, u, filepath.Join(o.LabDir, "driver"), phoneDir)
+	procs, err := s.startLink(ctx, fail, phoneDir)
 	if err != nil {
 		return report.Input{}, err
 	}
-	if err := lab.AttachPhone(ctx, pid); err != nil {
-		return report.Input{}, err
-	}
-
-	// Server-side processes stop when procs is cancelled, before cleanup.
-	procs, stopProcs := context.WithCancel(ctx)
-	var waits []func() error
-	defer func() {
-		stopProcs()
-		for _, wait := range waits {
-			if err := wait(); err != nil {
-				fmt.Fprintf(os.Stderr, "lab: process: %v\n", err)
-			}
-		}
-	}()
+	defer procs.stop()
 
 	origin := "https://" + netlab.ServerAddr + ":" + frontPort
 	if o.Profile.TCPPath {
@@ -212,11 +192,11 @@ func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir str
 			{lab.ServerNS, "--listen", netlab.ServerAddr + ":" + tunnelPort, "tunnel-server.log"},
 			{lab.PhoneNS, "--connect", netlab.ServerAddr + ":" + tunnelPort, "tunnel-phone.log"},
 		} {
-			exited, err := s.startLabProcess(procs, side.ns, side.log, "tunnel", "--dev", lab.TunnelIf(), side.flag, side.addr)
+			exited, err := s.startLabProcess(procs.ctx, side.ns, side.log, "tunnel", "--dev", lab.TunnelIf(), side.flag, side.addr)
 			if err != nil {
 				return report.Input{}, err
 			}
-			waits = append(waits, watch(procs, fail, side.log, exited))
+			procs.watch(side.log, exited)
 		}
 		origin = "https://" + netlab.TunnelServerAddr + ":" + frontPort
 	}
@@ -225,23 +205,23 @@ func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir str
 	if o.Profile.Soak {
 		soak = soakParts
 	}
-	server, err := t3server.Start(procs, t3server.Config{
+	server, err := t3server.Start(procs.ctx, t3server.Config{
 		User: u, NS: lab.ServerNS, LabID: lab.ID, T3Code: filepath.Join(repo, "t3code"), RunDir: s.runDir,
 		LabExe: o.LabExe, StaticDir: staticDir, Node: o.Node, CharsPerSecond: CharsPerSecond, SoakParts: soak,
 	})
 	if err != nil {
 		return report.Input{}, err
 	}
-	waits = append(waits, watch(procs, fail, "t3 server", server.Exited()))
+	procs.watch("t3 server", server.Exited())
 	frontArgs := []string{"front", "--listen", ":" + frontPort, "--upstream", fmt.Sprintf("127.0.0.1:%d", t3server.Port)}
 	if o.Client == "websocket-nodeflate" {
 		frontArgs = append(frontArgs, "--no-deflate")
 	}
-	exited, err := s.startLabProcess(procs, lab.ServerNS, "front.log", frontArgs...)
+	exited, err := s.startLabProcess(procs.ctx, lab.ServerNS, "front.log", frontArgs...)
 	if err != nil {
 		return report.Input{}, err
 	}
-	waits = append(waits, watch(procs, fail, "front", exited))
+	procs.watch("front", exited)
 
 	// Setup runs on the clean link; a hang there is a lab fault, not a result.
 	setupCtx, cancelSetup := context.WithTimeout(ctx, setupTimeout)
@@ -352,6 +332,53 @@ func (s *scenario) startProcess(ctx context.Context, ns, logName, exe string, ar
 	exited := make(chan error, 1)
 	go func() { exited <- errors.Join(cmd.Wait(), log.Close()) }()
 	return exited, nil
+}
+
+// processes are a run's server-side processes. They stop when stop is
+// called, before the lab's cleanup; one that exits before then fails the
+// run.
+type processes struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+	fail   context.CancelCauseFunc
+	waits  []func() error
+}
+
+// startLink creates the server namespace and the phone container joined by
+// the link, and returns the run's processes, none started yet. fail fails
+// the run.
+func (s *scenario) startLink(ctx context.Context, fail context.CancelCauseFunc, phoneDir string) (*processes, error) {
+	driverDir := filepath.Join(s.o.LabDir, "driver")
+	if err := phone.EnsureImage(ctx, driverDir); err != nil {
+		return nil, err
+	}
+	if err := s.lab.CreateServer(ctx); err != nil {
+		return nil, err
+	}
+	pid, err := phone.StartContainer(ctx, s.lab, s.u, driverDir, phoneDir)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.lab.AttachPhone(ctx, pid); err != nil {
+		return nil, err
+	}
+	procs, cancel := context.WithCancel(ctx)
+	return &processes{ctx: procs, cancel: cancel, fail: fail}, nil
+}
+
+// watch fails the run when the process exits before stop.
+func (p *processes) watch(name string, exited <-chan error) {
+	p.waits = append(p.waits, watch(p.ctx, p.fail, name, exited))
+}
+
+// stop stops the processes and waits for them.
+func (p *processes) stop() {
+	p.cancel()
+	for _, wait := range p.waits {
+		if err := wait(); err != nil {
+			fmt.Fprintf(os.Stderr, "lab: process: %v\n", err)
+		}
+	}
 }
 
 // watch fails the run when a process exits before procs ends, and returns

@@ -89,6 +89,12 @@ impl Log {
         writeln!(self.0, r#"{{"t":{},"ev":"{ev}"{fields}}}"#, unix_ms())
     }
 
+    /// Writes an event with a text field and, when given, the peer.
+    fn with_text(&mut self, ev: &str, peer: Option<PeerId>, text: &str) -> io::Result<()> {
+        let peer = peer.map_or(String::new(), |p| format!(r#","peer":{}"#, p.0));
+        self.write(ev, &format!(r#"{peer},"text":{}"#, json_string(text)))
+    }
+
     fn sent(&mut self, seq: u32) -> io::Result<()> {
         self.write("sent", &format!(r#","seq":{seq}"#))
     }
@@ -96,12 +102,24 @@ impl Log {
     fn received(&mut self, data: &[u8]) -> io::Result<()> {
         match Tick::decode(data) {
             Some(t) => self.write("recv", &format!(r#","seq":{},"sent":{}"#, t.seq, t.sent_ms)),
-            None => self.write(
-                "note",
-                &format!(r#","text":"not a tick: {} bytes""#, data.len()),
-            ),
+            None => self.with_text("note", None, &format!("not a tick: {} bytes", data.len())),
         }
     }
+}
+
+/// s as a JSON string, quotes included.
+fn json_string(s: &str) -> String {
+    let mut out = String::from('"');
+    for c in s.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            c if c < ' ' => out.push_str(&format!("\\u{:04x}", c as u32)),
+            c => out.push(c),
+        }
+    }
+    out.push('"');
+    out
 }
 
 fn unix_ms() -> u64 {
@@ -130,15 +148,16 @@ fn webrtc(udp: SocketAddr, http: SocketAddr, mut log: Log) -> Result<(), BoxErro
             let answer = pipe.accept_offer(&offer);
             match &answer {
                 Ok((id, _)) => log.write("offer", &format!(r#","peer":{}"#, id.0))?,
-                Err(e) => log.write("note", &format!(r#","text":"bad offer: {e}""#))?,
+                Err(e) => log.with_text("note", None, &format!("bad offer: {e}"))?,
             }
             if reply
                 .send(answer.map(|(_, sdp)| sdp).map_err(|e| e.to_string()))
                 .is_err()
             {
-                log.write(
+                log.with_text(
                     "note",
-                    r#","text":"the offer's HTTP request gave up before the answer""#,
+                    None,
+                    "the offer's HTTP request gave up before the answer",
                 )?;
             }
         }
@@ -152,9 +171,8 @@ fn webrtc(udp: SocketAddr, http: SocketAddr, mut log: Log) -> Result<(), BoxErro
                     seqs.push((id, 0));
                 }
                 PipeEvent::Data(_, data) => log.received(&data)?,
-                PipeEvent::IceState(id, state) => {
-                    log.write("ice", &format!(r#","peer":{},"text":"{state}""#, id.0))?
-                }
+                PipeEvent::IceState(id, state) => log.with_text("ice", Some(id), &state)?,
+                PipeEvent::Failed(id, error) => log.with_text("failed", Some(id), &error)?,
                 PipeEvent::Closed(id) => {
                     log.write("closed", &format!(r#","peer":{}"#, id.0))?;
                     seqs.retain(|(p, _)| *p != id);
@@ -172,9 +190,10 @@ fn webrtc(udp: SocketAddr, http: SocketAddr, mut log: Log) -> Result<(), BoxErro
                 if pipe.send(*id, &data)? {
                     log.sent(*seq)?;
                 } else {
-                    log.write(
+                    log.with_text(
                         "note",
-                        &format!(r#","text":"send buffer full, tick {seq} dropped""#),
+                        Some(*id),
+                        &format!("send buffer full, tick {seq} dropped"),
                     )?;
                 }
                 *seq += 1;
@@ -248,7 +267,7 @@ fn plain_udp(udp: SocketAddr, mut log: Log) -> Result<(), BoxError> {
                 .encode();
                 match socket.send_to(&data, addr) {
                     Ok(_) => log.sent(seq)?,
-                    Err(e) => log.write("note", &format!(r#","text":"send tick {seq}: {e}""#))?,
+                    Err(e) => log.with_text("note", None, &format!("send tick {seq}: {e}"))?,
                 }
                 seq += 1;
             }
@@ -258,7 +277,7 @@ fn plain_udp(udp: SocketAddr, mut log: Log) -> Result<(), BoxError> {
         match socket.recv_from(&mut buf) {
             Ok((n, source)) => {
                 if n == tick::SIZE && phone != Some(source) {
-                    log.write("open", &format!(r#","text":"{source}""#))?;
+                    log.with_text("open", None, &source.to_string())?;
                     phone = Some(source);
                 }
                 log.received(&buf[..n])?;
@@ -270,5 +289,16 @@ fn plain_udp(udp: SocketAddr, mut log: Log) -> Result<(), BoxError> {
                 ) => {}
             Err(e) => return Err(e.into()),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::json_string;
+
+    #[test]
+    fn json_string_escapes() {
+        assert_eq!(json_string(r#"a "b" \ c"#), r#""a \"b\" \\ c""#);
+        assert_eq!(json_string("line\nbreak"), r#""line\u000abreak""#);
     }
 }

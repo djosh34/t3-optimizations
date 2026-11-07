@@ -47,7 +47,11 @@ pub enum PipeEvent {
     Data(PeerId, Vec<u8>),
     /// A change of the connection's ICE state, for logs.
     IceState(PeerId, String),
-    /// The connection is gone.
+    /// str0m failed on this connection, for example on a bad packet from
+    /// the browser. `Closed` follows; the other connections go on.
+    Failed(PeerId, String),
+    /// The connection is gone: the browser closed the data channel, or the
+    /// connection failed.
     Closed(PeerId),
 }
 
@@ -94,6 +98,17 @@ struct Peer {
     id: PeerId,
     rtc: Rtc,
     channel: Option<ChannelId>,
+}
+
+impl Peer {
+    /// Ends this connection when str0m failed on it, so one browser's error
+    /// does not stop the others. `drain` then reports it closed.
+    fn check(&mut self, result: Result<(), RtcError>, events: &mut Vec<PipeEvent>) {
+        if let Err(e) = result {
+            events.push(PipeEvent::Failed(self.id, e.to_string()));
+            self.rtc.disconnect();
+        }
+    }
 }
 
 /// The server: one UDP socket and its connections.
@@ -184,7 +199,8 @@ impl Pipe {
             let wake = next.map_or(until, |t| t.min(until));
             if wake <= now {
                 for peer in &mut self.peers {
-                    peer.rtc.handle_input(Input::Timeout(now))?;
+                    let result = peer.rtc.handle_input(Input::Timeout(now));
+                    peer.check(result, events);
                 }
                 if until <= now {
                     return Ok(());
@@ -218,7 +234,8 @@ impl Pipe {
                 },
             );
             if let Some(peer) = self.peers.iter_mut().find(|p| p.rtc.accepts(&input)) {
-                peer.rtc.handle_input(input)?;
+                let result = peer.rtc.handle_input(input);
+                peer.check(result, events);
             }
         }
     }
@@ -230,7 +247,14 @@ impl Pipe {
         let mut next: Option<Instant> = None;
         for peer in &mut self.peers {
             while peer.rtc.is_alive() {
-                match peer.rtc.poll_output()? {
+                let output = match peer.rtc.poll_output() {
+                    Ok(output) => output,
+                    Err(e) => {
+                        peer.check(Err(e), events);
+                        break;
+                    }
+                };
+                match output {
                     Output::Timeout(t) => {
                         next = Some(next.map_or(t, |n| n.min(t)));
                         break;
@@ -258,7 +282,10 @@ impl Pipe {
                         events.push(PipeEvent::Data(peer.id, d.data));
                     }
                     Output::Event(Event::ChannelClose(_)) => {
+                        // A connection carries one channel, so its close ends
+                        // the connection.
                         peer.channel = None;
+                        peer.rtc.disconnect();
                     }
                     Output::Event(Event::IceConnectionStateChange(state)) => {
                         events.push(PipeEvent::IceState(peer.id, format!("{state:?}")));

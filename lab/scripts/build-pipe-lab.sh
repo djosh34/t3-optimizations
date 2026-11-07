@@ -27,6 +27,9 @@ if grep -q patch "$work/Cargo.toml"; then
   echo "build-pipe-lab.sh: could not drop the patch section from Cargo.toml" >&2
   exit 1
 fi
+# The same version as the vendored copy, not the newest 0.10.x: a direct
+# dependency with an exact version pins the one str0m uses.
+echo 'sctp-proto = "=0.10.8"' >> "$work/pipe/Cargo.toml"
 # A target dir of its own keeps the patched and unpatched builds apart.
 CARGO_TARGET_DIR="$repo/crates/target/unpatched" \
   cargo build --manifest-path "$work/Cargo.toml" --release -p pipe --bin pipe-lab
