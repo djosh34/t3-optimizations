@@ -191,7 +191,7 @@ await step("interrupt", async () => {
   await waitText(cfg.replyStart.slice(0, 30), 60_000);
   const stop = page.getByRole("button", { name: /stop|interrupt/i }).first();
   await stop.click({ timeout: 30_000 });
-  await page.getByRole("button", { name: "Submit message" }).first().waitFor({ timeout: 60_000 });
+  await waitText("Run interrupted", 60_000);
   await shot("interrupted");
 });
 
