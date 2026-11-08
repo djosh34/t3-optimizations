@@ -114,10 +114,25 @@ async function focusComposer(timeout = 60_000) {
   await page.locator(composer).first().click({ timeout });
 }
 
+// Enter, then the send button if the text is still in the composer: the log
+// says which one the client took, to tell a missed key from a refused send.
 async function send(text) {
   await focusComposer();
   await page.keyboard.type(text);
   await page.keyboard.press("Enter");
+  const editor = page.locator(composer).first();
+  const stillThere = async () => ((await editor.textContent().catch(() => "")) ?? "").includes(text);
+  for (let i = 0; i < 20; i++) {
+    if (!(await stillThere())) return;
+    await sleep(250);
+  }
+  // The submit button's label says why the client holds a message back.
+  const button = page.locator('button[type="submit"]').last();
+  const label = async () => (await button.getAttribute("aria-label").catch(() => null)) ?? "none";
+  log(`send: Enter left "${text}" in the composer; the send button says "${await label()}"`);
+  await button.click({ timeout: 10_000 }).catch((e) => log(`send: tap failed: ${e.message.split("\n")[0]}`));
+  await sleep(5_000);
+  if (await stillThere()) log(`send: still in the composer after a tap; the send button says "${await label()}"`);
 }
 
 async function waitText(text, timeout = 120_000) {
@@ -266,6 +281,14 @@ await step("upload", async () => {
 
 await step("prompt-on-case70", async () => {
   await ask("shape case70");
+  try {
+    return await promptOnCase70();
+  } finally {
+    await ask("shape clean");
+  }
+});
+
+async function promptOnCase70() {
   const states = await promptWithStates(cfg.prompt, "prompt", 120_000);
   await sleep(10_000);
   await shot("status-case70");
@@ -281,7 +304,7 @@ await step("prompt-on-case70", async () => {
   await ask("shape clean");
   await waitText(cfg.replyEnd, 300_000);
   return states;
-});
+}
 
 await step("thread-fills-newest-first", async () => {
   // The phone lost its content; the new page connects on the clean link (a

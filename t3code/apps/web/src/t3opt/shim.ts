@@ -591,6 +591,15 @@ function shimXhr(ctx: FetchContext): typeof XMLHttpRequest {
         headers: shimmed.headers,
         ...(body instanceof Document || body === null || body === undefined ? {} : { body }),
       });
+      // The client's own timeout: without it, an upload whose reply never
+      // comes holds the composer's send for good.
+      if (this.timeout > 0) {
+        setTimeout(() => {
+          if (this.shimStatus !== 0 || this.shimAborted) return;
+          this.shimAborted = true;
+          this.dispatchEvent(new ProgressEvent("timeout"));
+        }, this.timeout);
+      }
       handleFetch(ctx, request).then(
         async (response) => {
           if (this.shimAborted) return;
