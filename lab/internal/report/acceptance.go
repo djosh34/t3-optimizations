@@ -178,7 +178,7 @@ func targets(runs []accepted) string {
 		}
 	}
 	line("- The newest text and prompt acks overtake backfill in every run: %s. When the sidecar queued the prompt's reply and the reply's first newest text, it still had backfill (older messages, the thread list, other threads, images) it had never sent, which the priority order sends after them, and both then reached the phone, in %d runs. This shows the send order; on a lossy link a later packet can still arrive first. Not established in %d (the phone got no confirmation or no text, no line for a moment, or no backfill waiting then): %s. Not met means not established in every run, not a failure seen. Per run below.",
-		verdict(len(shown) > 0 && len(untold) == 0), len(shown), len(untold), names(untold))
+		sendOrder(len(shown) > 0 && len(untold) == 0), len(shown), len(untold), names(untold))
 
 	var again []accepted
 	for _, r := range runs {
@@ -195,6 +195,15 @@ func targets(runs []accepted) string {
 		line("- %s: %s / %s", r.Name(), fmtBytes(r.atConfirm), fmtBytes(r.atText))
 	}
 	return b.String()
+}
+
+// sendOrder is the backfill target's verdict: the evidence shows the send
+// order, not the arrival order.
+func sendOrder(ok bool) string {
+	if ok {
+		return "**met for the send order**"
+	}
+	return "**not met**"
 }
 
 func names(rs []accepted) string {

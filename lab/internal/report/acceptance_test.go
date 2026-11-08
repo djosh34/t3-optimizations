@@ -42,7 +42,7 @@ func TestBackfillNeedsTheConfirmationAndTextOnThePhone(t *testing.T) {
 	}
 	queued.PromptConfirmationS, queued.TimeToFirstTextS = &confirmed, &confirmed
 	out = targets([]accepted{queued})
-	if !strings.Contains(out, "overtake backfill in every run: **met**") {
+	if !strings.Contains(out, "overtake backfill in every run: **met for the send order**") {
 		t.Errorf("queued ahead of backfill and delivered not counted:\n%s", out)
 	}
 }
