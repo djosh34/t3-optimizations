@@ -623,10 +623,8 @@ impl Outbox {
             }
         }
 
-        for (key, rev, range) in &record {
-            if let Some(o) = self.objects.get_mut(key)
-                && o.rev == *rev
-            {
+        for (key, _, range) in &record {
+            if let Some(o) = self.objects.get_mut(key) {
                 o.ever_sent.insert(range.clone());
             }
         }
