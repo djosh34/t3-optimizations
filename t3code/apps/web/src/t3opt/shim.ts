@@ -81,7 +81,6 @@ function readReply(reply: unknown): { exit: unknown } | { chunk: unknown[] } {
   return { exit: die("the sidecar sent no reply") };
 }
 
-/** Resolves once `ready` returns a value; it is checked again on every change of synced state. */
 /**
  * A synced image's `blob:` URL, one per attachment for the page's life. Null
  * when its bytes did not come within `IMAGE_WAIT_MS` (the sidecar's fetch can
@@ -116,6 +115,7 @@ async function imageUrl(engine: Engine, attachment: string): Promise<string | nu
   return url;
 }
 
+/** Resolves once `ready` returns a value; it is checked again on every change of synced state. */
 function whenReady<T>(engine: Engine, ready: () => T | null): Promise<T> {
   const now = ready();
   if (now !== null) return Promise.resolve(now);
