@@ -82,7 +82,7 @@ load="$raw/load.log"
   sleep 60
 done) &
 sampler=$!
-trap 'kill "$sampler" 2>/dev/null' EXIT
+trap 'kill "$sampler" 2>/dev/null || true' EXIT
 
 status=0
 started=$(date -u +%Y-%m-%dT%H:%MZ)
