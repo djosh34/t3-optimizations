@@ -189,7 +189,7 @@ import { invalidateSettingsSecrets } from "./sourceControl/sourceControlHostSecr
 import * as DatabaseStorage from "./persistence/DatabaseStorage.ts";
 import * as StorageCleanup from "./storageCleanup.ts";
 import * as TerminalManager from "./terminal/Manager.ts";
-import { terminalOutputStream, withTerminalOutputWindow } from "./terminal/OutputProtocol.ts";
+import { terminalOutputStream, withOutputWindow } from "./terminal/OutputProtocol.ts";
 import * as ServerBrowser from "./preview/ServerBrowser.ts";
 import * as DeviceService from "./device/DeviceService.ts";
 import { remoteSshDeviceHosts } from "./device/localSshDeviceHost.ts";
@@ -3463,7 +3463,7 @@ export const layer = Layer.unwrap(
         const rpcWebSocketHttpEffect = yield* Effect.gen(function* () {
           const { protocol, httpEffect } = yield* RpcServer.makeProtocolWithHttpEffectWebsocket;
           yield* RpcServer.make(ServerWsRpcGroup, WS_RPC_SERVER_OPTIONS).pipe(
-            Effect.provideService(RpcServer.Protocol, withTerminalOutputWindow(protocol)),
+            Effect.provideService(RpcServer.Protocol, withOutputWindow(protocol)),
             Effect.provide(
               Layer.merge(
                 RpcAuthorization.layer(session.scopes, (method, payload) => {

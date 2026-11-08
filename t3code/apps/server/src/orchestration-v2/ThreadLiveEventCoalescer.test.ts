@@ -423,6 +423,27 @@ describe("ThreadLiveEventCoalescer", () => {
       ),
   );
 
+  it.effect("sends only the latest text of updates that queued while the client lagged", () =>
+    Effect.scoped(
+      Effect.gen(function* () {
+        const coalescer = yield* makeThreadLiveEventCoalescer();
+        const latest = [makeStreamingMessage(6), makeTextItem(7)];
+        yield* coalescer.offerAll([makeStreamingMessage(1), makeTextItem(2)]);
+        yield* TestClock.adjust("50 millis");
+        yield* coalescer.offer(makeToolActivity(3, { kind: "tool.completed" }));
+        yield* coalescer.offerAll([makeStreamingMessage(4), makeTextItem(5)]);
+        yield* TestClock.adjust("50 millis");
+        yield* coalescer.offerAll(latest);
+        yield* TestClock.adjust("50 millis");
+        const pull = yield* Stream.toPull(coalescer.stream);
+        const batch = yield* pull;
+        expect(batch.map((item) => (item.kind === "event" ? item.sequence : null))).toEqual([
+          1, 2, 3, 6, 7,
+        ]);
+      }),
+    ),
+  );
+
   it.effect("keeps the flush timer alive when an offer's shorter scope closes", () =>
     Effect.scoped(
       Effect.gen(function* () {

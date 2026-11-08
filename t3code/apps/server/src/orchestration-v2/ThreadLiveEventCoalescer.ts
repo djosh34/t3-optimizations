@@ -1,4 +1,5 @@
 import type { OrchestrationV2ThreadStreamItem } from "@t3tools/contracts";
+import * as Arr from "effect/Array";
 import * as Cause from "effect/Cause";
 import * as Deferred from "effect/Deferred";
 import * as Duration from "effect/Duration";
@@ -49,16 +50,17 @@ function coalescibleUpdateKey(input: ThreadLiveEvent): string | null {
 
 // These events replace whole entities. Keep each survivor at its original
 // position/sequence so a resume cursor cannot skip an unrelated earlier update.
-export function coalesceLiveUpdatedEvents(
-  events: ReadonlyArray<ThreadLiveEvent>,
-): ReadonlyArray<ThreadLiveEvent> {
+// A synchronization marker is a barrier, like any event that does not coalesce.
+export function coalesceLiveUpdatedEvents<A extends ThreadLiveInput>(
+  events: ReadonlyArray<A>,
+): ReadonlyArray<A> {
   const latestUpdates = new Map<string, number>();
   const superseded = new Set<number>();
   const pendingKeys = new Map<ThreadLiveEvent["event"]["type"], string>();
 
   for (const [index, event] of events.entries()) {
-    const key = coalescibleUpdateKey(event);
-    if (key === null) {
+    const key = event.kind === "event" ? coalescibleUpdateKey(event) : null;
+    if (event.kind !== "event" || key === null) {
       latestUpdates.clear();
       pendingKeys.clear();
       continue;
@@ -215,7 +217,14 @@ export const makeThreadLiveEventCoalescer = Effect.fn(
       }),
     ),
     offerAll,
-    stream: budget.deliver(Stream.fromQueue(output)),
+    // While the client has not acknowledged earlier chunks (a slow link), updates
+    // queue up here; the next pull sends only the latest version of each.
+    stream: budget.deliver(Stream.fromQueue(output)).pipe(
+      Stream.mapArray((items) => {
+        const latest = coalesceLiveUpdatedEvents(items);
+        return Arr.isReadonlyArrayNonEmpty(latest) ? latest : items;
+      }),
+    ),
     failed: budget.failed,
     closed: Deferred.await(cleanupComplete),
     usage: budget.usage,

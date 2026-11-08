@@ -1,5 +1,6 @@
 import { assert, describe, it } from "@effect/vitest";
 import {
+  ORCHESTRATION_V2_WS_METHODS,
   type TerminalAttachStreamEvent,
   TerminalAttachStreamEvent as TerminalAttachStreamEventSchema,
   WS_METHODS,
@@ -13,7 +14,7 @@ import * as Stream from "effect/Stream";
 import * as TestClock from "effect/testing/TestClock";
 import { Rpc, RpcGroup, RpcMessage, RpcSerialization, RpcServer } from "effect/rpc";
 
-import { terminalOutputStream, withTerminalOutputWindow } from "./OutputProtocol.ts";
+import { terminalOutputStream, withOutputWindow } from "./OutputProtocol.ts";
 
 describe("terminal output window", () => {
   it.effect.each([
@@ -21,37 +22,13 @@ describe("terminal output window", () => {
     { tag: WS_METHODS.terminalObserve, size: 1, limit: 8 },
     { tag: WS_METHODS.terminalAttach, size: 64 * 1024, limit: 1 },
     { tag: WS_METHODS.terminalObserve, size: 64 * 1024, limit: 1 },
+    { tag: WS_METHODS.subscribeServerConfig, size: 1, limit: 8 },
+    { tag: ORCHESTRATION_V2_WS_METHODS.subscribeShell, size: 1, limit: 8 },
+    { tag: ORCHESTRATION_V2_WS_METHODS.subscribeThread, size: 64 * 1024, limit: 8 },
     { tag: WS_METHODS.subscribeTerminalMetadata, size: 1, limit: 1 },
   ])("limits $tag with $size-byte values to $limit pending chunks", ({ tag, size, limit }) =>
     Effect.gen(function* () {
-      const group = RpcGroup.make(Rpc.make(tag, { success: Schema.String, stream: true }));
-      const output = yield* Queue.unbounded<string>();
-      const responses = yield* Queue.unbounded<RpcMessage.FromServerEncoded>();
-      const receive = yield* Deferred.make<Parameters<RpcServer.Protocol["Service"]["run"]>[0]>();
-      const protocol = yield* RpcServer.Protocol.make((write) =>
-        Effect.gen(function* () {
-          yield* Deferred.succeed(receive, write);
-          const serialization = yield* RpcSerialization.RpcSerialization;
-          return {
-            disconnects: yield* Queue.unbounded<number>(),
-            send: (_clientId, response) => Queue.offer(responses, response),
-            end: () => Effect.void,
-            clientIds: Effect.succeed(new Set([0])),
-            initialMessage: Effect.succeedNone,
-            supportsAck: true,
-            supportsTransferables: false,
-            supportsSpanPropagation: false,
-            supportsNotifications: true,
-            codecFor: serialization.codecFor,
-          };
-        }),
-      );
-      yield* RpcServer.make(group).pipe(
-        Effect.provide(group.toLayerHandler(tag, () => Stream.fromQueue(output))),
-        Effect.provideService(RpcServer.Protocol, withTerminalOutputWindow(protocol)),
-        Effect.forkScoped,
-      );
-      const write = yield* Deferred.await(receive);
+      const { output, responses, write } = yield* serveWindowed(tag);
       yield* write(0, { _tag: "Request", id: "1", tag, payload: null, headers: [] });
 
       for (let index = 0; index < limit; index++) {
@@ -80,6 +57,60 @@ describe("terminal output window", () => {
       assert.equal((yield* Queue.take(responses))._tag, "Exit");
     }).pipe(Effect.provide(RpcSerialization.layerJson), Effect.scoped),
   );
+
+  it.effect("waits for a client that has not acked for a second, then sends one batch", () =>
+    Effect.gen(function* () {
+      const tag = ORCHESTRATION_V2_WS_METHODS.subscribeThread;
+      const { output, responses, write } = yield* serveWindowed(tag);
+      yield* write(0, { _tag: "Request", id: "1", tag, payload: null, headers: [] });
+      const next = Effect.gen(function* () {
+        yield* TestClock.adjust(0);
+        const chunks = yield* Queue.clear(responses);
+        return chunks.map((chunk) => (chunk._tag === "Chunk" ? chunk.values : chunk._tag));
+      });
+
+      yield* Queue.offer(output, "a");
+      assert.deepEqual(yield* next, [["a"]]);
+      yield* TestClock.adjust("1 second");
+      yield* Queue.offer(output, "b");
+      assert.deepEqual(yield* next, [["b"]]);
+      yield* Queue.offerAll(output, ["c", "d"]);
+      assert.deepEqual(yield* next, []);
+      yield* write(0, { _tag: "Ack", requestId: "1" });
+      assert.deepEqual(yield* next, [["c", "d"]]);
+    }).pipe(Effect.provide(RpcSerialization.layerJson), Effect.scoped),
+  );
+});
+
+const serveWindowed = Effect.fn(function* (tag: string) {
+  const group = RpcGroup.make(Rpc.make(tag, { success: Schema.String, stream: true }));
+  const output = yield* Queue.unbounded<string>();
+  const responses = yield* Queue.unbounded<RpcMessage.FromServerEncoded>();
+  const receive = yield* Deferred.make<Parameters<RpcServer.Protocol["Service"]["run"]>[0]>();
+  const protocol = yield* RpcServer.Protocol.make((write) =>
+    Effect.gen(function* () {
+      yield* Deferred.succeed(receive, write);
+      const serialization = yield* RpcSerialization.RpcSerialization;
+      return {
+        disconnects: yield* Queue.unbounded<number>(),
+        send: (_clientId, response) => Queue.offer(responses, response),
+        end: () => Effect.void,
+        clientIds: Effect.succeed(new Set([0])),
+        initialMessage: Effect.succeedNone,
+        supportsAck: true,
+        supportsTransferables: false,
+        supportsSpanPropagation: false,
+        supportsNotifications: true,
+        codecFor: serialization.codecFor,
+      };
+    }),
+  );
+  yield* RpcServer.make(group).pipe(
+    Effect.provide(group.toLayerHandler(tag, () => Stream.fromQueue(output))),
+    Effect.provideService(RpcServer.Protocol, withOutputWindow(protocol)),
+    Effect.forkScoped,
+  );
+  return { output, responses, write: yield* Deferred.await(receive) };
 });
 
 const output = (data: string): TerminalAttachStreamEvent => ({
@@ -191,7 +222,7 @@ describe("terminal output stream", () => {
               ),
             ),
           ),
-          Effect.provideService(RpcServer.Protocol, withTerminalOutputWindow(protocol)),
+          Effect.provideService(RpcServer.Protocol, withOutputWindow(protocol)),
           Effect.forkScoped,
         );
         const write = yield* Deferred.await(receive);
