@@ -118,7 +118,7 @@ export class Objects {
     const lastComplete =
       complete || prev === undefined
         ? undefined
-        : prev.rev !== view.rev && prev.complete
+        : prev.rev !== view.rev && prev.complete && prev.len > 0
           ? prev.data
           : prev.lastComplete;
     const o: Obj = { ...view, id, metaJson, complete, ...(lastComplete ? { lastComplete } : {}) };

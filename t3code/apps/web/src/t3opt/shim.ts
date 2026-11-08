@@ -348,12 +348,10 @@ export class RpcServer {
         break;
       }
       case "orchestration.dispatchCommand": {
-        // The client sends a thread's commands one after the other, each
-        // after the last one's reply, and ignores a visit's reply: a visit
-        // waiting for its reply held the owner's prompt back, 278 s on
-        // profile D from a cold start (issue #46). It is answered at once
-        // and stays in the commands' order, so a later "mark unread" still
-        // comes after it; the next command waits only for it to arrive.
+        // The client sends a thread's next command only after the last reply
+        // and ignores a visit's: a visit held a prompt back 278 s (#46).
+        // Answered at once, it stays a command, so a later mark-unread still
+        // comes after it.
         if (command?.type === "thread.visit") {
           this.exit(id, { _tag: "Success", value: { sequence: 0 } });
           void this.engine

@@ -114,6 +114,9 @@ pub struct RateControl {
     last_rtt: Option<f64>,
     /// When the last packet from the other side came in.
     last_heard: Option<Millis>,
+    /// The rate when a long silence took it below the initial rate; the
+    /// peer heard again brings it back.
+    deep_from: Option<f64>,
     /// Packets from the other side per second, averaged over spans of
     /// `HEARD_SPAN`, and the span being counted. It changes only when a
     /// packet comes, so a silence does not lower it.
@@ -157,6 +160,7 @@ impl RateControl {
             jitter: 0.0,
             last_rtt: None,
             last_heard: None,
+            deep_from: None,
             heard_rate: None,
             heard_span: (now, 0),
             fresh_min: None,
@@ -285,6 +289,14 @@ impl RateControl {
     /// Notes a packet from the other side.
     pub fn on_heard(&mut self, now: Millis) {
         self.last_heard = Some(now);
+        // The link is back after a long silence: the rate it had then, not a
+        // climb from `SILENCE_FLOOR` (17 s to 2 kB/s, on both sides).
+        if let Some(rate) = self.deep_from.take()
+            && rate > self.rate
+        {
+            self.rate = rate;
+            self.changed_at = now;
+        }
         let (start, count) = self.heard_span;
         if now >= start + HEARD_SPAN {
             // The span that ended, and the empty spans after it.
@@ -420,11 +432,15 @@ impl RateControl {
             // unknown one, and a sender far below it hears too little to find
             // the rate again (both sides fell to the floor and stayed there).
             // A long silence goes on, to below the floor.
-            let low = if silent_for >= SILENCE_DEEP * silence {
+            let deep = silent_for >= SILENCE_DEEP * silence;
+            let low = if deep {
                 SILENCE_FLOOR.min(self.cfg.floor)
             } else {
                 self.cfg.initial.min(self.rate)
             };
+            if deep && self.limited && self.rate > low {
+                self.deep_from.get_or_insert(self.rate);
+            }
             if silent && self.limited && self.rate > low {
                 self.rate = (self.rate * SILENCE_DRAIN).max(low);
                 self.slow_start = true;
@@ -652,7 +668,36 @@ mod tests {
     }
 
     #[test]
-    fn rtt_growth_below_the_floor_never_raises_the_rate() {
+    fn the_peer_heard_after_a_long_silence_brings_the_rate_back() {
+        let mut rc = RateControl::new(RateConfig::default(), 0);
+        let mut t = 0;
+        for _ in 0..40 {
+            t += 300;
+            rc.on_heard(t);
+            rc.on_rtt(t, 20.0, t);
+            rc.note_limited(t);
+            rc.decide(t);
+        }
+        // An outage long enough to go below the initial rate.
+        for _ in 0..50 {
+            t += 300;
+            rc.note_limited(t);
+            rc.decide(t);
+        }
+        assert!(rc.rate() < RateConfig::default().floor);
+        // The link is back: at once the rate where the long silence began,
+        // not a climb from 50 B/s (17 s to 2 kB/s).
+        t += 300;
+        rc.on_heard(t);
+        assert!(
+            rc.rate() >= RateConfig::default().initial,
+            "rate {}",
+            rc.rate()
+        );
+    }
+
+    #[test]
+    fn rtt_growth_after_a_long_silence_never_raises_the_rate() {
         let mut rc = RateControl::new(RateConfig::default(), 0);
         let mut t = 0;
         for _ in 0..40 {
@@ -670,7 +715,6 @@ mod tests {
         }
         assert_eq!(rc.rate(), SILENCE_FLOOR);
         // Feedback, then the RTT grows: each decision may only lower it.
-        let mut last = f64::INFINITY;
         for rtt in [600.0, 600.0, 2_500.0, 5_000.0, 9_000.0] {
             t += 700;
             rc.on_heard(t);
@@ -685,9 +729,7 @@ mod tests {
                     rc.rate()
                 );
             }
-            last = rc.rate();
         }
-        assert!(last < RateConfig::default().floor, "rate {last}");
     }
 
     #[test]

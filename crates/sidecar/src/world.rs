@@ -633,10 +633,17 @@ impl World {
         let order = match entity["ordinal"].as_u64() {
             Some(o) if coll == "turnItems" => o,
             // An approval or question the owner must answer goes first in
-            // the status class. With the next sequence number it went after
-            // every item of the current turn: on profile D the approval
-            // showed 103 s after it was asked (issue #46).
-            _ if coll == "runtimeRequests" && entity["status"].as_str() == Some("pending") => {
+            // the status class, and its answer too, so the phone stops
+            // offering it. With the next sequence number it went after every
+            // item of the current turn: on profile D the approval showed
+            // 103 s after it was asked (issue #46).
+            _ if coll == "runtimeRequests"
+                && (entity["status"].as_str() == Some("pending")
+                    || self
+                        .objects
+                        .get(&object_id(&["body", thread, coll, &id]))
+                        .is_some_and(|o| o.order == u64::MAX)) =>
+            {
                 u64::MAX
             }
             _ => self.next_seq(),
@@ -1053,10 +1060,21 @@ mod tests {
         let id = object_id(&["body", "t1", "runtimeRequests", "rr1"]);
         let turn_item = object_id(&["body", "t1", "turnItems", "a"]);
         let order = |w: &World, id| w.get(id).map(|o| o.order);
-        // The approval the owner must answer, ahead of the turn's items.
+        // The approval the owner must answer, ahead of the turn's items, and
+        // its answer too.
         assert!(order(&w, id) > order(&w, turn_item));
         w.apply_event("t1", &event("runtime-request.updated", request("resolved")));
-        assert!(order(&w, id) < order(&w, turn_item));
+        assert!(order(&w, id) > order(&w, turn_item));
+        // One never pending keeps the next sequence number.
+        w.apply_event(
+            "t1",
+            &event(
+                "runtime-request.updated",
+                json!({"id": "rr2", "threadId": "t1", "status": "expired"}),
+            ),
+        );
+        let other = object_id(&["body", "t1", "runtimeRequests", "rr2"]);
+        assert!(order(&w, other) < order(&w, turn_item));
     }
 
     #[test]
