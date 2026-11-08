@@ -550,7 +550,7 @@ impl Outbox {
                     // must all arrive (at 70% loss a 750-byte command in
                     // 200-byte packets took four lucky packets; issue #46).
                     if class == Class::Urgent && may_grow(pass, out) {
-                        let need = (r.end - r.start) as usize + o.meta.len() + 48;
+                        let need = (r.end - r.start) as usize + o.meta.len() + CHUNK_HEAD_MAX;
                         let grow = need.saturating_sub(left).min(extra);
                         left += grow;
                         extra -= grow;
@@ -637,23 +637,29 @@ fn fit(
     if let Some(c) = make_chunk(key, o, range.clone(), from_end, *left) {
         return Some(c);
     }
-    // Without meta a chunk header is under 48 bytes, and `space` is far
+    // Without meta a chunk header is under `CHUNK_HEAD_MAX` bytes, and `space` is far
     // more; only meta can keep a chunk out of an empty packet.
     let needs = if o.rev_acked { 0 } else { o.meta.len() };
-    if *extra == 0 || needs + 48 + MIN_CHUNK_SPACE <= space {
+    if *extra == 0 || needs + CHUNK_HEAD_MAX + MIN_CHUNK_SPACE <= space {
         return None;
     }
     // By what the meta costs, so the chunk still gets a packet's worth of
     // bytes. Growing by all of `extra` filled the rest of the packet too, so
     // with the sidecar's 200-byte metas nearly every packet on a slow link
     // was full size (issue #44).
-    let grow = (needs + 48).min(*extra);
+    let grow = (needs + CHUNK_HEAD_MAX).min(*extra);
     let c = make_chunk(key, o, range, from_end, *left + grow)?;
     *left += grow;
     // Once per packet, as before.
     *extra = 0;
     Some(c)
 }
+
+/// Bytes a chunk takes beyond its data and meta (`wire::chunk_len`): two
+/// tag bytes and up to seven varints (key, revision, total length, offset,
+/// keep, the meta's length and the body's lengths). With values under 2^35,
+/// five bytes each, that is at most 41.
+const CHUNK_HEAD_MAX: usize = 48;
 
 /// A chunk needs at least this much space to be worth starting.
 const MIN_CHUNK_SPACE: usize = 24;

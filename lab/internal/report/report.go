@@ -336,7 +336,6 @@ func fmtSecs(v *float64) string {
 	return fmt.Sprintf("%.1fs", *v)
 }
 
-// Name is the file name stem of a report.
 // Name is the run's directory name in a reports dir: seeds other than 1
 // are added to it.
 func (r Report) Name() string {

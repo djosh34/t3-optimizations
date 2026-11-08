@@ -361,19 +361,25 @@ class RpcServer {
     // Everything else: one call to the sidecar, one reply. A call for what is
     // on screen or what a tap needs gets the reply class (#16); the client's
     // own reports, refreshes and side subscriptions go at the background class.
-    // A call answered from its last reply goes at the background class too.
     const key = ANSWERED_FROM_LAST_REPLY.has(tag) ? `${tag} ${JSON.stringify(payload)}` : null;
     const last = key === null ? undefined : lastReplies.get(key);
-    if (last !== undefined) this.exit(id, last);
-    const { reply } = await this.engine.request(
-      "call",
-      { tag, payload },
-      isBackgroundCall(tag) || last !== undefined,
-    );
+    if (key !== null && last !== undefined) {
+      // Answered; the fresh reply only replaces the last one.
+      this.exit(id, last);
+      void this.engine
+        .request("call", { tag, payload }, true)
+        .then(({ reply }) => reply)
+        .then((value) => {
+          const r = readReply(value);
+          if ("exit" in r && (r.exit as Json | null)?._tag === "Success") lastReplies.set(key, r.exit);
+        })
+        .catch((error: unknown) => trace(`refresh of ${tag} failed: ${String(error)}`));
+      return;
+    }
+    const { reply } = await this.engine.request("call", { tag, payload }, isBackgroundCall(tag));
     const r = readReply(await reply);
-    if ("exit" in r && key !== null) {
-      if ((r.exit as Json | null)?._tag === "Success") lastReplies.set(key, r.exit);
-      if (last !== undefined) return;
+    if ("exit" in r && key !== null && (r.exit as Json | null)?._tag === "Success") {
+      lastReplies.set(key, r.exit);
     }
     if ("chunk" in r) {
       // The sidecar takes a stream's first chunk; the stream stays open here.

@@ -115,24 +115,29 @@ func targets(runs []accepted) string {
 	line("## Targets")
 	line("")
 
-	c70 := of(func(r accepted) bool { return r.Profile == "case70" && r.Kind == "warm" })
-	ok := len(c70) > 0
-	for _, r := range c70 {
-		ok = ok && r.PromptConfirmationS != nil && *r.PromptConfirmationS <= case70PromptS
+	// The two cases start warm (lab/README.md); their cold starts get a
+	// verdict of their own.
+	for _, kind := range []string{"warm", "cold"} {
+		c70 := of(func(r accepted) bool { return r.Profile == "case70" && r.Kind == kind })
+		ok := len(c70) > 0
+		for _, r := range c70 {
+			ok = ok && r.PromptConfirmationS != nil && *r.PromptConfirmationS <= case70PromptS
+		}
+		line("- Case 70 from a %s start, a typed prompt confirmed within %.0f s: %s. %s.", kind, case70PromptS, verdict(ok),
+			list(c70, func(r accepted) string { return fmtSecs(r.PromptConfirmationS) }))
 	}
-	line("- Case 70, a typed prompt confirmed within %.0f s: %s. %s.", case70PromptS, verdict(ok),
-		list(c70, func(r accepted) string { return fmtSecs(r.PromptConfirmationS) }))
-
-	c50 := of(func(r accepted) bool { return r.Profile == "case50" && r.Kind == "warm" })
-	ok = len(c50) > 0
-	for _, r := range c50 {
-		ok = ok && r.MaxLagS != nil && *r.MaxLagS <= case50LagS
+	for _, kind := range []string{"warm", "cold"} {
+		c50 := of(func(r accepted) bool { return r.Profile == "case50" && r.Kind == kind })
+		ok := len(c50) > 0
+		for _, r := range c50 {
+			ok = ok && r.MaxLagS != nil && *r.MaxLagS <= case50LagS
+		}
+		line("- Case 50 from a %s start, the newest text never more than %.0f s behind: %s. Max lag: %s.", kind, case50LagS, verdict(ok),
+			list(c50, func(r accepted) string { return fmtLag(r.MaxLagS) }))
 	}
-	line("- Case 50, the newest text never more than %.0f s behind: %s. Max lag: %s.", case50LagS, verdict(ok),
-		list(c50, func(r accepted) string { return fmtLag(r.MaxLagS) }))
 
 	ae := of(func(r accepted) bool { return slices.Contains([]string{"A", "B", "C", "D", "E"}, r.Profile) })
-	ok = len(ae) > 0
+	ok := len(ae) > 0
 	for _, r := range ae {
 		ok = ok && r.PromptConfirmationS != nil && r.Status == StatusDone
 	}
@@ -159,18 +164,28 @@ func targets(runs []accepted) string {
 	line("- After every outage, sync resumes with no user action (runs with outages or an address change, the whole reply shown): %s. %s.",
 		verdict(ok), list(out, func(r accepted) string { return r.Status }))
 
-	waited, overtook := 0, 0
+	var shown, untold []accepted
 	for _, r := range runs {
-		if r.backfillAtConfirm < 0 && r.backfillAtText < 0 {
-			continue
-		}
-		waited++
-		if r.backfillAtConfirm > 0 || r.backfillAtText > 0 {
-			overtook++
+		switch {
+		case r.backfillAtConfirm < 0 && r.backfillAtText < 0:
+		case r.backfillAtConfirm > 0 || r.backfillAtText > 0:
+			shown = append(shown, r)
+		default:
+			untold = append(untold, r)
 		}
 	}
-	line("- The newest text and prompt acks overtake backfill: of the %d runs with a confirmed prompt or reply text, in %d the phone had not stored everything yet when the confirmation or the first text reached it (the sidecar's unsynced bytes, from its stats lines every 10 s), so lower classes were still waiting. Per run below.",
-		waited, overtook)
+	line("- The newest text and prompt acks overtake backfill in every run: %s. In %d runs the phone had not stored everything yet when the confirmation or the first text reached it (the sidecar's unsynced bytes, from its stats lines every 10 s), so lower classes were still waiting; in %d it cannot be told, because everything was stored by the sidecar's last stats line before: %s. Per run below.",
+		verdict(len(shown) > 0 && len(untold) == 0), len(shown), len(untold),
+		names(untold))
+
+	var again []accepted
+	for _, r := range runs {
+		if n := enterAgain(r.Report); n > 0 {
+			again = append(again, r)
+		}
+	}
+	line("- Open defect: the web app's composer ignored Enter, and the driver pressed it again, in %d of %d runs: %s. A user who does not press again never gets the prompt sent. The prompt's times count from the first Enter.",
+		len(again), len(runs), list(again, func(r accepted) string { return fmt.Sprintf("%d more", enterAgain(r.Report)) }))
 	line("")
 	line("Profile F and `derp` are reported with no target. Bytes the phone had not stored at the confirmation / at the first text (the sidecar's last stats line before each):")
 	line("")
@@ -178,6 +193,28 @@ func targets(runs []accepted) string {
 		line("- %s: %s / %s", r.Name(), fmtBytes(r.backfillAtConfirm), fmtBytes(r.backfillAtText))
 	}
 	return b.String()
+}
+
+func names(rs []accepted) string {
+	if len(rs) == 0 {
+		return "none"
+	}
+	var out []string
+	for _, r := range rs {
+		out = append(out, r.Name())
+	}
+	return strings.Join(out, ", ")
+}
+
+// enterAgain is how often the driver pressed Enter again in a run.
+func enterAgain(r Report) int {
+	n := 0
+	for _, note := range r.Notes {
+		if strings.Contains(note, "Enter again") {
+			n++
+		}
+	}
+	return n
 }
 
 func fmtBytes(v int64) string {

@@ -36,11 +36,15 @@ func TestTargetsSayWhichAreMet(t *testing.T) {
 	fast, slow := 3.0, 12.0
 	runs := []accepted{
 		{Report: Report{Profile: "case70", Client: "webapp", Kind: "warm", Seed: 1, PromptConfirmationS: &fast}, backfillAtConfirm: -1, backfillAtText: -1},
-		{Report: Report{Profile: "case70", Client: "webapp", Kind: "warm", Seed: 2, PromptConfirmationS: &slow}, backfillAtConfirm: -1, backfillAtText: -1},
+		{Report: Report{Profile: "case70", Client: "webapp", Kind: "warm", Seed: 2, PromptConfirmationS: &slow,
+			Notes: []string{"the prompt is still in the composer: Enter again"}}, backfillAtConfirm: -1, backfillAtText: -1},
 	}
 	out := targets(runs)
 	if !strings.Contains(out, "within 10 s: **not met**. case70-webapp-warm 3.0s, case70-webapp-warm-s2 12.0s.") {
 		t.Errorf("case 70 line wrong:\n%s", out)
+	}
+	if !strings.Contains(out, "pressed it again, in 1 of 2 runs: case70-webapp-warm-s2 1 more.") {
+		t.Errorf("Enter line wrong:\n%s", out)
 	}
 	if !strings.Contains(out, "twice, over all 2 runs: 0") {
 		t.Errorf("duplicates line wrong:\n%s", out)
