@@ -60,7 +60,7 @@ impl Server {
                 PipeEvent::Closed(id) => self.closed.push(id),
                 PipeEvent::Data(id, d) => self.data.push((id, d)),
                 PipeEvent::Unknown { local_ufrag, .. } => self.resolve(&local_ufrag)?,
-                PipeEvent::IceState(..) | PipeEvent::Failed(..) => {}
+                PipeEvent::IceState(..) | PipeEvent::DtlsUp(..) | PipeEvent::Failed(..) => {}
             }
         }
         Ok(())

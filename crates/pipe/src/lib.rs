@@ -73,6 +73,9 @@ pub enum PipeEvent {
     Data(PeerId, Vec<u8>),
     /// A change of the connection's ICE state, for logs.
     IceState(PeerId, String),
+    /// DTLS is up on the connection; SCTP and the channel come next. For
+    /// logs: a cold start at heavy loss can stall in either.
+    DtlsUp(PeerId),
     /// str0m failed on this connection, for example on a bad packet from
     /// the browser. `Closed` follows; the other connections go on.
     Failed(PeerId, String),
@@ -553,6 +556,7 @@ impl Pipe {
                     Output::Event(Event::IceConnectionStateChange(state)) => {
                         events.push(PipeEvent::IceState(peer.id, format!("{state:?}")));
                     }
+                    Output::Event(Event::Connected) => events.push(PipeEvent::DtlsUp(peer.id)),
                     Output::Event(_) => {}
                 }
             }

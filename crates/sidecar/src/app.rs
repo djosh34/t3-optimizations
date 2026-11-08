@@ -282,6 +282,7 @@ impl App {
             PipeEvent::IceState(peer, state) => {
                 log(format!("data channel {}: ICE {state}", peer.0))
             }
+            PipeEvent::DtlsUp(peer) => log(format!("data channel {}: DTLS up", peer.0)),
             PipeEvent::Failed(peer, e) => log(format!("data channel {} failed: {e}", peer.0)),
             PipeEvent::Closed(peer) => {
                 log(format!("data channel {} closed", peer.0));
