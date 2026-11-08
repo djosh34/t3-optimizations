@@ -307,6 +307,25 @@ pub(crate) struct Outbox {
     /// Send order: class, then highest order first.
     index: BTreeSet<(Class, Reverse<u64>, Key)>,
     inflight: BTreeMap<u64, SentPacket>,
+    /// Since the last `take_busiest`: content bytes put in packets and new
+    /// revisions, per object.
+    busy: BTreeMap<Key, (u64, u32)>,
+}
+
+/// An object that took a share of the packets: see `Outbox::take_busiest`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Busy {
+    pub key: Key,
+    pub class: Class,
+    pub order: u64,
+    pub meta: Vec<u8>,
+    pub len: u64,
+    pub acked: u64,
+    /// Content bytes put in packets, in every pass: first sends, resends
+    /// and extra copies.
+    pub sent: u64,
+    /// New revisions, each sent from its first changed byte again.
+    pub revs: u32,
 }
 
 impl Outbox {
@@ -360,6 +379,7 @@ impl Outbox {
             .take_while(|(a, b)| a == b)
             .count() as u64;
         o.rev += 1;
+        self.busy.entry(key).or_default().1 += 1;
         o.keep = if o.rev_acked {
             prefix
         } else {
@@ -396,6 +416,31 @@ impl Outbox {
         for k in keys {
             self.remove(k);
         }
+    }
+
+    /// The `n` objects that took the most packet bytes since the last call,
+    /// most first, and starts counting again. For the logs: which objects
+    /// fill the packets while others wait.
+    pub fn take_busiest(&mut self, n: usize) -> Vec<Busy> {
+        let mut busy: Vec<Busy> = std::mem::take(&mut self.busy)
+            .into_iter()
+            .filter_map(|(key, (sent, revs))| {
+                let o = self.objects.get(&key)?;
+                Some(Busy {
+                    key,
+                    class: o.class,
+                    order: o.order,
+                    meta: o.meta.clone(),
+                    len: o.len(),
+                    acked: o.acked.len().min(o.len()),
+                    sent,
+                    revs,
+                })
+            })
+            .collect();
+        busy.sort_by_key(|b| (Reverse(b.sent), Reverse(b.revs), b.key));
+        busy.truncate(n);
+        busy
     }
 
     pub fn is_synced(&self) -> bool {
@@ -627,6 +672,7 @@ impl Outbox {
             if let Some(o) = self.objects.get_mut(key) {
                 o.ever_sent.insert(range.clone());
             }
+            self.busy.entry(*key).or_default().0 += range.end - range.start;
         }
         for (key, range) in timed {
             if let Some(o) = self.objects.get_mut(&key) {
@@ -884,5 +930,56 @@ mod tests {
         // The peer lost its cache: nothing of it is there.
         ob.forget_peer();
         assert_eq!(ob.unsent_backfill_bytes(), 3_000);
+    }
+
+    #[test]
+    fn busiest_counts_packet_bytes_and_revisions_since_the_last_call() {
+        let mut ob = Outbox::default();
+        let status = Key::Object(1);
+        let backfill = Key::Object(2);
+        ob.set(status, Class::Status, 0, Vec::new(), vec![b'a'; 100]);
+        ob.set(
+            backfill,
+            Class::Background,
+            0,
+            Vec::new(),
+            vec![b'b'; 3_000],
+        );
+        let fill = Fill {
+            now: 0,
+            rto: 1_000,
+            fast_rto: 500,
+            copies: 1,
+        };
+        let mut out = Vec::new();
+        ob.fill(0, 600, 600, &fill, &mut out);
+        let sent_of = |k| -> u64 {
+            out.iter()
+                .filter(|c| c.key == k)
+                .map(|c| c.body.raw_len())
+                .sum()
+        };
+        let (status_sent, backfill_sent) = (sent_of(status), sent_of(backfill));
+        assert!(status_sent > 0 && backfill_sent > 0);
+        // A new revision counts; its bytes count once they go out.
+        ob.set(status, Class::Status, 0, Vec::new(), vec![b'c'; 100]);
+        let busy = ob.take_busiest(5);
+        let of = |k| busy.iter().find(|b| b.key == k).unwrap();
+        assert_eq!((of(status).sent, of(status).revs), (status_sent, 1));
+        assert_eq!((of(backfill).sent, of(backfill).revs), (backfill_sent, 0));
+        assert!(
+            busy.windows(2).all(|w| w[0].sent >= w[1].sent),
+            "most first"
+        );
+        ob.set(status, Class::Status, 0, Vec::new(), vec![b'd'; 100]);
+        ob.set(
+            backfill,
+            Class::Background,
+            0,
+            Vec::new(),
+            vec![b'e'; 3_000],
+        );
+        assert_eq!(ob.take_busiest(1).len(), 1, "only the top one");
+        assert!(ob.take_busiest(5).is_empty(), "counting starts again");
     }
 }

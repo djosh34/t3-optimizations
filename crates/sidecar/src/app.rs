@@ -94,6 +94,8 @@ const SAVE_EVERY: Duration = Duration::from_secs(2);
 const TICK: Duration = Duration::from_millis(5);
 const REPORTS_MAX: u64 = 4 << 20;
 const STATS_EVERY: Duration = Duration::from_secs(10);
+/// How many of the objects that took the most packet bytes the stats name.
+const BUSIEST_LOGGED: usize = 5;
 
 pub struct App {
     data: DataDir,
@@ -280,6 +282,32 @@ impl App {
                 s.inflight_packets,
                 s.sent_packets,
                 s.received_packets,
+            ));
+        }
+        for d in self.devices.values_mut().filter(|d| d.link.is_some()) {
+            let busy = d.server.take_busiest(BUSIEST_LOGGED);
+            if busy.is_empty() {
+                continue;
+            }
+            let list: Vec<String> = busy
+                .iter()
+                .map(|b| {
+                    format!(
+                        "{} ({:?} order {}, sent {} B, acked {}/{} B, {} new revisions)",
+                        String::from_utf8_lossy(&b.meta),
+                        b.class,
+                        b.order,
+                        b.sent,
+                        b.acked,
+                        b.len,
+                        b.revs
+                    )
+                })
+                .collect();
+            log(format!(
+                "device {} sent most: {}",
+                d.record.id,
+                list.join("; ")
             ));
         }
     }

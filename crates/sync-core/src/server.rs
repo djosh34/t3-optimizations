@@ -7,7 +7,7 @@ use std::fmt;
 use crate::Millis;
 use crate::endpoint::{Config, Endpoint, Stats, decode};
 use crate::inbox::InObject;
-use crate::outbox::{Class, OutObject};
+use crate::outbox::{Busy, Class, OutObject};
 use crate::phone::EntryKind;
 use crate::store;
 use crate::wire::{DecodeError, Hello, Key, MAX_ID, Packet, Reader, put_varint};
@@ -313,6 +313,11 @@ impl Server {
 
     pub fn stats(&self) -> Stats {
         self.ep.stats()
+    }
+
+    /// The `n` objects that took the most packet bytes since the last call.
+    pub fn take_busiest(&mut self, n: usize) -> Vec<Busy> {
+        self.ep.out.take_busiest(n)
     }
 
     /// Everything a restarted sidecar needs to go on without a full resync.
