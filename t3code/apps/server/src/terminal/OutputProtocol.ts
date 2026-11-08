@@ -103,7 +103,6 @@ export function withOutputWindow(
           if (window) {
             return Effect.flatMap(Clock.currentTimeMillis, (now) => {
               window.sizes.push(
-                // @effect-diagnostics-next-line preferSchemaOverJson:off
                 window.bytes ? Buffer.byteLength(JSON.stringify(response)) : 0,
               );
               window.sentAt.push(now);

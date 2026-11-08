@@ -132,6 +132,10 @@ func Run(ctx context.Context, o Options) (string, error) {
 	} else if _, err := os.Stat(filepath.Join(staticDir, "index.html")); err != nil {
 		return "", fmt.Errorf("no baseline client build at %s; run lab/scripts/build-baseline-client.sh as yourself first", staticDir)
 	}
+	// v0.1.7 has no T3CODE_STATIC_DIR; it serves the client built in its own tree.
+	if o.Server == ServerV017 {
+		staticDir = ""
+	}
 	commit := buildCommit()
 
 	if err := netlab.Cleanup(ctx); err != nil {
