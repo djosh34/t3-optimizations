@@ -545,6 +545,16 @@ impl Outbox {
                 }
                 for r in ranges {
                     let mut r = r;
+                    // A command, a call or a reply is of use only whole: it
+                    // goes in one packet when it fits one, not in pieces that
+                    // must all arrive (at 70% loss a 750-byte command in
+                    // 200-byte packets took four lucky packets; issue #46).
+                    if class == Class::Urgent && may_grow(pass, out) {
+                        let need = (r.end - r.start) as usize + o.meta.len() + 48;
+                        let grow = need.saturating_sub(left).min(extra);
+                        left += grow;
+                        extra -= grow;
+                    }
                     while !r.is_empty() {
                         let mut no_extra = 0;
                         let grow = if may_grow(pass, out) {

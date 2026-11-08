@@ -186,6 +186,9 @@ impl Endpoint {
         self.rate.decide(now);
         self.out.prune(now);
         let unsynced = !self.out.is_synced();
+        if !unsynced {
+            self.rate.note_idle(now);
+        }
         if !self.rate.can_send(now) {
             if unsynced {
                 self.rate.note_limited(now);

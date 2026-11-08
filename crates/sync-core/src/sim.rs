@@ -9,7 +9,7 @@
 //! [`WIRE_OVERHEAD`] bytes more than its application bytes.
 
 use std::cmp::Reverse;
-use std::collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, VecDeque};
+use std::collections::{BTreeMap, BinaryHeap, HashMap, VecDeque};
 use std::ops::Range;
 
 use crate::Incoming;
@@ -197,10 +197,11 @@ impl<T: Clone> Link<T> {
 /// What goes from the server to the phone.
 #[derive(Debug, Clone)]
 enum Down {
-    Sync(Vec<u8>),
-    /// The server's SCTP acks the phone's DATA, with every TSN it has
-    /// (the recent ones; older ones no longer matter to the phone).
-    Sack(Vec<u64>),
+    /// A sync packet, with the SACK for the phone's SCTP that rides in it.
+    Sync(Vec<u8>, Option<u64>),
+    /// The server's SCTP acks the phone's DATA up to this TSN; it acks past
+    /// lost chunks.
+    Sack(u64),
 }
 
 /// What goes from the phone to the server.
@@ -414,8 +415,8 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
     let mut down: Link<Down> = Link::new(LinkSpec::clean());
     let mut up: Link<Up> = Link::new(LinkSpec::clean());
     let mut sctp = BrowserSctp::default();
-    // TSNs of the phone's SCTP the server has, for its SACKs.
-    let mut sctp_received: BTreeSet<u64> = BTreeSet::new();
+    // The newest TSN of the phone's SCTP the server has, for its SACKs.
+    let mut sctp_cumulative: Option<u64> = None;
     let mut host = Host {
         server: Server::new(TOKEN, Config::server(), 0),
         objects: BTreeMap::new(),
@@ -526,7 +527,7 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
             up.clear();
             // A new page has a new SCTP association.
             sctp = BrowserSctp::default();
-            sctp_received.clear();
+            sctp_cumulative = None;
             sent_chunks.clear();
         }
 
@@ -591,9 +592,14 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
 
         for packet in down.take(now) {
             let bytes = match packet {
-                Down::Sync(bytes) => bytes,
-                Down::Sack(tsns) => {
-                    sctp.on_sack(now, &tsns);
+                Down::Sync(bytes, sack) => {
+                    if let Some(cumulative) = sack {
+                        sctp.on_sack(now, cumulative);
+                    }
+                    bytes
+                }
+                Down::Sack(cumulative) => {
+                    sctp.on_sack(now, cumulative);
                     continue;
                 }
             };
@@ -616,20 +622,17 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
                 Up::Sctp(p) => {
                     // The server's SCTP acks every DATA packet at once.
                     for (tsn, m) in p.messages {
-                        sctp_received.insert(tsn);
+                        sctp_cumulative = sctp_cumulative.max(Some(tsn));
                         from_phone.push(m);
                     }
-                    let top = sctp_received.last().copied().unwrap_or(0);
-                    let recent: Vec<u64> = sctp_received
-                        .range(top.saturating_sub(256)..)
-                        .copied()
-                        .collect();
-                    down.send(
-                        now,
-                        PACKET_HEADER + SACK_CHUNK,
-                        Down::Sack(recent),
-                        &mut rng,
-                    );
+                    if let Some(cumulative) = sctp_cumulative {
+                        down.send(
+                            now,
+                            PACKET_HEADER + SACK_CHUNK,
+                            Down::Sack(cumulative),
+                            &mut rng,
+                        );
+                    }
                 }
             }
         }
@@ -693,12 +696,9 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
                 }
                 sent_chunks.insert(p.seq, chunks);
             }
-            down.send(
-                now,
-                bytes.len() + WIRE_OVERHEAD,
-                Down::Sync(bytes),
-                &mut rng,
-            );
+            let sack = sctp_cumulative.filter(|_| s.webkit);
+            let wire = bytes.len() + WIRE_OVERHEAD + if sack.is_some() { SACK_CHUNK } else { 0 };
+            down.send(now, wire, Down::Sync(bytes, sack), &mut rng);
         }
         if s.webkit {
             // The web app hands packets over while less than 1200 bytes wait.

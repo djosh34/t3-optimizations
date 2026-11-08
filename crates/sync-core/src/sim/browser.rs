@@ -6,12 +6,14 @@
 //! timer that backs off. The SACKs travel on the other direction, so a full
 //! queue there holds back what the phone sends (issue #46).
 //!
-//! Only what decides timing is modelled: the window, the timer and its
-//! backoff, abandoning a chunk after a timeout or three miss reports, and
-//! bundling messages into packets. dcsctp's defaults are used where
-//! libwebrtc keeps them: retransmit timeout 400 ms to 60 s with an RTT
-//! variance of at least 220 ms, a backed-off timer capped at 3 s, an initial
-//! window of 10 packets and a smallest of 4.
+//! The server's SCTP (the patched sctp-proto) acks past chunks it lost, so
+//! every SACK acks up to the newest TSN it has, with no gap reports; a SACK
+//! rides in every packet it sends. Only what decides timing is modelled:
+//! the window, the timer and its backoff, abandoning what is in flight on a
+//! timeout, and bundling messages into packets. dcsctp's defaults are used
+//! where libwebrtc keeps them: retransmit timeout 400 ms to 60 s with an RTT
+//! variance of at least 220 ms, a backed-off timer capped at 3 s, and an
+//! initial window of 10 packets.
 
 use std::collections::{BTreeMap, VecDeque};
 
@@ -20,15 +22,14 @@ use crate::Millis;
 /// IPv4 20, UDP 8, DTLS 37, SCTP common header 12.
 pub const PACKET_HEADER: usize = 77;
 pub const DATA_CHUNK_HEADER: usize = 16;
-/// A SACK chunk with one gap report.
-pub const SACK_CHUNK: usize = 24;
+/// A SACK chunk without gap reports.
+pub const SACK_CHUNK: usize = 16;
 /// The largest SCTP packet on the wire.
 const MTU: usize = 1200;
 const RTO_MIN: f64 = 400.0;
 const RTO_MAX: f64 = 60_000.0;
 const MIN_RTT_VARIANCE: f64 = 220.0;
 const MAX_BACKOFF: f64 = 3_000.0;
-const MISSES_TO_ABANDON: u32 = 3;
 /// The phone's SCTP acks every second DATA packet, or 200 ms after one.
 const DELAYED_ACK: Millis = 200;
 
@@ -36,7 +37,6 @@ const DELAYED_ACK: Millis = 200;
 struct Outstanding {
     sent_at: Millis,
     bytes: usize,
-    misses: u32,
 }
 
 #[derive(Debug)]
@@ -55,8 +55,6 @@ pub struct BrowserSctp {
     /// Timeouts since the last new ack.
     backoff: u32,
     t3: Option<Millis>,
-    /// Fast recovery lasts until this TSN is acked or abandoned.
-    recovery_until: Option<u64>,
     /// DATA packets from the server not SACKed yet, and when the first
     /// arrived.
     unacked_data: u32,
@@ -78,7 +76,6 @@ impl Default for BrowserSctp {
             rto: 500.0,
             backoff: 0,
             t3: None,
-            recovery_until: None,
             unacked_data: 0,
             unacked_since: None,
         }
@@ -144,7 +141,6 @@ impl BrowserSctp {
                 Outstanding {
                     sent_at: now,
                     bytes: len,
-                    misses: 0,
                 },
             );
             p.messages.push((tsn, m));
@@ -190,55 +186,34 @@ impl BrowserSctp {
         self.ssthresh = (self.cwnd / 2).max(4 * MTU);
         self.cwnd = MTU;
         self.backoff += 1;
-        self.recovery_until = None;
         self.t3 = None;
     }
 
-    /// A SACK from the server: `received` are the TSNs it has.
-    pub fn on_sack(&mut self, now: Millis, received: &[u64]) {
+    /// A SACK from the server: it acks every TSN up to `cumulative`.
+    pub fn on_sack(&mut self, now: Millis, cumulative: u64) {
         self.expire(now);
-        let mut acked_bytes = 0;
-        let mut newest: Option<(u64, Millis)> = None;
-        for tsn in received {
-            if let Some(o) = self.outstanding.remove(tsn) {
-                self.flight -= o.bytes;
-                acked_bytes += o.bytes;
-                if newest.is_none_or(|(t, _)| *tsn > t) {
-                    newest = Some((*tsn, o.sent_at));
-                }
-            }
-        }
-        let Some((top, sent_at)) = newest else {
+        let acked: Vec<u64> = self
+            .outstanding
+            .range(..=cumulative)
+            .map(|(&t, _)| t)
+            .collect();
+        let Some(&top) = acked.last() else {
             return;
         };
+        let sent_at = self.outstanding.get(&top).map_or(now, |o| o.sent_at);
+        let mut acked_bytes = 0;
+        for tsn in acked {
+            if let Some(o) = self.outstanding.remove(&tsn) {
+                self.flight -= o.bytes;
+                acked_bytes += o.bytes;
+            }
+        }
         self.on_rtt(now.saturating_sub(sent_at) as f64);
         self.backoff = 0;
-        if self.recovery_until.is_some_and(|r| top >= r) {
-            self.recovery_until = None;
-        }
         if self.cwnd <= self.ssthresh {
             self.cwnd += acked_bytes.min(MTU);
         } else {
             self.cwnd += MTU * acked_bytes / self.cwnd.max(1);
-        }
-        // Chunks below the newest acked one that it did not ack were missed.
-        let mut abandoned = false;
-        let missed: Vec<u64> = self.outstanding.range(..top).map(|(&t, _)| t).collect();
-        for tsn in missed {
-            let Some(o) = self.outstanding.get_mut(&tsn) else {
-                continue;
-            };
-            o.misses += 1;
-            if o.misses >= MISSES_TO_ABANDON {
-                self.flight -= o.bytes;
-                self.outstanding.remove(&tsn);
-                abandoned = true;
-            }
-        }
-        if abandoned && self.recovery_until.is_none() {
-            self.ssthresh = (self.cwnd / 2).max(4 * MTU);
-            self.cwnd = self.ssthresh;
-            self.recovery_until = Some(self.next_tsn.saturating_sub(1));
         }
         self.t3 = (!self.outstanding.is_empty()).then(|| now + self.timer() as Millis);
     }
@@ -295,7 +270,7 @@ mod tests {
         // A chunk goes out while less than the window (10 packets of 1200
         // bytes) is in flight: 12 chunks of 1016 bytes.
         assert_eq!(sent.len(), 12);
-        b.on_sack(400, &sent);
+        b.on_sack(400, sent.last().copied().unwrap_or(0));
         assert_eq!(b.flight, 0);
         assert_eq!(b.backoff, 0);
         assert!(b.poll(400).is_some());

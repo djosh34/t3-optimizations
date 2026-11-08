@@ -93,7 +93,8 @@ pub struct RateControl {
     /// Whether the sender had data waiting on the rate since the last
     /// decision. Only then is a higher rate worth probing.
     limited: bool,
-    last_limited: Option<Millis>,
+    /// Since when the sender has had nothing to send.
+    idle_since: Option<Millis>,
     next_decision: Millis,
     srtt: Option<f64>,
     rttvar: f64,
@@ -139,7 +140,7 @@ impl RateControl {
             last_refill: now,
             slow_start: true,
             limited: false,
-            last_limited: None,
+            idle_since: None,
             next_decision: now,
             srtt: None,
             rttvar: 0.0,
@@ -228,10 +229,18 @@ impl RateControl {
         self.tokens >= 0.0
     }
 
+    /// Notes that the sender has nothing to send.
+    pub fn note_idle(&mut self, now: Millis) {
+        self.idle_since.get_or_insert(now);
+    }
+
     /// Notes that data waited on the rate. After an idle spell the rate
-    /// starts again from the initial one, in slow start.
+    /// starts again from the initial one, in slow start. A sender that had
+    /// data but was not asked for packets (the browser's SCTP held them
+    /// back) was not idle: its measurements stay (issue #46: they were
+    /// reset every few seconds and the phone never measured the loss).
     pub fn note_limited(&mut self, now: Millis) {
-        if self.last_limited.is_some_and(|t| now >= t + IDLE_RESTART) {
+        if self.idle_since.is_some_and(|t| now >= t + IDLE_RESTART) {
             self.rate = self.rate.min(self.cfg.initial.max(self.cfg.floor));
             self.slow_start = true;
             self.changed_at = now;
@@ -241,7 +250,7 @@ impl RateControl {
             self.delivered = 0.0;
             self.report_base = None;
         }
-        self.last_limited = Some(now);
+        self.idle_since = None;
         self.limited = true;
     }
 

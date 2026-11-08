@@ -62,6 +62,9 @@ use thiserror::Error;
 /// t3-optimizations patch: the congestion window to start with, see
 /// `Association::new`.
 const INITIAL_CWND: u32 = 1 << 20;
+/// t3-optimizations patch: a SACK with more gap blocks than this does not
+/// ride in DATA packets; it would take too much of each.
+const BUNDLED_SACK_MAX_GAPS: usize = 16;
 
 pub(crate) mod state;
 pub(crate) mod stats;
@@ -4110,8 +4113,19 @@ impl Association {
     /// DATA chunks into a packet so long as the resulting packet size does not exceed
     /// the path MTU.
     fn bundle_data_chunks_into_packets(&self, chunks: Vec<ChunkPayloadData>) -> Vec<Packet> {
+        // t3-optimizations patch: a DATA packet starts with the current SACK
+        // where it fits. The phone's SCTP (the browser's) cuts its window to
+        // one packet and backs its retransmit timer off whenever no SACK comes
+        // in time; at 70% loss each way a lone SACK rarely arrives, and the
+        // phone's data stalled for seconds (issues #45, #46). Since the
+        // server acks past lost chunks of the phone's channel (`handle_data`),
+        // these SACKs carry no gap reports the browser could count as misses.
+        let sack = self.bundled_sack();
+        let sack_len = sack
+            .as_ref()
+            .map_or(0, |s| crate::chunk::chunk_header::CHUNK_HEADER_SIZE as u32 + s.value_length() as u32);
         let mut packets = vec![];
-        let mut chunks_to_send = vec![];
+        let mut chunks_to_send: Vec<Box<dyn Chunk + Send + Sync>> = vec![];
         let mut bytes_in_packet = COMMON_HEADER_SIZE;
 
         for c in chunks {
@@ -4120,13 +4134,19 @@ impl Association {
             //   single packet.  Furthermore, DATA chunks being retransmitted MAY be
             //   bundled with new DATA chunks, as long as the resulting packet size
             //   does not exceed the path MTU.
-            if bytes_in_packet + c.user_data.len() as u32 > self.mtu {
-                packets.push(self.create_packet(chunks_to_send));
-                chunks_to_send = vec![];
+            if !chunks_to_send.is_empty() && bytes_in_packet + c.user_data.len() as u32 > self.mtu {
+                packets.push(self.create_packet(std::mem::take(&mut chunks_to_send)));
                 bytes_in_packet = COMMON_HEADER_SIZE;
             }
-
-            bytes_in_packet += DATA_CHUNK_HEADER_SIZE + c.user_data.len() as u32;
+            let len = DATA_CHUNK_HEADER_SIZE + c.user_data.len() as u32;
+            if chunks_to_send.is_empty()
+                && let Some(s) = &sack
+                && bytes_in_packet + sack_len + len <= self.mtu
+            {
+                chunks_to_send.push(Box::new(s.clone()));
+                bytes_in_packet += sack_len;
+            }
+            bytes_in_packet += len;
             chunks_to_send.push(Box::new(c));
         }
 
@@ -4135,6 +4155,19 @@ impl Association {
         }
 
         packets
+    }
+
+    /// t3-optimizations patch: the SACK that rides in DATA packets, without
+    /// the duplicate TSNs a lone SACK reports once. None when its gap blocks
+    /// would take too much of the packet.
+    fn bundled_sack(&self) -> Option<ChunkSelectiveAck> {
+        let sack = ChunkSelectiveAck {
+            cumulative_tsn_ack: self.peer_last_tsn,
+            advertised_receiver_window_credit: self.get_my_receiver_window_credit(),
+            gap_ack_blocks: self.payload_queue.get_gap_ack_blocks(self.peer_last_tsn),
+            duplicate_tsn: vec![],
+        };
+        (sack.gap_ack_blocks.len() <= BUNDLED_SACK_MAX_GAPS).then_some(sack)
     }
 
     /// generate_next_rsn returns the my_next_rsn and increases it. The caller should hold the lock.
