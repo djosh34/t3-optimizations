@@ -131,6 +131,31 @@ function whenReady<T>(engine: Engine, ready: () => T | null): Promise<T> {
 
 // The RPC side.
 
+/**
+ * Calls the client makes by itself, not for what the owner looks at or taps:
+ * their replies wait behind everything the phone is syncing.
+ */
+const BACKGROUND_CALLS = new Set([
+  "server.reportClientActivity",
+  "server.refreshProviders",
+  "preview.reportProfiles",
+  "preview.list",
+  "projects.readFile",
+  "attachments.delete",
+  "subscribeResourceTelemetry",
+  "subscribeDeviceState",
+  "subscribePreviewEvents",
+  "subscribeTerminalMetadata",
+  "subscribeDiscoveredLocalServers",
+  "subscribeProjectClones",
+  "pullRequests.subscribeRefreshes",
+  "scheduledTasks.subscribe",
+]);
+
+export function isBackgroundCall(tag: string): boolean {
+  return BACKGROUND_CALLS.has(tag);
+}
+
 /** A request id as the client sent it; replies carry it back unchanged. */
 type RequestId = string | number;
 
@@ -300,10 +325,10 @@ class RpcServer {
         return;
       }
     }
-    // Everything else: one call to the sidecar, one reply, at the background
-    // class: the client makes many calls by itself (status, activity,
-    // subscriptions), and an urgent reply is repeated at heavy loss.
-    const { reply } = await this.engine.request("call", { tag, payload }, true);
+    // Everything else: one call to the sidecar, one reply. A call for what is
+    // on screen or what a tap needs gets the reply class (#16); the client's
+    // own reports, refreshes and side subscriptions go at the background class.
+    const { reply } = await this.engine.request("call", { tag, payload }, isBackgroundCall(tag));
     const r = readReply(await reply);
     if ("chunk" in r) {
       // The sidecar takes a stream's first chunk; the stream stays open here.

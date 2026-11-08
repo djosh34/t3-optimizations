@@ -698,3 +698,35 @@ fn deleting_an_object_the_phone_has() {
     );
     assert!(p.phone.object(10).is_some_and(|o| o.complete()));
 }
+
+#[test]
+fn a_reply_to_a_call_the_owner_made_overtakes_history() {
+    let mut p = Pair::new();
+    p.run(100);
+    for id in 100..140 {
+        p.server
+            .set(id, Class::History, id, Vec::new(), text(20_000))
+            .expect("set");
+    }
+    let shown = p
+        .phone
+        .call(b"{\"method\":\"subscribeServerLifecycle\"}".to_vec(), false);
+    let background = p.phone.call(
+        b"{\"method\":\"server.reportClientActivity\"}".to_vec(),
+        true,
+    );
+    // The server gets both calls while history waits for the phone.
+    for _ in 0..50 {
+        while let Some(b) = p.phone.poll(p.now) {
+            p.deliver_to_server(&b);
+        }
+        p.now += 1;
+    }
+    p.incoming.retain(|i| *i != Incoming::Reset);
+    assert_eq!(p.incoming.len(), 2);
+    p.reply_to_commands();
+    let packet = p.next_server_packet();
+    let keys: Vec<Key> = packet.chunks.iter().map(|c| c.key).collect();
+    assert!(keys.contains(&Key::Reply(shown)), "{keys:?}");
+    assert!(!keys.contains(&Key::Reply(background)), "{keys:?}");
+}
