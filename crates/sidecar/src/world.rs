@@ -714,11 +714,19 @@ impl World {
 
     /// Notes the turn item behind an object, and a new turn when the item
     /// is a newer user message: then the previous turn's objects change
-    /// class.
+    /// class. Only the turn's messages count: tool rows can be large, and
+    /// they would hold back the server config, without which the app shows
+    /// nothing after a cache loss.
     fn note_turn(&mut self, thread: &str, item: &Value, id: u64) {
         let Some(ordinal) = item["ordinal"].as_u64() else {
             return;
         };
+        if !matches!(
+            item["type"].as_str(),
+            Some("user_message" | "assistant_message")
+        ) {
+            return;
+        }
         let state = self.threads.entry(thread.to_owned()).or_default();
         state.turn_ordinals.insert(id, ordinal);
         if item["type"].as_str() == Some("user_message") && ordinal > state.turn_start {
