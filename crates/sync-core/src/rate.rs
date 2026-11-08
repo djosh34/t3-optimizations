@@ -117,6 +117,9 @@ pub struct RateControl {
     /// The rate when a long silence took it below the initial rate; the
     /// peer heard again brings it back.
     deep_from: Option<f64>,
+    /// After a silence the delivery rate is the old link's: no growth until
+    /// the new one is measured.
+    awaiting_capacity: bool,
     /// Packets from the other side per second, averaged over spans of
     /// `HEARD_SPAN`, and the span being counted. It changes only when a
     /// packet comes, so a silence does not lower it.
@@ -161,6 +164,7 @@ impl RateControl {
             last_rtt: None,
             last_heard: None,
             deep_from: None,
+            awaiting_capacity: false,
             heard_rate: None,
             heard_span: (now, 0),
             fresh_min: None,
@@ -381,6 +385,7 @@ impl RateControl {
             r.bytes.saturating_sub(base.bytes) as f64 + packets * crate::WIRE_OVERHEAD as f64;
         let delivered = wire / secs;
         let loss = (1.0 - packets / sent as f64).clamp(0.0, 1.0);
+        self.awaiting_capacity = false;
         if self.delivered == 0.0 {
             self.delivered = delivered;
             self.loss = loss;
@@ -448,8 +453,14 @@ impl RateControl {
                 self.drain_from = None;
                 self.changed_at = now;
                 // The path may be another one now: its first samples are
-                // the new base, not RTT growth.
+                // the new base, not RTT growth, and the delivery rate is the
+                // old link's. Slow start capped by it took the sidecar to
+                // 5.3 kB/s on case 70's 1.25 kB/s (issue #46); it waits for
+                // the new link's first measurement.
                 self.rtt_window.clear();
+                self.delivered = 0.0;
+                self.report_base = None;
+                self.awaiting_capacity = true;
             }
             self.next_decision = now + interval as Millis;
             return;
@@ -511,7 +522,7 @@ impl RateControl {
             self.next_decision = now + interval as Millis;
         } else {
             self.drain_from = None;
-            if fresh.is_some() && self.limited {
+            if fresh.is_some() && self.limited && !self.awaiting_capacity {
                 let up = if self.slow_start {
                     SLOW_START_INCREASE
                 } else {
@@ -594,6 +605,70 @@ mod tests {
             );
             assert!(worst < 3_000.0, "cap {cap}: queue delay up to {worst} ms");
         }
+    }
+
+    #[test]
+    fn a_silence_forgets_the_old_links_capacity() {
+        let mut rc = RateControl::new(RateConfig::default(), 0);
+        let mut t = 0;
+        let (mut bytes, mut seq) = (0, 0);
+        let mut report = |rc: &mut RateControl, t: u64, rate: u64| {
+            // What the peer got over the last second, with no loss.
+            bytes += rate;
+            seq += 20;
+            rc.on_report(Report {
+                time_ms: t,
+                bytes,
+                packets: seq,
+                max_seq: seq,
+            });
+        };
+        // A fast link, measured.
+        for i in 0..40 {
+            t += 300;
+            rc.on_heard(t);
+            rc.on_rtt(t, 20.0, t);
+            rc.note_limited(t);
+            rc.decide(t);
+            if i % 4 == 0 {
+                report(&mut rc, t, 20_000);
+            }
+        }
+        assert!(rc.capacity().is_some_and(|c| c > 10_000.0));
+        // The switch: silence, then a slower path whose RTT stays flat.
+        for _ in 0..10 {
+            t += 300;
+            rc.note_limited(t);
+            rc.decide(t);
+        }
+        let after_silence = rc.rate();
+        for _ in 0..10 {
+            t += 700;
+            rc.on_heard(t);
+            rc.on_rtt(t, 600.0, t);
+            rc.note_limited(t);
+            rc.decide(t);
+            // Not on the old link's capacity (case 70: 5.3 kB/s on 1.25 kB/s).
+            assert!(
+                rc.rate() <= after_silence,
+                "rate {} above {after_silence}",
+                rc.rate()
+            );
+        }
+        // The new link's first measurements cap what comes next.
+        for _ in 0..6 {
+            t += 1_000;
+            report(&mut rc, t, 1_250);
+            rc.on_heard(t);
+            rc.on_rtt(t, 600.0, t);
+            rc.note_limited(t);
+            rc.decide(t);
+        }
+        assert!(
+            rc.rate() <= after_silence.max(1.5 * 1_250.0),
+            "rate {}",
+            rc.rate()
+        );
     }
 
     #[test]
