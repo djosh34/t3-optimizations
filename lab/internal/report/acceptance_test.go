@@ -13,10 +13,11 @@ func TestBackfillIsReadAtTheMomentsAfterThePrompt(t *testing.T) {
 {"t":2500,"ev":"prompt-confirmed"}
 `
 	log := `sidecar ready
-sidecar: 500 device d1: command 3 replied, backfill unsent 9000 B
-sidecar: 1500 device d1: command 4 replied, backfill unsent 700 B
+sidecar: 500 device d1: command 3 (message.dispatch) replied, backfill unsent 9000 B
+sidecar: 1200 device d1: command 4 (thread.visit) replied, backfill unsent 800 B
+sidecar: 1500 device d1: command 5 (message.dispatch) replied, backfill unsent 700 B
 sidecar: 1600 device d1: new newest text, backfill unsent 650 B
-sidecar: 3000 device d1: command 5 replied, backfill unsent 0 B
+sidecar: 3000 device d1: command 6 (message.dispatch) replied, backfill unsent 0 B
 `
 	for name, data := range map[string]string{"phone.jsonl": events, "sidecar.log": log} {
 		if err := os.WriteFile(filepath.Join(dir, name), []byte(data), 0o644); err != nil {

@@ -287,13 +287,15 @@ func loadAccepted(dir string) ([]accepted, error) {
 // The sidecar's lines at the two moments: its time, and the backfill bytes
 // it had never sent.
 var (
-	replyLine = regexp.MustCompile(`^sidecar: (\d+) device \S+: command \d+ replied, backfill unsent (\d+) B`)
+	replyLine = regexp.MustCompile(`^sidecar: (\d+) device \S+: command \d+ \(message\.dispatch\) replied, backfill unsent (\d+) B`)
 	textLine  = regexp.MustCompile(`^sidecar: (\d+) device \S+: new newest text, backfill unsent (\d+) B`)
 )
 
 // backfill reads the run's sidecar log and returns the backfill bytes the
-// sidecar had never sent at the first command reply and the first new
-// newest text after the prompt was typed; -1 for a moment the log lacks.
+// sidecar had never sent at the first reply to a sent message (the prompt;
+// the client also sends other commands, such as thread.visit) and at the
+// first new newest text after the prompt was typed; -1 for a moment the log
+// lacks.
 func backfill(dir string) (atConfirm, atText int64, err error) {
 	atConfirm, atText = -1, -1
 	events, err := readEvents(filepath.Join(dir, "phone.jsonl"))

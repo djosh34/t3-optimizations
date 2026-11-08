@@ -70,9 +70,20 @@ enum Pending {
     Live,
     ConfigStream,
     Config,
-    Call { device: String, seq: u64 },
-    Command { device: String, seq: u64 },
-    AssetUrl { id: String, mime: String },
+    Call {
+        device: String,
+        seq: u64,
+    },
+    /// `kind` is the command's type, for the log.
+    Command {
+        device: String,
+        seq: u64,
+        kind: String,
+    },
+    AssetUrl {
+        id: String,
+        mime: String,
+    },
 }
 
 /// A thread snapshot is fetched this long after its last change.
@@ -514,14 +525,18 @@ impl App {
                 "device {device}: lost its cache, syncing everything"
             )),
             Incoming::Command { seq, payload } => match serde_json::from_slice::<Value>(&payload) {
-                Ok(p) => self.request(
-                    "orchestration.dispatchCommand",
-                    p,
-                    Pending::Command {
-                        device: device.to_owned(),
-                        seq,
-                    },
-                ),
+                Ok(p) => {
+                    let kind = p["type"].as_str().unwrap_or_default().to_owned();
+                    self.request(
+                        "orchestration.dispatchCommand",
+                        p,
+                        Pending::Command {
+                            device: device.to_owned(),
+                            seq,
+                            kind,
+                        },
+                    )
+                }
                 Err(e) => self.reply(device, seq, &json!({"error": format!("bad command: {e}")})),
             },
             Incoming::Call { seq, payload, .. } => {
@@ -810,13 +825,13 @@ impl App {
             Pending::Call { device, seq } => {
                 self.reply(&device, seq, &json!({"exit": exit}));
             }
-            Pending::Command { device, seq } => {
+            Pending::Command { device, seq, kind } => {
                 self.reply(&device, seq, &json!({"exit": exit}));
                 // The reply goes out before any backfill not sent yet: the
                 // lab's acceptance report reads this line (issue #46).
                 if let Some(d) = self.devices.get(&device) {
                     log(format!(
-                        "device {device}: command {seq} replied, backfill unsent {} B",
+                        "device {device}: command {seq} ({kind}) replied, backfill unsent {} B",
                         d.server.stats().unsent_backfill_bytes
                     ));
                 }
