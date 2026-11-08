@@ -27,9 +27,27 @@ const (
 type accepted struct {
 	Report
 	dir string
-	// Backfill bytes the sidecar still had to send when the prompt was
-	// confirmed and when the first reply text showed; -1 when unknown.
-	backfillAtConfirm, backfillAtText int64
+	// The backfill backlog around the prompt's confirmation and around
+	// the first reply text on screen.
+	atConfirm, atText around
+}
+
+// around is the backfill the phone had not stored (the classes below
+// status) in the sidecar's last stats line before a moment and its first
+// one after; -1 where there is no such line or no such moment.
+type around struct{ before, after int64 }
+
+// overtook says whether the moment came while backfill waited: unsent
+// backfill both before and after it. Known is false without the lines.
+func (a around) overtook() (yes, known bool) {
+	if a.before < 0 || a.after < 0 {
+		return false, false
+	}
+	return a.before > 0 && a.after > 0, true
+}
+
+func (a around) String() string {
+	return fmtBytes(a.before) + " → " + fmtBytes(a.after)
 }
 
 // Acceptance prints the acceptance report of issue #46: each target of the
@@ -164,19 +182,22 @@ func targets(runs []accepted) string {
 	line("- After every outage, sync resumes with no user action (runs with outages or an address change, the whole reply shown): %s. %s.",
 		verdict(ok), list(out, func(r accepted) string { return r.Status }))
 
-	var shown, untold []accepted
+	var shown, notShown, untold []accepted
 	for _, r := range runs {
+		confirm, knownConfirm := r.atConfirm.overtook()
+		text, knownText := r.atText.overtook()
 		switch {
-		case r.backfillAtConfirm < 0 && r.backfillAtText < 0:
-		case r.backfillAtConfirm > 0 || r.backfillAtText > 0:
+		case !knownConfirm || !knownText:
+			untold = append(untold, r)
+		case confirm && text:
 			shown = append(shown, r)
 		default:
-			untold = append(untold, r)
+			notShown = append(notShown, r)
 		}
 	}
-	line("- The newest text and prompt acks overtake backfill in every run: %s. In %d runs the phone had not stored everything yet when the confirmation or the first text reached it (the sidecar's unsynced bytes, from its stats lines every 10 s), so lower classes were still waiting; in %d it cannot be told, because everything was stored by the sidecar's last stats line before: %s. Per run below.",
-		verdict(len(shown) > 0 && len(untold) == 0), len(shown), len(untold),
-		names(untold))
+	line("- The newest text and prompt acks overtake backfill in every run: %s. Both the confirmation and the first reply text reached the phone while backfill (older messages, the thread list, other threads, images) still waited, by the sidecar's stats lines just before and just after each (every 10 s), in %d runs; not shown in %d: %s; cannot be told in %d (no prompt, no text, or no stats line on one side): %s. Per run below.",
+		verdict(len(shown) > 0 && len(notShown) == 0 && len(untold) == 0),
+		len(shown), len(notShown), names(notShown), len(untold), names(untold))
 
 	var again []accepted
 	for _, r := range runs {
@@ -187,10 +208,10 @@ func targets(runs []accepted) string {
 	line("- Open defect: the web app's composer ignored Enter, and the driver pressed it again, in %d of %d runs: %s. A user who does not press again never gets the prompt sent. The prompt's times count from the first Enter.",
 		len(again), len(runs), list(again, func(r accepted) string { return fmt.Sprintf("%d more", enterAgain(r.Report)) }))
 	line("")
-	line("Profile F and `derp` are reported with no target. Bytes the phone had not stored at the confirmation / at the first text (the sidecar's last stats line before each):")
+	line("Profile F and `derp` are reported with no target. Backfill bytes not stored, in the sidecar's stats lines before → after the confirmation, and before → after the first reply text:")
 	line("")
 	for _, r := range runs {
-		line("- %s: %s / %s", r.Name(), fmtBytes(r.backfillAtConfirm), fmtBytes(r.backfillAtText))
+		line("- %s: %s; %s", r.Name(), r.atConfirm, r.atText)
 	}
 	return b.String()
 }
@@ -267,7 +288,7 @@ func loadAccepted(dir string) ([]accepted, error) {
 		if err := json.Unmarshal(data, &a.Report); err != nil {
 			return nil, fmt.Errorf("%s: %w", path, err)
 		}
-		a.backfillAtConfirm, a.backfillAtText, err = backfill(a.dir)
+		a.atConfirm, a.atText, err = backfill(a.dir)
 		if err != nil {
 			return nil, err
 		}
@@ -282,19 +303,18 @@ func loadAccepted(dir string) ([]accepted, error) {
 	return runs, nil
 }
 
-// statsLine matches the sidecar's stats lines: their time and the bytes the
-// phone has not stored yet.
-var statsLine = regexp.MustCompile(`^sidecar: (\d+) device \S+ stats: .*unsynced (\d+) B`)
+// statsLine matches the sidecar's stats lines: their time and the backfill
+// bytes the phone has not stored yet.
+var statsLine = regexp.MustCompile(`^sidecar: (\d+) device \S+ stats: .*backfill (\d+) B`)
 
 // backfill reads the run's sidecar log and phone events and returns the
-// bytes the sidecar still had to send at the last stats line before the
-// prompt's confirmation and before the first reply text; -1 where the event
-// or a stats line before it is missing.
-func backfill(dir string) (atConfirm, atText int64, err error) {
-	atConfirm, atText = -1, -1
+// backfill backlog around the prompt's confirmation and around the first
+// reply text.
+func backfill(dir string) (atConfirm, atText around, err error) {
+	atConfirm, atText = around{-1, -1}, around{-1, -1}
 	events, err := readEvents(filepath.Join(dir, "phone.jsonl"))
 	if err != nil {
-		return 0, 0, err
+		return atConfirm, atText, err
 	}
 	var confirmed, text int64
 	sent := false
@@ -313,9 +333,18 @@ func backfill(dir string) (atConfirm, atText int64, err error) {
 		return atConfirm, atText, nil
 	}
 	if err != nil {
-		return 0, 0, err
+		return atConfirm, atText, err
 	}
 	defer f.Close()
+	note := func(a *around, moment, t, n int64) {
+		switch {
+		case moment == 0:
+		case t <= moment:
+			a.before = n
+		case a.after < 0:
+			a.after = n
+		}
+	}
 	s := bufio.NewScanner(f)
 	for s.Scan() {
 		m := statsLine.FindStringSubmatch(s.Text())
@@ -327,12 +356,8 @@ func backfill(dir string) (atConfirm, atText int64, err error) {
 		if err1 != nil || err2 != nil {
 			continue
 		}
-		if confirmed > 0 && t <= confirmed {
-			atConfirm = n
-		}
-		if text > 0 && t <= text {
-			atText = n
-		}
+		note(&atConfirm, confirmed, t, n)
+		note(&atText, text, t, n)
 	}
 	return atConfirm, atText, s.Err()
 }

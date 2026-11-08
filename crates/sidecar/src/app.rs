@@ -258,13 +258,14 @@ impl App {
                 _ => 0,
             };
             log(format!(
-                "device {} stats: send {:.0} B/s, delivered {:.0} B/s, loss {:.0}%, srtt {} ms, unsynced {} B, in flight {} packets, sent {} received {} packets, SCTP queue {queued} B, {dropped} dropped by a full SCTP buffer",
+                "device {} stats: send {:.0} B/s, delivered {:.0} B/s, loss {:.0}%, srtt {} ms, unsynced {} B, backfill {} B, in flight {} packets, sent {} received {} packets, SCTP queue {queued} B, {dropped} dropped by a full SCTP buffer",
                 d.record.id,
                 s.send_rate,
                 s.delivered_rate,
                 s.loss * 100.0,
                 s.srtt_ms.map_or("-".into(), |r| format!("{r:.0}")),
                 s.unsynced_bytes,
+                s.unsynced_backfill_bytes,
                 s.inflight_packets,
                 s.sent_packets,
                 s.received_packets,

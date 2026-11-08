@@ -400,6 +400,16 @@ impl Outbox {
             .sum()
     }
 
+    /// Bytes the peer has not stored of the classes below `Status`: older
+    /// messages, the thread list, other threads and images.
+    pub fn unsynced_backfill_bytes(&self) -> u64 {
+        self.objects
+            .values()
+            .filter(|o| o.class > Class::Status)
+            .map(|o| o.len() - o.acked.len().min(o.len()))
+            .sum()
+    }
+
     pub fn inflight_packets(&self) -> usize {
         self.inflight.len()
     }

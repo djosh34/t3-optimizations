@@ -176,7 +176,7 @@ interface Stream {
   stop: () => void;
 }
 
-class RpcServer {
+export class RpcServer {
   private readonly streams = new Map<string, Stream>();
 
   constructor(
@@ -371,7 +371,8 @@ class RpcServer {
         .then(({ reply }) => reply)
         .then((value) => {
           const r = readReply(value);
-          if ("exit" in r && (r.exit as Json | null)?._tag === "Success") lastReplies.set(key, r.exit);
+          if ("exit" in r && (r.exit as Json | null)?._tag === "Success")
+            lastReplies.set(key, r.exit);
         })
         .catch((error: unknown) => trace(`refresh of ${tag} failed: ${String(error)}`));
       return;

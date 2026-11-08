@@ -23,7 +23,7 @@ trap 'rm -rf "$work"' EXIT
 cp -r "$repo/crates/Cargo.toml" "$repo/crates/Cargo.lock" "$repo/crates/rust-toolchain.toml" \
   "$repo/crates/pipe" "$repo/crates/sync-core" "$work/"
 mkdir -p "$work/vendor"
-cp -r "$repo/crates/vendor/is" "$work/vendor/"
+cp -r "$repo/crates/vendor/is" "$repo/crates/vendor/dimpl" "$work/vendor/"
 sed -i -e 's/^members = .*/members = ["sync-core", "pipe"]/' \
   -e '/^# str0m.s SCTP layer/d' -e '/^sctp-proto = { path/d' "$work/Cargo.toml"
 if grep -q '^sctp-proto' "$work/Cargo.toml"; then
