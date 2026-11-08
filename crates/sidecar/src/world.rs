@@ -1017,6 +1017,13 @@ mod tests {
             "t1",
             &event("turn-item.updated", item("b", 4, "second", true, "1")),
         );
+        let tool = json!({"id": "x", "threadId": "t1", "type": "command_execution", "ordinal": 5,
+            "status": "completed", "updatedAt": "1"});
+        w.apply_event("t1", &event("turn-item.updated", tool));
+        assert!(
+            !w.in_current_turn("t1", body("x")),
+            "tool rows stay with history"
+        );
         for id in ["u2", "b"] {
             assert!(w.in_current_turn("t1", body(id)), "{id} body");
             assert!(w.in_current_turn("t1", text(id)), "{id} text");
