@@ -391,14 +391,14 @@ impl World {
 
     fn put_project(&mut self, id: &str, project: &Value) {
         self.shell_projects.insert(id.to_owned());
-        let order = self.next_seq();
         self.put(
             object_id(&["project", id]),
             Obj {
                 thread: None,
-                kind: Kind::Shell,
+                // The open thread's view needs its project.
+                kind: Kind::Config,
                 status: false,
-                order,
+                order: u64::MAX,
                 meta: compact(&json!({"c": "project", "i": id})),
                 content: compact(project),
             },
@@ -417,7 +417,8 @@ impl World {
         self.put(
             object_id(&["thread", location, id]),
             Obj {
-                thread: None,
+                // The thread's own: its row goes with its status while it is open.
+                thread: Some(id.to_owned()),
                 kind: Kind::Shell,
                 status: false,
                 order,

@@ -91,9 +91,15 @@ impl Device {
 /// The class of an object for a phone that has `focus` open (issue #16):
 /// the newest assistant text first, then approvals and status, then older
 /// messages, then the thread list, other threads, images. The server's
-/// config and the thread list's header go first among the older messages.
+/// config, the thread list's header and the projects go first among the
+/// older messages; the open thread's row goes with its status.
 pub fn class_of(world: &World, id: u64, obj: &Obj, focus: Option<&str>) -> Class {
     match obj.kind {
+        // The open thread's row in the list: the client shows the thread
+        // only once its row is here.
+        Kind::Shell if obj.thread.is_some() && obj.thread.as_deref() == focus => {
+            return Class::Status;
+        }
         Kind::Shell => return Class::ThreadList,
         // The web app shows nothing before it has these. They go after the
         // open thread's newest text and status, before its older messages
@@ -126,7 +132,8 @@ mod tests {
     fn what_the_web_app_needs_first_goes_before_the_open_threads_older_messages() {
         let mut w = World::default();
         w.set_shell(&json!({"kind": "snapshot", "snapshot": {"schemaVersion": 2,
-            "snapshotSequence": 1, "projects": [], "threads": [{"id": "t1"}], "archivedThreads": []}}));
+            "snapshotSequence": 1, "projects": [{"id": "p1"}], "threads": [{"id": "t1"}, {"id": "t2"}],
+            "archivedThreads": []}}));
         w.set_config(&json!({"environment": {}}));
         let class = |id: u64| {
             let o = w.get(id).expect("object");
@@ -135,7 +142,15 @@ mod tests {
         assert_eq!(class(object_id(&["shell"])), (Class::History, u64::MAX));
         assert_eq!(class(object_id(&["config"])), (Class::History, u64::MAX));
         assert_eq!(
+            class(object_id(&["project", "p1"])),
+            (Class::History, u64::MAX)
+        );
+        assert_eq!(
             class(object_id(&["thread", "active", "t1"])).0,
+            Class::Status
+        );
+        assert_eq!(
+            class(object_id(&["thread", "active", "t2"])).0,
             Class::ThreadList
         );
     }

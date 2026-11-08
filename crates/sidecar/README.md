@@ -38,8 +38,8 @@ An object with empty content is deleted. A body is not sent again when only its 
 Classes, per phone, follow [issue #16](https://github.com/djosh34/t3-optimizations/issues/16). The open thread is the one the phone named with `sidecar.focus`.
 
 - **Tail:** the text of the open thread's newest assistant message.
-- **Status:** the open thread's frame, its `thread`, `runs`, `attempts`, `runtimeRequests`, `plans`, `subagents`, and turn items that are pending, running or waiting.
-- **History:** the config objects and the thread list's header first (the web app shows nothing before it has them), then the rest of the open thread.
+- **Status:** the open thread's frame, its row in the thread list, its `thread`, `runs`, `attempts`, `runtimeRequests`, `plans`, `subagents`, and turn items that are pending, running or waiting.
+- **History:** the config objects, the thread list's header and the projects first (the web app shows nothing before it has them), then the rest of the open thread.
 - **ThreadList:** the thread list.
 - **Background:** other threads.
 - **Image:** images.
