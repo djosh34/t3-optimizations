@@ -149,6 +149,15 @@ const BACKGROUND_CALLS = new Set([
   "scheduledTasks.subscribe",
 ]);
 
+/**
+ * Calls the shim answers at once from their last reply, while the sidecar
+ * answers them again in the background. The client refreshes its providers
+ * whenever the owner types, and takes no Enter until the reply is here: on
+ * case 50 a full round trip each time (issue #46).
+ */
+const ANSWERED_FROM_LAST_REPLY = new Set(["server.refreshProviders"]);
+const lastReplies = new Map<string, unknown>();
+
 export function isBackgroundCall(tag: string): boolean {
   return BACKGROUND_CALLS.has(tag);
 }
@@ -283,7 +292,8 @@ class RpcServer {
   }
 
   private async request(id: RequestId, tag: string, payload: unknown) {
-    trace(`rpc ${id} ${tag}`);
+    const command = tag === "orchestration.dispatchCommand" ? (payload as Json | null) : null;
+    trace(`rpc ${id} ${tag}${command ? ` ${String(command.type ?? "")}` : ""}`);
     const objects = this.engine.objects;
     switch (tag) {
       case "server.probe":
@@ -351,8 +361,20 @@ class RpcServer {
     // Everything else: one call to the sidecar, one reply. A call for what is
     // on screen or what a tap needs gets the reply class (#16); the client's
     // own reports, refreshes and side subscriptions go at the background class.
-    const { reply } = await this.engine.request("call", { tag, payload }, isBackgroundCall(tag));
+    // A call answered from its last reply goes at the background class too.
+    const key = ANSWERED_FROM_LAST_REPLY.has(tag) ? `${tag} ${JSON.stringify(payload)}` : null;
+    const last = key === null ? undefined : lastReplies.get(key);
+    if (last !== undefined) this.exit(id, last);
+    const { reply } = await this.engine.request(
+      "call",
+      { tag, payload },
+      isBackgroundCall(tag) || last !== undefined,
+    );
     const r = readReply(await reply);
+    if ("exit" in r && key !== null) {
+      if ((r.exit as Json | null)?._tag === "Success") lastReplies.set(key, r.exit);
+      if (last !== undefined) return;
+    }
     if ("chunk" in r) {
       // The sidecar takes a stream's first chunk; the stream stays open here.
       if (!this.streams.has(String(id))) {

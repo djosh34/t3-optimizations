@@ -29,6 +29,7 @@ const usage = `usage:
   sudo ./bin/lab cleanup
   ./bin/lab profiles
   ./bin/lab summary <reports dir>
+  ./bin/lab acceptance <web app reports dir> <baseline reports dir>
   ./bin/lab pipe-summary <reports dir>
   ./bin/lab render <run dir>...   rewrite report.md from report.json
 
@@ -76,6 +77,11 @@ func dispatch(ctx context.Context, cmd string, args []string) error {
 			return errors.New("usage: lab summary <reports dir>")
 		}
 		return report.Summary(args[0])
+	case "acceptance":
+		if len(args) != 2 {
+			return errors.New("usage: lab acceptance <web app reports dir> <baseline reports dir>")
+		}
+		return report.Acceptance(args[0], args[1])
 	case "pipe-summary":
 		if len(args) != 1 {
 			return errors.New("usage: lab pipe-summary <reports dir>")
