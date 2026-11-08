@@ -48,7 +48,7 @@ One queue. Each packet takes from the highest class that has data:
 | Class | What | Within the class |
 |---|---|---|
 | `Tail` | newest text of the last message | newest bytes first, then its start |
-| `Urgent` | replies to commands and to calls the owner made | lowest number first |
+| `Urgent` | replies to commands and to calls the owner made | commands' first (a prompt's result does not wait behind call replies, which are repeated at loss too), then calls'; lowest number first in each |
 | `Status` | approvals and thread status | highest order first |
 | `History` | older messages of the current thread | highest order (newest) first |
 | `ThreadList` | the thread list | |
@@ -69,7 +69,9 @@ The sender paces packets at a send rate in wire bytes per second, counting 93 by
 
 - What arrived (from the phone's cumulative reports) is kept apart from what the sender may send. Loss never lowers the send rate.
 - About once per round trip, on RTT samples of packets sent after the last change: if RTT grew (25% above the base, plus 150 ms or three times the measured jitter), the rate drops to 75% of the lower of itself and the measured send capacity, but never below half. Otherwise, with data waiting, it grows by half (at the start) or a quarter, at most that much above the measured capacity.
+- One fresh sample above twice the base plus a second counts as RTT growth on its own: at heavy loss samples are rare, and waiting for three more lets the queue grow.
 - The base is the lowest RTT of the last 60 s. If draining to 30% of the rate does not bring the RTT down, the path itself got slower: its RTT becomes the base, and the rate goes back to where the drains started, but not above the measured capacity.
+- Sending with nothing at all heard from the other side for 15 s (or four smoothed RTTs, if longer) lowers the rate to 75% at each decision, and the next RTT samples start a new base in slow start. Either the link went down, or the rate is so far above a link that just got slower that its queue drops the other side's acks too: in the lab, after a switch from the clean link to 10 kbit/s, the sidecar kept its clean-link rate, WebKit's acks never got through, and no RTT sample ever came to lower it (issue #45). An idle side still sends a packet a second, so at 70% loss 15 s without one happens by chance in about 0.5% of such spells.
 - After 2 s with nothing to send, the rate starts again from 2 kB/s. It never goes below 150 B/s.
 - Packets hold about 100 ms of what the link delivers, between 200 and 1100 bytes, so a queue that counts packets stays short on a slow link.
 

@@ -668,3 +668,105 @@ fn a_large_meta_does_not_make_every_packet_full_size() {
     // what the meta costs.
     assert!(largest <= 200 + 200 + 48, "packets up to {largest} bytes");
 }
+
+/// A restarted sidecar lists what the phone has and deletes what the
+/// forked server no longer has; a saved and loaded server keeps the list.
+#[test]
+fn deleting_an_object_the_phone_has() {
+    let mut p = Pair::new();
+    for id in [10, 11] {
+        p.server
+            .set(id, Class::History, id, b"{}".to_vec(), text(300))
+            .expect("set");
+    }
+    p.run(2_000);
+    assert!(p.phone.object(10).is_some_and(|o| o.complete()));
+    let saved = p.server.save();
+    p.server = Server::load(&saved, Config::server(), p.now).expect("loads");
+    let mut ids = p.server.object_ids();
+    ids.sort();
+    assert_eq!(ids, vec![10, 11]);
+    p.server.delete(11);
+    assert_eq!(p.server.object_ids(), vec![10]);
+    p.run(2_000);
+    // Empty content is a deleted object.
+    assert!(
+        p.phone
+            .object(11)
+            .is_some_and(|o| o.complete() && o.len == 0),
+        "the phone kept a deleted object"
+    );
+    assert!(p.phone.object(10).is_some_and(|o| o.complete()));
+}
+
+#[test]
+fn a_reply_to_a_call_the_owner_made_overtakes_history() {
+    let mut p = Pair::new();
+    p.run(100);
+    for id in 100..140 {
+        p.server
+            .set(id, Class::History, id, Vec::new(), text(20_000))
+            .expect("set");
+    }
+    let shown = p
+        .phone
+        .call(b"{\"method\":\"subscribeServerLifecycle\"}".to_vec(), false);
+    let background = p.phone.call(
+        b"{\"method\":\"server.reportClientActivity\"}".to_vec(),
+        true,
+    );
+    // The server gets both calls while history waits for the phone.
+    for _ in 0..50 {
+        while let Some(b) = p.phone.poll(p.now) {
+            p.deliver_to_server(&b);
+        }
+        p.now += 1;
+    }
+    p.incoming.retain(|i| *i != Incoming::Reset);
+    assert_eq!(p.incoming.len(), 2);
+    p.reply_to_commands();
+    let packet = p.next_server_packet();
+    let keys: Vec<Key> = packet.chunks.iter().map(|c| c.key).collect();
+    assert!(keys.contains(&Key::Reply(shown)), "{keys:?}");
+    assert!(!keys.contains(&Key::Reply(background)), "{keys:?}");
+}
+
+#[test]
+fn a_commands_reply_goes_before_the_replies_to_earlier_calls() {
+    let mut p = Pair::new();
+    p.run(100);
+    let calls: Vec<u64> = (0..5)
+        .map(|i| {
+            p.phone
+                .call(format!("{{\"method\":\"call{i}\"}}").into_bytes(), false)
+        })
+        .collect();
+    let cmd = p
+        .phone
+        .command(b"{\"type\":\"thread.turn.start\"}".to_vec());
+    // The phone's command goes before its earlier calls.
+    let first = p.phone.poll(p.now).expect("a packet");
+    let entries: Vec<Key> = Packet::decode(&first)
+        .expect("decodes")
+        .chunks
+        .iter()
+        .map(|c| c.key)
+        .collect();
+    assert_eq!(entries.first(), Some(&Key::Entry(cmd)), "{entries:?}");
+    p.deliver_to_server(&first);
+    for _ in 0..50 {
+        while let Some(b) = p.phone.poll(p.now) {
+            p.deliver_to_server(&b);
+        }
+        p.now += 1;
+    }
+    p.incoming.retain(|i| *i != Incoming::Reset);
+    // The calls are answered first, each with a few kilobytes.
+    for seq in &calls {
+        p.server.reply(*seq, text(4_000)).expect("reply");
+    }
+    // Above the size that rides in every packet: the order decides.
+    p.server.reply(cmd, text(1_000)).expect("reply");
+    let packet = p.next_server_packet();
+    assert_eq!(packet.chunks.first().map(|c| c.key), Some(Key::Reply(cmd)));
+}

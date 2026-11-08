@@ -224,6 +224,20 @@ func (s *Server) Setup(ctx context.Context, origin string) (threadID, pairURL st
 	return "", "", fmt.Errorf("no pairing URL in %q", out)
 }
 
+// PairingCode mints a one-time pairing code with `t3 pair`.
+func (s *Server) PairingCode(ctx context.Context) (string, error) {
+	out, err := s.cli(ctx, "pair", "--base-dir", s.baseDir)
+	if err != nil {
+		return "", err
+	}
+	for _, line := range strings.Split(out, "\n") {
+		if code, ok := strings.CutPrefix(line, "Token: "); ok {
+			return strings.TrimSpace(code), nil
+		}
+	}
+	return "", fmt.Errorf("no code in %q", out)
+}
+
 func lastLines(s string, n int) string {
 	lines := strings.Split(strings.TrimSpace(s), "\n")
 	return strings.Join(lines[max(len(lines)-n, 0):], "\n")

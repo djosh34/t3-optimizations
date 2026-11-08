@@ -29,6 +29,12 @@ it("initializes React refresh before a shared UI chunk runs in bundled dev", asy
     for (const file of ["index.html", "src/bootstrap.ts", "src/lib/bootError.ts"]) {
       await NodeFSP.copyFile(new URL(`../${file}`, import.meta.url), NodePath.join(root, file));
     }
+    // bootstrap.ts imports the sidecar's shim only in its own build.
+    await NodeFSP.mkdir(NodePath.join(root, "src/t3opt"), { recursive: true });
+    await NodeFSP.writeFile(
+      NodePath.join(root, "src/t3opt/index.ts"),
+      "export async function startT3opt() {}",
+    );
     await NodeFSP.writeFile(
       NodePath.join(root, "src/shared.tsx"),
       "export function Shared() { return <div>ready</div>; }",

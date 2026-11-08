@@ -15,7 +15,7 @@ sidecar --t3-url http://127.0.0.1:13773 --t3-base-dir ~/.t3opt \
 
 - **Pairing with t3.** The sidecar runs `<t3-command> pair --base-dir <t3-base-dir>`, exchanges the printed code at `/oauth/token` and keeps the bearer token in `<data-dir>/t3-token`. When t3 rejects the token (it lives 30 days), the sidecar pairs again by itself.
 - **Effect RPC over `/ws`**, with a ticket from `POST /api/auth/websocket-ticket/rpc`. It acks every stream chunk, pings every 5 s, drops a socket that is silent for 15 s, and reconnects with backoff. Requests without an exit go out again on the new socket: subscriptions start over with a snapshot, and t3 applies a command once per `commandId`.
-- **What it reads.** `orchestration.subscribeShell` (the thread list), `orchestration.subscribeThread` for each thread a phone has open, and `orchestration.subscribeLiveText`. Other threads come from `GET /api/orchestration/threads/:id`, 0.5 s after the thread list says they changed. Images come from `assets.createUrl`, then a GET of the signed URL.
+- **What it reads.** `orchestration.subscribeShell` (the thread list), `orchestration.subscribeThread` for each thread a phone has open, and `orchestration.subscribeLiveText`. Other threads come from `GET /api/orchestration/threads/:id`, 0.5 s after the thread list says they changed. Images come from `assets.createUrl`, then a GET of the signed URL. The server's config comes from `server.getConfig`, again after each event of `subscribeServerConfig`; the environment descriptor and the sidecar's own session from `/.well-known/t3/environment` and `/api/auth/session` once connected.
 - **Raw partial text.** t3 holds assistant text back until a paragraph or code fence closes (`assistantStreaming.ts`). The fork adds `orchestration.subscribeLiveText` (`apps/server/src/orchestration-v2/LiveTextHub.ts`): every assistant and reasoning item with its raw text, at most every 100 ms, before that filter. Normal clients are unchanged.
 
 ## What phones get
@@ -31,14 +31,15 @@ The sidecar cuts t3's state into sync-core objects. Each has a JSON `meta`:
 | Text | `{"t":thread,"m":key,"k":kind}` | the text of a message (key: message id, the same for the message and its turn item) or of a reasoning item (key: item id); `k` is `assistant`, `user`, `reasoning`, ... |
 | Frame | `{"t":thread,"c":"frame"}` | the snapshot fields (`snapshotSequence`, `historyCursor`, `hasMoreHistory`, `latestLocalTurnOrdinal`, `updatedAt`) and `visibleTurnItems`, local rows without their `item` |
 | Image | `{"c":"image","i":attachment,"y":mime}` | the bytes |
+| Config | `{"c":"config"}`, `{"c":"descriptor"}`, `{"c":"session"}` | the server's config, its environment descriptor, the sidecar's session: what the web app needs before it shows anything |
 
 An object with empty content is deleted. A body is not sent again when only its `updatedAt` changed, because streaming bumps it on every update. While the agent writes, a message's text is the raw live text; once the item is finished it is t3's text.
 
 Classes, per phone, follow [issue #16](https://github.com/djosh34/t3-optimizations/issues/16). The open thread is the one the phone named with `sidecar.focus`.
 
 - **Tail:** the text of the open thread's newest assistant message.
-- **Status:** the open thread's frame, its `thread`, `runs`, `attempts`, `runtimeRequests`, `plans`, `subagents`, and turn items that are pending, running or waiting.
-- **History:** the rest of the open thread.
+- **Status:** the open thread's frame, its row in the thread list, its `thread`, `runs`, `attempts`, `runtimeRequests`, `plans`, `subagents`, and turn items that are pending, running or waiting.
+- **History:** the config objects, the thread list's header and the projects first (the web app shows nothing before it has them), then the rest of the open thread.
 - **ThreadList:** the thread list.
 - **Background:** other threads.
 - **Image:** images.
@@ -48,6 +49,7 @@ Classes, per phone, follow [issue #16](https://github.com/djosh34/t3-optimizatio
 - **Command:** a phone command's payload is the JSON of an `orchestration.dispatchCommand`. The reply is `{"exit": <t3's exit>}`.
 - **Call:** a phone call's payload is `{"tag": <rpc method>, "payload": ...}`. The reply is `{"exit": ...}`, or `{"chunk": [values]}` for a stream (the sidecar takes its first chunk and ends it).
 - **`sidecar.focus`** `{"threadId": id | null}` is the sidecar's own call: it opens a thread for this phone, and the sidecar keeps it across restarts.
+- **`sidecar.http`** `{"method", "path", "contentType", "body"}` (the body in base64) is the sidecar's other call: an HTTP request to the forked server with the sidecar's token, for what the web app does over HTTP (image uploads, history pages, project icons). The reply is `{"http": {"status", "contentType", "body"}}`. Each request runs in a thread of its own.
 - A payload the sidecar cannot read gets `{"error": "..."}`.
 
 ## Connections
@@ -63,7 +65,7 @@ Each phone pairs once, then reaches the sidecar like this:
 7. **After a sidecar restart.** The phone's ICE restart for its current generation gets a fresh connection. ICE connects, the old DTLS session fails, and the phone makes a new connection without signaling.
 8. **WebSocket fallback.** `GET /sync` upgrades to a WebSocket. Each binary message is one sync packet, starting with a hello.
 
-What the native phone does, and what the web app should do (#45):
+What the native phone and the web app (`t3code/apps/web/src/t3opt`, issue #45) do:
 - Restart ICE after 8 s with nothing from the sidecar, and again every 8 s while it stays silent. Not on ICE's own disconnected state: at heavy loss ICE reports that often while data still arrives.
 - Make a new connection when ICE connects again but no data comes for 30 s, or when the channel closes. A new connection costs a DTLS handshake, which takes minutes at 70% loss.
 
@@ -103,7 +105,6 @@ Every file is readable by the owner only.
 cargo test -p sidecar --test integration -- --ignored --exact sidecar_end_to_end
 ```
 
-## Not done yet
+## After a restart
 
-- Objects of a thread deleted while the sidecar was down stay on the phone until the thread changes again.
-- A prompt with an image needs t3's upload endpoint, which a phone cannot reach (t3 listens on localhost); the sidecar does not relay uploads yet.
+A restarted sidecar loads every phone's sync state, so it knows what each phone has, and builds its world again from the forked server. Once it has the thread list, a snapshot of every listed thread, the config, the descriptor and the session, it deletes on each phone what the server no longer has, such as a thread deleted while the sidecar was down (`Server::delete`). Images it asked for count as known.

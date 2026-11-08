@@ -1,0 +1,27 @@
+/* The status line sits above the app; the app gets the height below it. */
+html.t3opt {
+  --t3opt-safe-top: env(safe-area-inset-top);
+  --t3opt-bar: calc(24px + var(--t3opt-safe-top));
+  --t3opt-details-max: 70dvh;
+  --t3opt-z: 2147483000;
+  /* The app's fixed top controls start below the status line. */
+  --workspace-controls-top: var(--t3opt-bar);
+}
+
+html.t3opt #root {
+  box-sizing: border-box;
+  padding-top: var(--t3opt-bar);
+}
+
+html.t3opt .h-dvh,
+html.t3opt .h-dvh\! {
+  height: calc(100dvh - var(--t3opt-bar)) !important;
+}
+
+html.t3opt .h-svh {
+  height: calc(100svh - var(--t3opt-bar)) !important;
+}
+
+html.t3opt .min-h-svh {
+  min-height: calc(100svh - var(--t3opt-bar)) !important;
+}

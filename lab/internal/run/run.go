@@ -67,12 +67,13 @@ const tunnelPort = "7000"
 // headline.
 func Run(ctx context.Context, o Options) (string, error) {
 	pipe := pipereport.IsPipeClient(o.Client)
-	sidecar := o.Client == ClientSidecarNative
+	webapp := o.Client == ClientWebapp
+	sidecar := o.Client == ClientSidecarNative || webapp
 	if o.Client != "websocket" && o.Client != "websocket-nodeflate" && !pipe && !sidecar {
-		return "", fmt.Errorf("unknown client %q: use websocket, websocket-nodeflate, sidecar-native, pipe, pipe-unpatched or udp", o.Client)
+		return "", fmt.Errorf("unknown client %q: use websocket, websocket-nodeflate, sidecar-native, webapp, pipe, pipe-unpatched or udp", o.Client)
 	}
 	if sidecar && o.Profile.TCPPath {
-		return "", fmt.Errorf("profile %s carries the link in a TCP tunnel, which sidecar-native runs do not set up yet", o.Profile.Name)
+		return "", fmt.Errorf("profile %s carries the link in a TCP tunnel, which sidecar runs do not set up yet", o.Profile.Name)
 	}
 	if o.Kind != "warm" && o.Kind != "cold" {
 		return "", fmt.Errorf("unknown kind %q: use warm or cold", o.Kind)
@@ -93,13 +94,13 @@ func Run(ctx context.Context, o Options) (string, error) {
 	}
 	repo := filepath.Dir(o.LabDir)
 	staticDir := filepath.Join(u.Home, ".cache", "t3lab", "baseline-client-"+BaselineCommit[:12], "dist")
-	var server, sidecarBin, nativeBin string
+	var server, sidecarBin, nativeBin, webDir string
 	if pipe {
 		if server, err = pipeServer(o.LabDir, o.Client); err != nil {
 			return "", err
 		}
 	} else if sidecar {
-		if sidecarBin, nativeBin, err = sidecarBinaries(o.LabDir); err != nil {
+		if sidecarBin, nativeBin, webDir, err = sidecarBinaries(o.LabDir, webapp); err != nil {
 			return "", err
 		}
 	} else if _, err := os.Stat(filepath.Join(staticDir, "index.html")); err != nil {
@@ -159,7 +160,7 @@ func Run(ctx context.Context, o Options) (string, error) {
 	}
 	var in report.Input
 	if sidecar {
-		in, err = s.executeSidecar(ctx, repo, phoneDir, sidecarBin, nativeBin)
+		in, err = s.executeSidecar(ctx, repo, phoneDir, sidecarBin, nativeBin, webDir)
 	} else {
 		in, err = s.execute(ctx, repo, staticDir, phoneDir)
 	}

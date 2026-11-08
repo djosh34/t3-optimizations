@@ -1,0 +1,13 @@
+[package]
+name = "phone-wasm"
+version = "0.1.0"
+description = "sync-core's phone side for the web app, as a WebAssembly module with a plain C ABI."
+edition = "2024"
+publish = false
+
+[lib]
+# cdylib for the .wasm the web app loads, rlib for the native tests.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sync-core = { path = "../sync-core" }

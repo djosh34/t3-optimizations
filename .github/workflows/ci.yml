@@ -32,7 +32,7 @@ jobs:
       - run: cargo test --manifest-path vendor/sctp-proto/Cargo.toml
       # The patched ICE agent's own tests; see crates/vendor/README.md.
       - run: cargo test --manifest-path vendor/is/Cargo.toml
-      - run: cargo build -p sync-core --target wasm32-unknown-unknown
+      - run: cargo build -p sync-core -p phone-wasm --target wasm32-unknown-unknown
 
   go:
     runs-on: ubuntu-24.04
@@ -79,10 +79,10 @@ jobs:
       - run: vp run --filter @t3tools/web test
       - run: vp run --filter t3 test
 
-  # Three short chaos lab runs of the baseline client, one of the pipe and
-  # one of the sidecar, with the same setup as on the VM: netem namespaces,
-  # the forked t3 server, WebKit in docker. Then the sidecar's tests that
-  # need node, Go and docker.
+  # Three short chaos lab runs of the baseline client, one of the pipe, one
+  # of the sidecar and one of the web app, with the same setup as on the VM:
+  # netem namespaces, the forked t3 server, WebKit in docker. Then the
+  # sidecar's tests that need node, Go and docker.
   lab-smoke:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -120,6 +120,7 @@ jobs:
         working-directory: crates
       - run: lab/scripts/build-pipe-lab.sh --patched-only
       - run: lab/scripts/build-sidecar.sh
+      - run: lab/scripts/build-webapp.sh
       - run: go build -o bin/lab ./cmd/lab
         working-directory: lab
       # A must finish; outage10 and case70 must produce a report, whatever
@@ -149,6 +150,14 @@ jobs:
             --deadline 3m --out reports/runs/ci --name sidecar-case70
           cat reports/runs/ci/sidecar-case70/report.md
           jq -e '.promptConfirmationS != null' reports/runs/ci/sidecar-case70/report.json
+      # The home-screen web app in WebKit must get the prompt confirmed too.
+      - name: Web app run
+        working-directory: lab
+        run: |
+          sudo ./bin/lab run --node "$(command -v node)" --profile case70 --seed 1 --client webapp \
+            --deadline 3m --out reports/runs/ci --name webapp-case70
+          cat reports/runs/ci/webapp-case70/report.md
+          jq -e '.promptConfirmationS != null' reports/runs/ci/webapp-case70/report.json
       - name: Sidecar integration tests
         working-directory: crates
         run: |

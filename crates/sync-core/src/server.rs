@@ -126,6 +126,20 @@ impl Server {
         Ok(())
     }
 
+    /// Deletes an object the phone may have: it drops its copy.
+    pub fn delete(&mut self, id: u64) {
+        let Some(o) = self.ep.out.get(Key::Object(id)) else {
+            return;
+        };
+        if o.content.is_empty() {
+            return;
+        }
+        let (class, order, meta) = (o.class, o.order, o.meta.clone());
+        self.ep
+            .out
+            .set(Key::Object(id), class, order, meta, Vec::new());
+    }
+
     /// The result of a command or call, for the phone.
     pub fn reply(&mut self, seq: u64, payload: Vec<u8>) -> Result<(), Error> {
         let kind = *self.done.get(&seq).ok_or(Error::NoEntry(seq))?;
@@ -137,7 +151,7 @@ impl Server {
         };
         self.ep
             .out
-            .set(Key::Reply(seq), class, u64::MAX - seq, Vec::new(), payload);
+            .set(Key::Reply(seq), class, kind.order(seq), Vec::new(), payload);
         Ok(())
     }
 
@@ -272,6 +286,19 @@ impl Server {
     /// When to call [`Server::poll`] next.
     pub fn next_wakeup(&self, now: Millis) -> Millis {
         self.ep.next_wakeup(now, false)
+    }
+
+    /// The ids of the objects set and not deleted, so a restarted sidecar
+    /// can delete those the forked server no longer has.
+    pub fn object_ids(&self) -> Vec<u64> {
+        self.ep
+            .out
+            .objects()
+            .filter_map(|(k, o)| match k {
+                Key::Object(id) if !o.content.is_empty() => Some(*id),
+                _ => None,
+            })
+            .collect()
     }
 
     /// Whether the phone has stored everything.

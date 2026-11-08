@@ -15,6 +15,9 @@
 //! - Frame: a thread's snapshot fields and its visible rows, with local rows'
 //!   items left out (they are bodies).
 //! - Image: an attachment's bytes.
+//! - Config: the server's config (`server.getConfig`), its environment
+//!   descriptor and the sidecar's auth session on it, which the web app
+//!   needs before it shows anything.
 //!
 //! Every object has a `meta` JSON that says what it is; see `crates/sidecar/README.md`.
 
@@ -27,6 +30,7 @@ use sync_core::MAX_META;
 /// An object's kind decides its class (see `crate::device`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Kind {
+    Config,
     Shell,
     Body,
     Text,
@@ -47,6 +51,10 @@ pub struct Obj {
     /// Empty for a deleted object.
     pub content: Vec<u8>,
 }
+
+const CONFIG: &str = "config";
+const DESCRIPTOR: &str = "descriptor";
+const SESSION: &str = "session";
 
 /// Projection collections whose bodies go with status in the current
 /// thread. Turn items that are not finished go there too.
@@ -119,6 +127,10 @@ pub struct World {
     seq: u64,
     images: HashSet<String>,
     wanted_images: Vec<(String, String)>,
+    /// What a sidecar that just started has rebuilt: the thread list, the
+    /// threads that had a snapshot, the config and the descriptor.
+    shell_loaded: bool,
+    loaded_threads: HashSet<String>,
     /// Ids whose meta did not fit, reported once.
     pub skipped: Vec<String>,
 }
@@ -211,6 +223,65 @@ impl World {
         }
     }
 
+    /// Whether everything the forked server has is here: the thread list,
+    /// a snapshot of every listed thread, the config, the descriptor and the
+    /// session.
+    /// Until then, an object the world lacks may just not be loaded yet.
+    pub fn complete(&self) -> bool {
+        self.shell_loaded
+            && self
+                .shell_threads
+                .keys()
+                .all(|t| self.loaded_threads.contains(t))
+            && [CONFIG, DESCRIPTOR, SESSION]
+                .iter()
+                .all(|c| self.objects.contains_key(&object_id(&[c])))
+    }
+
+    /// The objects the world has or will have: images it asked for count.
+    /// Objects a phone has beyond these were deleted.
+    pub fn known_ids(&self) -> HashSet<u64> {
+        let images = self.images.iter().map(|a| object_id(&["image", a]));
+        self.objects
+            .iter()
+            .filter(|(_, o)| !o.content.is_empty())
+            .map(|(id, _)| *id)
+            .chain(images)
+            .collect()
+    }
+
+    // The config.
+
+    /// The server's config, from `server.getConfig`.
+    pub fn set_config(&mut self, config: &Value) {
+        self.put_config(CONFIG, compact(config));
+    }
+
+    /// The environment descriptor, from `/.well-known/t3/environment`.
+    pub fn set_descriptor(&mut self, descriptor: &Value) {
+        self.put_config(DESCRIPTOR, compact(descriptor));
+    }
+
+    /// The sidecar's session on the server, from `/api/auth/session`: the
+    /// web app shows the scopes and permissions it has through the sidecar.
+    pub fn set_session(&mut self, session: &Value) {
+        self.put_config(SESSION, compact(session));
+    }
+
+    fn put_config(&mut self, c: &str, content: Vec<u8>) {
+        self.put(
+            object_id(&[c]),
+            Obj {
+                thread: None,
+                kind: Kind::Config,
+                status: false,
+                order: u64::MAX,
+                meta: compact(&json!({ "c": c })),
+                content,
+            },
+        );
+    }
+
     // The thread list.
 
     /// A `subscribeShell` snapshot item.
@@ -229,6 +300,7 @@ impl World {
             }
             return;
         }
+        self.shell_loaded = true;
         let header = json!({
             "schemaVersion": snap["schemaVersion"],
             "snapshotSequence": snap["snapshotSequence"],
@@ -238,7 +310,8 @@ impl World {
             object_id(&["shell"]),
             Obj {
                 thread: None,
-                kind: Kind::Shell,
+                // The web app shows nothing before it has the header.
+                kind: Kind::Config,
                 status: false,
                 order: u64::MAX,
                 meta: compact(&json!({"c": "shell"})),
@@ -318,14 +391,14 @@ impl World {
 
     fn put_project(&mut self, id: &str, project: &Value) {
         self.shell_projects.insert(id.to_owned());
-        let order = self.next_seq();
         self.put(
             object_id(&["project", id]),
             Obj {
                 thread: None,
-                kind: Kind::Shell,
+                // The open thread's view needs its project.
+                kind: Kind::Config,
                 status: false,
-                order,
+                order: u64::MAX,
                 meta: compact(&json!({"c": "project", "i": id})),
                 content: compact(project),
             },
@@ -344,7 +417,8 @@ impl World {
         self.put(
             object_id(&["thread", location, id]),
             Obj {
-                thread: None,
+                // The thread's own: its row goes with its status while it is open.
+                thread: Some(id.to_owned()),
                 kind: Kind::Shell,
                 status: false,
                 order,
@@ -392,6 +466,7 @@ impl World {
                 }
             }
         }
+        self.loaded_threads.insert(thread.to_owned());
         let complete = snapshot["hasMoreHistory"].as_bool() != Some(true);
         if complete {
             let gone: Vec<(String, String)> = self
@@ -1003,5 +1078,32 @@ mod tests {
             w.take_wanted_images(),
             vec![("img1".to_owned(), "image/png".to_owned())]
         );
+    }
+
+    #[test]
+    fn complete_once_every_listed_thread_and_the_config_are_here() {
+        let mut w = World::default();
+        let shell = |threads: Value| {
+            json!({"kind": "snapshot", "snapshot": {"schemaVersion": 2, "snapshotSequence": 1,
+                "projects": [], "threads": threads, "archivedThreads": []}})
+        };
+        let snap = json!({"snapshotSequence": 3, "projection": {
+            "thread": {"id": "t1"}, "turnItems": [item("a", 1, "x", false, "1")],
+            "visibleTurnItems": [], "updatedAt": "now"}});
+        assert!(!w.complete());
+        w.set_shell(&shell(json!([{"id": "t1"}, {"id": "t2"}])));
+        w.set_config(&json!({"environment": {}}));
+        w.set_descriptor(&json!({"environmentId": "e"}));
+        w.set_session(&json!({"authenticated": true}));
+        w.set_thread("t1", &snap);
+        assert!(!w.complete(), "t2 has no snapshot yet");
+        w.set_thread("t2", &snap);
+        assert!(w.complete());
+        // A thread that went away takes its objects out of the known ones.
+        let text = object_id(&["text", "t2", "m-a"]);
+        assert!(w.known_ids().contains(&text));
+        w.set_shell(&shell(json!([{"id": "t1"}])));
+        assert!(!w.known_ids().contains(&text));
+        assert!(w.known_ids().contains(&object_id(&["text", "t1", "m-a"])));
     }
 }

@@ -1,0 +1,546 @@
+// The end-to-end test of the home-screen web app (issue #45), in WebKit at the
+// iPhone 17 Pro's size. Runs inside the t3lab-phone container with `docker
+// exec`; `lab webapp-e2e` starts it and does what it asks for.
+//
+// Argument: the path of a JSON config (E2EConfig in internal/phone/phone.go).
+// stdout: one JSON event per line: "step" with its name and "ok" or why it
+// failed, "screenshot", "note", and "ask" when the lab has to act (shape the
+// link, cut it, block a kind of traffic, swap the build, restart the
+// sidecar). stdin: the lab's answer to each ask, "ok [value]" or "error ...".
+import { readFileSync } from "node:fs";
+import { createInterface } from "node:readline";
+import { devices, webkit } from "/opt/driver/node_modules/playwright/index.mjs";
+
+const cfg = JSON.parse(readFileSync(process.argv[2], "utf8"));
+const lines = createInterface({ input: process.stdin })[Symbol.asyncIterator]();
+
+function emit(ev, data = {}) {
+  process.stdout.write(`${JSON.stringify({ t: Date.now(), ev, ...data })}\n`);
+}
+
+async function ask(text) {
+  emit("ask", { text });
+  const { value, done } = await lines.next();
+  const answer = done ? "error the lab is gone" : value.trim();
+  if (!answer.startsWith("ok")) throw new Error(`${text}: ${answer}`);
+  return answer.slice(2).trim();
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// The Safari tab (402x681), then the home-screen app (402x874, no browser bars).
+const device = devices["iPhone 17 Pro"];
+const browser = await webkit.launch();
+const context = await browser.newContext({ ...device, ignoreHTTPSErrors: true });
+const page = await context.newPage();
+// What makes the app reload itself, as the page logs it (src/t3opt): an
+// unexplained reload loses the typed prompt and the scroll position, so a step
+// fails on one; only the update step expects the new version to take control.
+const TAKEOVER = "t3opt: a new version took control";
+const reloadTriggers = [];
+const startedAt = Date.now();
+const log = (text) => console.error(`${((Date.now() - startedAt) / 1000).toFixed(1)} ${text}`);
+page.on("console", (m) => {
+  const text = m.text();
+  if (text.startsWith("t3opt: a chunk failed to load") || text.startsWith(TAKEOVER)) reloadTriggers.push(text);
+  if (m.type() === "error" || m.type() === "warning") log(`page ${m.type()}: ${text.slice(0, 500)}`);
+});
+page.on("requestfailed", (r) => {
+  const u = new URL(r.url());
+  if (u.pathname.startsWith("/assets/")) log(`page asset failed: ${u.pathname} ${r.failure()?.errorText}`);
+});
+page.on("response", (r) => {
+  if (r.status() >= 400) log(`page HTTP ${r.status()}: ${r.request().method()} ${new URL(r.url()).pathname}`);
+});
+page.on("framenavigated", (f) => {
+  if (f === page.mainFrame()) log(`page navigated: ${new URL(f.url()).pathname}`);
+});
+
+async function shot(name) {
+  try {
+    await page.screenshot({ path: `/out/${name}-safari.png`, timeout: 15_000 });
+    await page.setViewportSize({ width: 402, height: 874 });
+    // WebKit lays the page out again for the new height within a second.
+    await sleep(1_500);
+    await page.screenshot({ path: `/out/${name}-home-screen.png`, timeout: 15_000 });
+    emit("screenshot", { name });
+  } catch (error) {
+    emit("note", { text: `screenshot ${name} failed: ${error.message.split("\n")[0]}` });
+  } finally {
+    await page.setViewportSize(device.viewport).catch(() => {});
+  }
+}
+
+const results = [];
+async function step(name, run, { takeover = false } = {}) {
+  const started = Date.now();
+  reloadTriggers.length = 0;
+  log(`step ${name}`);
+  try {
+    const detail = await run();
+    const unexpected = reloadTriggers.filter((t) => !(takeover && t.startsWith(TAKEOVER)));
+    if (unexpected.length > 0) throw new Error(`the app reloaded itself: ${unexpected[0]}`);
+    results.push({ name, ok: true });
+    emit("step", { name, text: `ok in ${((Date.now() - started) / 1000).toFixed(1)} s${detail ? `: ${detail}` : ""}` });
+  } catch (error) {
+    results.push({ name, ok: false });
+    emit("step", { name, text: `failed: ${String(error.message ?? error).split("\n")[0]}` });
+    // What the shim saw, to tell a client that did not ask from a reply that did not come.
+    const state = await page
+      .evaluate(() => ({
+        trace: (window.t3opt?.trace ?? []).filter((l) => / (rpc|exit|fetch|fetched|failed|stream) /.test(l)).slice(-150),
+        link: window.t3opt?.engine?.status().link ?? null,
+      }))
+      .catch((e) => ({ trace: [`no state: ${e.message}`], link: null }));
+    for (const line of state.trace) log(`trace ${line}`);
+    log(`link ${JSON.stringify(state.link)}`);
+    await shot(`failed-${name}`);
+  }
+}
+
+// The app.
+
+const composer = '[data-testid="composer-editor"]:visible';
+const composerOrExpand = `${composer}, button[aria-label="Expand composer"]:visible`;
+
+// A fresh server's sole startup project counts as a first run, and t3code
+// shows its welcome wizard over the app; a real owner's server does not.
+async function closeWelcomeThenWait(ready, timeout) {
+  const until = Date.now() + timeout;
+  const welcome = page.getByText("Connect your computers").first();
+  while (Date.now() < until) {
+    if (await welcome.isVisible().catch(() => false)) {
+      await page.getByRole("button", { name: "Close" }).first().click({ timeout: 5_000 }).catch(() => {});
+    } else if (await ready.isVisible().catch(() => false)) {
+      return;
+    }
+    await sleep(500);
+  }
+  await ready.waitFor({ timeout: 1_000 });
+}
+
+async function appReady(timeout = 120_000) {
+  await closeWelcomeThenWait(page.locator(composerOrExpand).first(), timeout);
+}
+
+async function focusComposer(timeout = 60_000) {
+  await page.locator(composerOrExpand).first().waitFor({ timeout });
+  const expand = page.getByRole("button", { name: "Expand composer" });
+  if (await expand.isVisible()) await expand.click({ timeout });
+  await page.locator(composer).first().click({ timeout });
+}
+
+// Enter, then the send button if the text is still in the composer: the log
+// says which one the client took, to tell a missed key from a refused send.
+async function send(text) {
+  await focusComposer();
+  await page.keyboard.type(text);
+  await page.keyboard.press("Enter");
+  const editor = page.locator(composer).first();
+  const stillThere = async () => ((await editor.textContent().catch(() => "")) ?? "").includes(text);
+  for (let i = 0; i < 20; i++) {
+    if (!(await stillThere())) return;
+    await sleep(250);
+  }
+  // The submit button's label says why the client holds a message back.
+  const button = page.locator('button[type="submit"]').last();
+  const label = async () => (await button.getAttribute("aria-label").catch(() => null)) ?? "none";
+  log(`send: Enter left "${text}" in the composer; the send button says "${await label()}"`);
+  await button.click({ timeout: 10_000 }).catch((e) => log(`send: tap failed: ${e.message.split("\n")[0]}`));
+  await sleep(5_000);
+  if (await stillThere()) log(`send: still in the composer after a tap; the send button says "${await label()}"`);
+}
+
+async function waitText(text, timeout = 120_000) {
+  await page.getByText(text, { exact: false }).first().waitFor({ state: "visible", timeout });
+}
+
+async function openThread(threadId) {
+  const url = `${cfg.origin}/${cfg.environmentId}/${encodeURIComponent(threadId)}`;
+  await page.goto(url, { waitUntil: "commit", timeout: 60_000 });
+  await appReady();
+}
+
+async function reload() {
+  await page.reload({ waitUntil: "commit", timeout: 60_000 });
+}
+
+const link = () => page.evaluate(() => window.t3opt?.engine?.status().link ?? null);
+const promptState = () => page.evaluate(() => window.t3opt?.prompt?.() ?? null);
+
+/** Sends a prompt and takes a screenshot at each state the status line shows. */
+async function promptWithStates(text, name, timeout = 120_000) {
+  const before = Date.now();
+  await send(text);
+  const seen = new Set();
+  const until = Date.now() + timeout;
+  while (Date.now() < until) {
+    const p = await promptState();
+    if (p !== null && p.at >= before - 1_000 && !seen.has(p.state)) {
+      seen.add(p.state);
+      await shot(`${name}-${p.state}`);
+      if (p.state === "confirmed") return `${[...seen].join(" > ")} in ${((Date.now() - before) / 1000).toFixed(1)} s`;
+      if (p.state === "failed") throw new Error("the server refused the prompt");
+    }
+    await sleep(100);
+  }
+  throw new Error(`not confirmed in ${timeout / 1000} s (states seen: ${[...seen].join(", ")})`);
+}
+
+async function openSidebar() {
+  const toggle = page.getByRole("button", { name: "Toggle main sidebar" }).first();
+  await toggle.click({ timeout: 30_000 });
+  await sleep(800);
+}
+
+/**
+ * The phone loses its content but keeps its token: the sync store's content,
+ * and the client's own thread cache, as when iOS clears the site's data. The
+ * deletion completes once the page closes its connection, on the reload.
+ */
+// The page stops writing first, as a killed page would: browsers evict
+// storage while the app is closed, never under a running page.
+async function loseCache() {
+  await page.evaluate(async () => {
+    const { store } = window.t3opt;
+    store.commit = () => new Promise(() => {});
+    store.set = () => new Promise(() => {});
+    await store.clearContent();
+    indexedDB.deleteDatabase("t3code:connection-runtime");
+  });
+}
+
+async function swVersion() {
+  return page.evaluate(async () => {
+    const r = await fetch("/__sw");
+    return r.ok ? (await r.json()).version : null;
+  });
+}
+
+// The steps.
+
+let newThreadId = null;
+
+await step("pairing", async () => {
+  await page.goto(cfg.origin, { waitUntil: "commit", timeout: 120_000 });
+  await page.locator("#pairing-token").waitFor({ timeout: 120_000 });
+  await shot("pairing");
+  await page.locator("#pairing-token").fill(cfg.code);
+  await page.getByRole("button", { name: "Continue" }).click();
+  await appReady();
+  const descriptor = await page.evaluate(async () => (await fetch("/.well-known/t3/environment")).json());
+  cfg.environmentId = descriptor.environmentId;
+  await shot("paired");
+});
+
+await step("service-worker", async () => {
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, { timeout: 120_000 });
+  return `version ${await swVersion()}`;
+});
+
+await step("add-project-and-thread", async () => {
+  await openSidebar();
+  await page.getByRole("button", { name: "Add project" }).first().click({ timeout: 30_000 });
+  await page.getByText("New project", { exact: true }).first().click({ timeout: 30_000 });
+  await page.keyboard.type("phone-project");
+  await page.keyboard.press("Enter");
+  await sleep(4_000);
+  await page.keyboard.press("Escape");
+  await send("lab:warmup from the phone");
+  await waitText("The lab thread is set up");
+  newThreadId = decodeURIComponent(new URL(page.url()).pathname.split("/").pop() ?? "");
+  await shot("new-thread");
+  return `thread ${newThreadId}`;
+});
+
+await step("stream-and-approval", async () => {
+  await send("Explain the sync loop");
+  await waitText(cfg.replyStart.slice(0, 30), 60_000);
+  await shot("streaming");
+  const approve = page.getByRole("button", { name: /^(Approve|Yes)$/ }).first();
+  await approve.waitFor({ timeout: 120_000 });
+  await shot("approval");
+  await approve.click();
+  await waitText(cfg.replyEnd, 120_000);
+  await shot("reply-done");
+});
+
+await step("interrupt", async () => {
+  await send("Explain it once more");
+  await waitText(cfg.replyStart.slice(0, 30), 60_000);
+  const stop = page.getByRole("button", { name: /stop|interrupt/i }).first();
+  await stop.click({ timeout: 30_000 });
+  await waitText("Run interrupted", 60_000);
+  await shot("interrupted");
+});
+
+await step("upload", async () => {
+  await openThread(cfg.threadId);
+  await focusComposer();
+  const [chooser] = await Promise.all([
+    page.waitForEvent("filechooser", { timeout: 60_000 }),
+    page.getByRole("button", { name: "Attach files" }).first().click({ timeout: 60_000 }),
+  ]);
+  await chooser.setFiles({ name: "phone.png", mimeType: "image/png", buffer: Buffer.from(cfg.image, "base64") });
+  await focusComposer();
+  await page.keyboard.type("lab:image from the phone");
+  const editor = page.locator(composer).first();
+  for (let i = 0; i < 60; i++) {
+    await page.keyboard.press("Enter");
+    await sleep(2_000);
+    if (!((await editor.textContent().catch(() => "")) ?? "").includes("lab:image from the phone")) break;
+    await editor.click({ timeout: 10_000 }).catch(() => {});
+  }
+  await waitText("I received the image", 120_000);
+  await shot("upload");
+});
+
+await step("prompt-on-case70", async () => {
+  await ask("shape case70");
+  try {
+    return await promptOnCase70();
+  } finally {
+    await ask("shape clean");
+  }
+});
+
+async function promptOnCase70() {
+  const states = await promptWithStates(cfg.prompt, "prompt", 120_000);
+  await sleep(10_000);
+  await shot("status-case70");
+  await page.getByTestId("t3opt-status").click();
+  await sleep(500);
+  await shot("details-case70");
+  await page.getByTestId("t3opt-details").click();
+  await waitText(cfg.replyStart.slice(0, 30), 600_000);
+  await shot("text-case70");
+  const approve = page.getByRole("button", { name: /^(Approve|Yes)$/ }).first();
+  await approve.waitFor({ timeout: 600_000 });
+  await approve.click();
+  await ask("shape clean");
+  await waitText(cfg.replyEnd, 300_000);
+  return states;
+}
+
+await step("thread-fills-newest-first", async () => {
+  // The phone lost its content; the new page connects on the clean link (a
+  // handshake at 50% loss takes minutes) and syncs everything on case 50.
+  await loseCache();
+  await reload();
+  await page.waitForFunction(() => window.t3opt?.engine?.status().link.lastDataAt != null, null, {
+    timeout: 120_000,
+  });
+  await ask("shape case50");
+  // The end of the newest reply shows before the thread's first reply.
+  const order = [];
+  const fillStarted = Date.now();
+  const until = Date.now() + 300_000;
+  let n = 0;
+  while (Date.now() < until && order.length < 2) {
+    for (const [label, text] of [
+      ["newest", cfg.replyLast],
+      ["oldest", "The lab thread is set up"],
+    ]) {
+      if (order.includes(label)) continue;
+      if (await page.getByText(text, { exact: false }).first().isVisible().catch(() => false)) order.push(label);
+    }
+    // Spread over the fill: the first ones show the splash while the config
+    // objects come (after the open thread's newest text and status).
+    if (n < 4 && (Date.now() - fillStarted) / 8_000 >= n) await shot(`filling-${n++}`);
+    await sleep(1_500);
+  }
+  await shot("filled");
+  await ask("shape clean");
+  // What the page asked for and got while it filled, for the run's log.
+  const trace = await page
+    .evaluate(() => (window.t3opt?.trace ?? []).filter((l) => / (fetch|fetched|rpc|exit) /.test(l)))
+    .catch(() => []);
+  for (const line of trace) log(`fill trace ${line}`);
+  if (order[0] !== "newest") throw new Error(`shown in the order ${order.join(", ")}`);
+  return order.join(" before ");
+});
+
+await step("reload-old-connection-alive", async () => {
+  const before = (await link())?.generation;
+  await reload();
+  await appReady();
+  await page.waitForFunction(() => window.t3opt?.engine?.status().link.trying.endsWith("live"), null, {
+    timeout: 60_000,
+  });
+  const after = (await link())?.generation;
+  if (!(after > before)) throw new Error(`generation ${before} then ${after}`);
+  await promptWithStates("lab:warmup after the reload", "after-reload", 60_000);
+  return `generation ${before} to ${after}`;
+});
+
+await step("outage-recovered-on-the-same-connection", async () => {
+  const before = await link();
+  await ask("outage on");
+  await sleep(cfg.outageSeconds * 1000);
+  await shot("outage");
+  await ask("outage off");
+  await page.waitForFunction((t) => (window.t3opt?.engine?.status().link.lastDataAt ?? 0) > t, Date.now(), {
+    timeout: 300_000,
+  });
+  const after = await link();
+  if (after.newConnections !== before.newConnections) {
+    throw new Error(`made ${after.newConnections - before.newConnections} new connections`);
+  }
+  if (after.longestRecoveredGapMs < cfg.outageSeconds * 800) {
+    throw new Error(`longest gap recovered on the same connection ${after.longestRecoveredGapMs} ms`);
+  }
+  await shot("after-outage");
+  return `${after.iceRestarts - before.iceRestarts} ICE restarts, gap ${(after.longestRecoveredGapMs / 1000).toFixed(1)} s`;
+});
+
+await step("history-and-images-without-http", async () => {
+  await ask("block https on");
+  try {
+    // A fresh load: the service worker serves the app, the sync link the rest.
+    await openThread(cfg.threadId);
+    await waitText("The lab thread is set up", 60_000);
+    await waitText("I received the image", 60_000);
+    // The timeline keeps only rows near the viewport in the page: scroll to the
+    // reply below the image, then up until the image row is there.
+    await page.getByText("I received the image").first().scrollIntoViewIfNeeded({ timeout: 30_000 });
+    const image = page.locator('img[src^="blob:"]').first();
+    for (let i = 0; i < 10 && !(await image.isVisible().catch(() => false)); i++) {
+      // Mobile WebKit has no mouse wheel: scroll the timeline's own scroller.
+      await page.evaluate(() => {
+        const text = [...document.querySelectorAll("p, div")].find((e) => e.textContent?.trim() === "I received the image.");
+        let el = text?.parentElement ?? null;
+        while (el && !(el.scrollHeight > el.clientHeight + 10 && /auto|scroll/.test(getComputedStyle(el).overflowY))) {
+          el = el.parentElement;
+        }
+        el?.scrollBy(0, -500);
+      });
+      await sleep(500);
+    }
+    await image.waitFor({ timeout: 60_000 });
+    await image.scrollIntoViewIfNeeded();
+    await shot("no-http");
+  } finally {
+    await ask("block https off");
+  }
+});
+
+await step("offline-open", async () => {
+  await ask("outage on");
+  try {
+    await reload();
+    await appReady();
+    await waitText(cfg.replyEnd, 60_000);
+    await shot("offline");
+  } finally {
+    await ask("outage off");
+  }
+});
+
+await step("websocket-fallback-mid-session", async () => {
+  // UDP goes away under an open page: after a minute of silence with ICE
+  // down, a WebSocket probe gets through, and 20 s later it takes over.
+  await page.waitForFunction(() => window.t3opt?.engine?.status().link.trying === "webrtc live", null, {
+    timeout: 120_000,
+  });
+  const before = (await link())?.generation;
+  await ask("block udp on");
+  try {
+    await page.waitForFunction(() => window.t3opt?.engine?.status().link.transport === "websocket", null, {
+      timeout: 180_000,
+    });
+    const states = await promptWithStates("lab:warmup after UDP went away", "websocket-mid", 60_000);
+    return `generation ${before}, ${states}`;
+  } finally {
+    await ask("block udp off");
+  }
+});
+
+await step("websocket-fallback", async () => {
+  await ask("block udp on");
+  try {
+    await reload();
+    await appReady();
+    await page.waitForFunction(() => window.t3opt?.engine?.status().link.transport === "websocket", null, {
+      timeout: 90_000,
+    });
+    const states = await promptWithStates("lab:warmup over the WebSocket", "websocket", 60_000);
+    await page.getByTestId("t3opt-status").click();
+    await shot("websocket-details");
+    await page.getByTestId("t3opt-details").click();
+    return states;
+  } finally {
+    await ask("block udp off");
+  }
+});
+
+await step("update", async () => {
+  const before = await swVersion();
+  await ask("swap build");
+  await page.evaluate(async () => (await navigator.serviceWorker.getRegistration())?.update());
+  const button = page.getByTestId("t3opt-update");
+  await button.waitFor({ timeout: 180_000 });
+  await shot("update-offered");
+  await button.click();
+  // The page reloads into the new version; a check during the reload fails.
+  await page.waitForFunction(
+    async (v) => {
+      try {
+        const j = await (await fetch("/__sw")).json();
+        return typeof j.version === "string" && j.version !== v;
+      } catch {
+        return false;
+      }
+    },
+    before,
+    { timeout: 120_000, polling: 1_000 },
+  );
+  await appReady();
+  await shot("updated");
+  const after = await swVersion();
+  if (typeof before !== "string" || after === before) throw new Error(`still ${after}`);
+  return `${before} to ${after}`;
+}, { takeover: true });
+
+await step("deleted-while-sidecar-down", async () => {
+  if (!newThreadId) throw new Error("no thread from add-project-and-thread");
+  await openThread(cfg.threadId);
+  await ask(`delete-offline ${newThreadId}`);
+  const until = Date.now() + 300_000;
+  while (Date.now() < until) {
+    const listed = await page.evaluate(async (id) => {
+      const shell = await (await fetch("/api/orchestration/shell")).json();
+      return [...shell.threads, ...shell.archivedThreads].some((t) => t.id === id);
+    }, newThreadId);
+    if (!listed) {
+      await openSidebar();
+      await shot("deleted");
+      return;
+    }
+    await sleep(2_000);
+  }
+  throw new Error("the deleted thread is still on the phone");
+});
+
+await step("cache-lost-token-kept", async () => {
+  await loseCache();
+  await openThread(cfg.threadId);
+  await waitText(cfg.replyEnd, 120_000);
+});
+
+await step("token-lost", async () => {
+  await page.evaluate(() => window.t3opt.store.clearAll());
+  await page.goto(cfg.origin, { waitUntil: "commit", timeout: 60_000 });
+  await page.locator("#pairing-token").waitFor({ timeout: 60_000 });
+  await shot("pairing-again");
+  const code = await ask("mint-code");
+  await page.locator("#pairing-token").fill(code);
+  await page.getByRole("button", { name: "Continue" }).click();
+  await appReady();
+  await openThread(cfg.threadId);
+  await waitText(cfg.replyEnd, 120_000);
+});
+
+const failed = results.filter((r) => !r.ok).map((r) => r.name);
+emit("note", { text: failed.length === 0 ? "all steps passed" : `failed: ${failed.join(", ")}` });
+await browser.close();
+process.exit(failed.length === 0 ? 0 : 1);

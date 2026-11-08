@@ -137,3 +137,18 @@ func (u User) Install(src, dst string) error {
 	}
 	return nil
 }
+
+// CopyDir copies what is in src into dst as the user, overwriting files of
+// the same name.
+func (u User) CopyDir(src, dst string) error {
+	if err := u.MkdirAll(dst); err != nil {
+		return err
+	}
+	var stderr bytes.Buffer
+	cmd := u.Command(context.Background(), "", userEnv, "/", "cp", "-R", "--", src+"/.", dst)
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("copy %s to %s: %w: %s", src, dst, err, strings.TrimSpace(stderr.String()))
+	}
+	return nil
+}
