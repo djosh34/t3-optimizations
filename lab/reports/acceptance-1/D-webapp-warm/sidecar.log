@@ -1,0 +1,46 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794150610667 connected to t3
+sidecar: 1794150612031 device uca6mcna paired
+sidecar: 1794150612661 device uca6mcna: generation 1 signaled
+sidecar: 1794150612664 data channel 1: ICE Checking
+sidecar: 1794150612712 data channel 1: ICE Completed
+sidecar: 1794150612713 data channel 1: DTLS up
+sidecar: 1794150612715 data channel 1 open
+sidecar: 1794150612715 device uca6mcna: now on Rtc(PeerId(1))
+sidecar: 1794150612715 device uca6mcna: lost its cache, syncing everything
+sidecar: 1794150617872 data channel 1 closed
+sidecar: 1794150618297 device uca6mcna: generation 2 connects without signaling
+sidecar: 1794150618297 data channel 2: ICE Checking
+sidecar: 1794150618337 data channel 2: ICE Completed
+sidecar: 1794150618338 data channel 2: DTLS up
+sidecar: 1794150618339 data channel 2 open
+sidecar: 1794150618759 device uca6mcna: now on Rtc(PeerId(2))
+sidecar: 1794150618796 device uca6mcna: command 20 (thread.visit) replied, backfill unsent 13541 B
+sidecar: 1794150619056 device uca6mcna stats: send 9575 B/s, delivered 6383 B/s, loss 0%, srtt 9 ms, unsynced 27681 B, backfill unsent 14727 B, in flight 4 packets, sent 76 received 34 packets, SCTP queue 24 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150625096 device uca6mcna: command 37 (message.dispatch) replied, backfill unsent 0 B
+sidecar: 1794150625376 device uca6mcna: new newest text, backfill unsent 10491 B
+sidecar: 1794150625446 device uca6mcna: command 39 (thread.visit) replied, backfill unsent 10491 B
+sidecar: 1794150626196 device uca6mcna: command 40 (thread.visit) replied, backfill unsent 15199 B
+sidecar: 1794150629056 device uca6mcna stats: send 3208 B/s, delivered 8448 B/s, loss 0%, srtt 5 ms, unsynced 6531 B, backfill unsent 2484 B, in flight 28 packets, sent 230 received 133 packets, SCTP queue 3570 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150632036 device uca6mcna: command 43 (message.dispatch) replied, backfill unsent 1633 B
+sidecar: 1794150632306 device uca6mcna: new newest text, backfill unsent 4644 B
+sidecar: 1794150639056 device uca6mcna stats: send 2000 B/s, delivered 8448 B/s, loss 0%, srtt 392 ms, unsynced 14109 B, backfill unsent 4644 B, in flight 73 packets, sent 280 received 143 packets, SCTP queue 1258 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150649057 device uca6mcna stats: send 1500 B/s, delivered 5250 B/s, loss 5%, srtt 7630 ms, unsynced 11055 B, backfill unsent 5216 B, in flight 46 packets, sent 315 received 163 packets, SCTP queue 424 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150659076 device uca6mcna stats: send 1125 B/s, delivered 2295 B/s, loss 39%, srtt 8926 ms, unsynced 10442 B, backfill unsent 5176 B, in flight 73 packets, sent 356 received 194 packets, SCTP queue 196 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150669086 device uca6mcna stats: send 844 B/s, delivered 1224 B/s, loss 35%, srtt 9216 ms, unsynced 17241 B, backfill unsent 8544 B, in flight 62 packets, sent 375 received 231 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150679106 device uca6mcna stats: send 633 B/s, delivered 1249 B/s, loss 24%, srtt 9411 ms, unsynced 16796 B, backfill unsent 8584 B, in flight 76 packets, sent 402 received 272 packets, SCTP queue 192 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150689126 device uca6mcna stats: send 633 B/s, delivered 1249 B/s, loss 24%, srtt 9944 ms, unsynced 16727 B, backfill unsent 8584 B, in flight 95 packets, sent 423 received 273 packets, SCTP queue 187 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150699156 device uca6mcna stats: send 791 B/s, delivered 1002 B/s, loss 31%, srtt 9053 ms, unsynced 15813 B, backfill unsent 8584 B, in flight 80 packets, sent 445 received 280 packets, SCTP queue 188 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150709166 device uca6mcna stats: send 791 B/s, delivered 795 B/s, loss 22%, srtt 9462 ms, unsynced 14898 B, backfill unsent 8624 B, in flight 67 packets, sent 470 received 316 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150719186 device uca6mcna stats: send 989 B/s, delivered 827 B/s, loss 11%, srtt 9437 ms, unsynced 14020 B, backfill unsent 8624 B, in flight 52 packets, sent 494 received 357 packets, SCTP queue 194 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150729186 device uca6mcna stats: send 1155 B/s, delivered 780 B/s, loss 16%, srtt 9337 ms, unsynced 13839 B, backfill unsent 8624 B, in flight 65 packets, sent 524 received 404 packets, SCTP queue 183 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150739196 device uca6mcna stats: send 1155 B/s, delivered 730 B/s, loss 24%, srtt 9580 ms, unsynced 12844 B, backfill unsent 8664 B, in flight 73 packets, sent 565 received 448 packets, SCTP queue 195 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150749196 device uca6mcna stats: send 1155 B/s, delivered 730 B/s, loss 24%, srtt 9580 ms, unsynced 12844 B, backfill unsent 8664 B, in flight 105 packets, sent 605 received 452 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150759196 device uca6mcna stats: send 1155 B/s, delivered 640 B/s, loss 38%, srtt 9327 ms, unsynced 11933 B, backfill unsent 8704 B, in flight 82 packets, sent 637 received 475 packets, SCTP queue 197 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150768606 device uca6mcna: command 50 (thread.visit) replied, backfill unsent 8704 B
+sidecar: 1794150769204 device uca6mcna stats: send 1280 B/s, delivered 851 B/s, loss 32%, srtt 9081 ms, unsynced 12981 B, backfill unsent 8704 B, in flight 101 packets, sent 681 received 529 packets, SCTP queue 190 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150778502 device uca6mcna: command 52 (runtime-request.respond) replied, backfill unsent 8744 B
+sidecar: 1794150778516 device uca6mcna: new newest text, backfill unsent 10331 B
+sidecar: 1794150779206 device uca6mcna stats: send 1600 B/s, delivered 904 B/s, loss 33%, srtt 9292 ms, unsynced 16519 B, backfill unsent 11154 B, in flight 106 packets, sent 722 received 577 packets, SCTP queue 423 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150789076 device uca6mcna: command 53 (runtime-request.respond) replied, backfill unsent 11486 B
+sidecar: 1794150789206 device uca6mcna stats: send 1600 B/s, delivered 1010 B/s, loss 35%, srtt 9685 ms, unsynced 17903 B, backfill unsent 11486 B, in flight 99 packets, sent 753 received 623 packets, SCTP queue 2295 B, 0 dropped by a full SCTP buffer

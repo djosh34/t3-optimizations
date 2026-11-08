@@ -1,0 +1,37 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794150457276 connected to t3
+sidecar: 1794150459597 device fh7durv7 paired
+sidecar: 1794150460438 device fh7durv7: generation 1 signaled
+sidecar: 1794150460442 data channel 1: ICE Checking
+sidecar: 1794150460490 data channel 1: ICE Completed
+sidecar: 1794150460491 data channel 1: DTLS up
+sidecar: 1794150460494 data channel 1 open
+sidecar: 1794150460494 device fh7durv7: now on Rtc(PeerId(1))
+sidecar: 1794150460494 device fh7durv7: lost its cache, syncing everything
+sidecar: 1794150465236 device fh7durv7 stats: send 8800 B/s, delivered 5867 B/s, loss 0%, srtt 2 ms, unsynced 15236 B, backfill unsent 14638 B, in flight 1 packets, sent 65 received 31 packets, SCTP queue 488 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150465587 data channel 1 closed
+sidecar: 1794150465878 device fh7durv7: generation 2 connects without signaling
+sidecar: 1794150465878 data channel 2: ICE Checking
+sidecar: 1794150465925 data channel 2: ICE Completed
+sidecar: 1794150465928 data channel 2: DTLS up
+sidecar: 1794150465931 data channel 2 open
+sidecar: 1794150466082 device fh7durv7: now on Rtc(PeerId(2))
+sidecar: 1794150466586 device fh7durv7: command 20 (thread.visit) replied, backfill unsent 13507 B
+sidecar: 1794150472976 device fh7durv7: command 37 (message.dispatch) replied, backfill unsent 0 B
+sidecar: 1794150473287 device fh7durv7: new newest text, backfill unsent 10531 B
+sidecar: 1794150475247 device fh7durv7 stats: send 3000 B/s, delivered 1853 B/s, loss 0%, srtt 6 ms, unsynced 17282 B, backfill unsent 15239 B, in flight 2 packets, sent 170 received 114 packets, SCTP queue 370 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150475477 device fh7durv7: command 39 (thread.visit) replied, backfill unsent 15239 B
+sidecar: 1794150478103 device fh7durv7: command 41 (message.dispatch) replied, backfill unsent 13964 B
+sidecar: 1794150478706 device fh7durv7: new newest text, backfill unsent 15697 B
+sidecar: 1794150485266 device fh7durv7 stats: send 9010 B/s, delivered 6006 B/s, loss 0%, srtt 77 ms, unsynced 5 B, backfill unsent 0 B, in flight 10 packets, sent 321 received 179 packets, SCTP queue 399 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150485414 device fh7durv7: command 44 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794150495267 device fh7durv7 stats: send 31442 B/s, delivered 20876 B/s, loss 0%, srtt 82 ms, unsynced 10 B, backfill unsent 0 B, in flight 58 packets, sent 1440 received 236 packets, SCTP queue 1039 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150495446 device fh7durv7: command 46 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794150505273 device fh7durv7 stats: send 95097 B/s, delivered 63301 B/s, loss 0%, srtt 90 ms, unsynced 15 B, backfill unsent 0 B, in flight 200 packets, sent 5038 received 288 packets, SCTP queue 3704 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150505996 device fh7durv7: command 47 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794150506436 device fh7durv7: command 48 (runtime-request.respond) replied, backfill unsent 0 B
+sidecar: 1794150506466 device fh7durv7: new newest text, backfill unsent 2310 B
+sidecar: 1794150515283 device fh7durv7 stats: send 112506 B/s, delivered 108190 B/s, loss 1%, srtt 112 ms, unsynced 10 B, backfill unsent 0 B, in flight 137 packets, sent 11566 received 345 packets, SCTP queue 4109 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150515892 device fh7durv7: command 51 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794150520863 device fh7durv7: command 53 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794150521655 data channel 2 closed

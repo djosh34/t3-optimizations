@@ -1,0 +1,142 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794151057746 connected to t3
+sidecar: 1794151059317 device wjye7wvg paired
+sidecar: http: Broken pipe (os error 32)
+sidecar: http: Broken pipe (os error 32)
+sidecar: http: Broken pipe (os error 32)
+sidecar: http: Broken pipe (os error 32)
+sidecar: http: Broken pipe (os error 32)
+sidecar: http: Broken pipe (os error 32)
+sidecar: http: Broken pipe (os error 32)
+sidecar: 1794151059909 device wjye7wvg: generation 1 signaled
+sidecar: 1794151059911 data channel 1: ICE Checking
+sidecar: 1794151060008 data channel 1: ICE Completed
+sidecar: 1794151060008 data channel 1: DTLS up
+sidecar: 1794151060016 data channel 1 open
+sidecar: 1794151060017 device wjye7wvg: now on Rtc(PeerId(1))
+sidecar: 1794151060017 device wjye7wvg: lost its cache, syncing everything
+sidecar: 1794151065026 data channel 1 closed
+sidecar: 1794151065630 device wjye7wvg: generation 2 connects without signaling
+sidecar: 1794151065630 data channel 2: ICE Checking
+sidecar: 1794151065723 data channel 2: ICE Completed
+sidecar: 1794151065726 data channel 2: DTLS up
+sidecar: 1794151065730 data channel 2 open
+sidecar: 1794151065950 device wjye7wvg: now on Rtc(PeerId(2))
+sidecar: 1794151066010 device wjye7wvg: command 20 (thread.visit) replied, backfill unsent 13557 B
+sidecar: 1794151066276 device wjye7wvg stats: send 9010 B/s, delivered 6007 B/s, loss 0%, srtt 4 ms, unsynced 29984 B, backfill unsent 14743 B, in flight 4 packets, sent 71 received 34 packets, SCTP queue 22 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151070126 device wjye7wvg: command 35 (message.dispatch) replied, backfill unsent 0 B
+sidecar: 1794151070386 device wjye7wvg: new newest text, backfill unsent 10026 B
+sidecar: 1794151071276 device wjye7wvg: command 37 (thread.visit) replied, backfill unsent 15081 B
+sidecar: 1794151076296 device wjye7wvg stats: send 2000 B/s, delivered 11225 B/s, loss 0%, srtt 10 ms, unsynced 7348 B, backfill unsent 2542 B, in flight 42 packets, sent 211 received 130 packets, SCTP queue 1452 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151084998 device wjye7wvg: ICE restart 1 on generation 2
+sidecar: 1794151086316 device wjye7wvg stats: send 2000 B/s, delivered 11225 B/s, loss 0%, srtt 10 ms, unsynced 7348 B, backfill unsent 2542 B, in flight 96 packets, sent 265 received 130 packets, SCTP queue 1097 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151096326 device wjye7wvg stats: send 2000 B/s, delivered 11225 B/s, loss 0%, srtt 10 ms, unsynced 7348 B, backfill unsent 2542 B, in flight 151 packets, sent 320 received 130 packets, SCTP queue 1290 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151102470 device wjye7wvg: ICE restart 2 on generation 2
+sidecar: 1794151106347 device wjye7wvg stats: send 2000 B/s, delivered 11225 B/s, loss 0%, srtt 10 ms, unsynced 7348 B, backfill unsent 2542 B, in flight 206 packets, sent 375 received 130 packets, SCTP queue 1454 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151116151 device wjye7wvg: ICE restart 3 on generation 2
+sidecar: 1794151116356 device wjye7wvg stats: send 2000 B/s, delivered 11225 B/s, loss 0%, srtt 10 ms, unsynced 7348 B, backfill unsent 2542 B, in flight 260 packets, sent 429 received 130 packets, SCTP queue 1091 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151126366 device wjye7wvg stats: send 2000 B/s, delivered 11225 B/s, loss 0%, srtt 10 ms, unsynced 7348 B, backfill unsent 2542 B, in flight 314 packets, sent 483 received 130 packets, SCTP queue 909 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151132660 device wjye7wvg: ICE restart 5 on generation 2
+sidecar: 1794151136366 device wjye7wvg stats: send 2000 B/s, delivered 11225 B/s, loss 0%, srtt 10 ms, unsynced 7348 B, backfill unsent 2542 B, in flight 327 packets, sent 538 received 130 packets, SCTP queue 1100 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151141709 device wjye7wvg: ICE restart 6 on generation 2
+sidecar: 1794151146387 device wjye7wvg stats: send 2000 B/s, delivered 11225 B/s, loss 0%, srtt 10 ms, unsynced 7348 B, backfill unsent 2542 B, in flight 328 packets, sent 593 received 130 packets, SCTP queue 1100 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151150759 device wjye7wvg: ICE restart 7 on generation 2
+sidecar: 1794151156396 device wjye7wvg stats: send 2000 B/s, delivered 11225 B/s, loss 0%, srtt 10 ms, unsynced 7348 B, backfill unsent 2542 B, in flight 327 packets, sent 647 received 130 packets, SCTP queue 909 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151157994 device wjye7wvg: ICE restart 8 on generation 2
+sidecar: 1794151166416 device wjye7wvg stats: send 2000 B/s, delivered 11225 B/s, loss 0%, srtt 10 ms, unsynced 7348 B, backfill unsent 2542 B, in flight 326 packets, sent 701 received 130 packets, SCTP queue 545 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151167632 device wjye7wvg: ICE restart 9 on generation 2
+sidecar: 1794151174352 device wjye7wvg: ICE restart 10 on generation 2
+sidecar: 1794151176416 device wjye7wvg stats: send 2000 B/s, delivered 11225 B/s, loss 0%, srtt 10 ms, unsynced 7348 B, backfill unsent 2542 B, in flight 327 packets, sent 756 received 130 packets, SCTP queue 736 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151186431 device wjye7wvg stats: send 2000 B/s, delivered 11225 B/s, loss 0%, srtt 10 ms, unsynced 7348 B, backfill unsent 2542 B, in flight 327 packets, sent 811 received 130 packets, SCTP queue 900 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151194928 device wjye7wvg: ICE restart 12 on generation 2
+sidecar: 1794151196456 device wjye7wvg stats: send 2000 B/s, delivered 11225 B/s, loss 0%, srtt 10 ms, unsynced 7348 B, backfill unsent 2542 B, in flight 327 packets, sent 865 received 130 packets, SCTP queue 546 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151199288 device wjye7wvg: ICE restart 13 on generation 2
+sidecar: 1794151206457 device wjye7wvg stats: send 2000 B/s, delivered 11225 B/s, loss 0%, srtt 10 ms, unsynced 7348 B, backfill unsent 2542 B, in flight 327 packets, sent 920 received 130 packets, SCTP queue 745 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151207223 device wjye7wvg: ICE restart 14 on generation 2
+sidecar: 1794151216477 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 319 packets, sent 966 received 132 packets, SCTP queue 540 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151226486 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 296 packets, sent 998 received 132 packets, SCTP queue 540 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151227396 device wjye7wvg: ICE restart 15 on generation 2
+sidecar: 1794151236496 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 273 packets, sent 1030 received 132 packets, SCTP queue 541 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151238627 device wjye7wvg: ICE restart 16 on generation 2
+sidecar: 1794151246496 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 251 packets, sent 1062 received 132 packets, SCTP queue 541 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151252901 device wjye7wvg: generation 3 connects without signaling
+sidecar: 1794151252901 data channel 3: ICE Checking
+sidecar: 1794151256506 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 229 packets, sent 1094 received 132 packets, SCTP queue 541 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151266507 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 205 packets, sent 1125 received 132 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151276196 data channel 3: ICE Disconnected
+sidecar: 1794151276526 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1157 received 132 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151286546 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1189 received 132 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151296546 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1221 received 132 packets, SCTP queue 3751 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151306546 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1253 received 132 packets, SCTP queue 3751 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151316547 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 1284 received 132 packets, SCTP queue 3219 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151326566 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 1316 received 132 packets, SCTP queue 3219 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151326955 device wjye7wvg: generation 4 connects without signaling
+sidecar: 1794151326955 data channel 4: ICE Checking
+sidecar: 1794151336586 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1348 received 132 packets, SCTP queue 3219 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151346606 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1380 received 132 packets, SCTP queue 3219 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151356616 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1412 received 132 packets, SCTP queue 3219 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151359576 data channel 4: ICE Disconnected
+sidecar: 1794151366627 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1444 received 132 packets, SCTP queue 3219 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151376646 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 1475 received 132 packets, SCTP queue 2678 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151386676 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 1507 received 132 packets, SCTP queue 2678 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151391459 device wjye7wvg: generation 5 connects without signaling
+sidecar: 1794151391459 data channel 5: ICE Checking
+sidecar: 1794151396696 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1539 received 132 packets, SCTP queue 2678 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151400901 data channel 5: ICE Completed
+sidecar: 1794151406706 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1571 received 132 packets, SCTP queue 2678 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151416716 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1603 received 132 packets, SCTP queue 2678 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151426716 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 1634 received 132 packets, SCTP queue 2687 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151436726 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 1666 received 132 packets, SCTP queue 2687 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151446726 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1698 received 132 packets, SCTP queue 2687 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151456736 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1730 received 132 packets, SCTP queue 2687 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151466746 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1762 received 132 packets, SCTP queue 2687 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151476779 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 1793 received 132 packets, SCTP queue 2146 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151486848 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 1825 received 132 packets, SCTP queue 2146 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151496857 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 1857 received 132 packets, SCTP queue 2146 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151506879 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1889 received 132 packets, SCTP queue 2146 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151516906 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1921 received 132 packets, SCTP queue 2146 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151526926 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1953 received 132 packets, SCTP queue 2146 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151536936 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 1985 received 132 packets, SCTP queue 2146 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151546947 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 2016 received 132 packets, SCTP queue 1614 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151556966 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 2048 received 132 packets, SCTP queue 1614 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151566978 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2080 received 132 packets, SCTP queue 1614 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151576987 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2112 received 132 packets, SCTP queue 1614 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151587016 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2144 received 132 packets, SCTP queue 2146 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151597017 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 2175 received 132 packets, SCTP queue 1605 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151607036 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 2207 received 132 packets, SCTP queue 1605 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151617046 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2239 received 132 packets, SCTP queue 1605 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151627046 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2271 received 132 packets, SCTP queue 1605 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151637047 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2303 received 132 packets, SCTP queue 1605 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151647068 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2335 received 132 packets, SCTP queue 1605 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151657086 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 2366 received 132 packets, SCTP queue 1073 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151667096 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2398 received 132 packets, SCTP queue 1073 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151677100 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2430 received 132 packets, SCTP queue 1073 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151687106 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2462 received 132 packets, SCTP queue 1073 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151697107 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 2493 received 132 packets, SCTP queue 1073 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151707126 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 2525 received 132 packets, SCTP queue 1073 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151717146 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2557 received 132 packets, SCTP queue 1073 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151727146 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2589 received 132 packets, SCTP queue 1073 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151737148 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2621 received 132 packets, SCTP queue 1073 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151747168 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2653 received 132 packets, SCTP queue 1073 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151757186 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 2684 received 132 packets, SCTP queue 541 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151767186 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2716 received 132 packets, SCTP queue 541 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151777186 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2748 received 132 packets, SCTP queue 541 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151787216 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2780 received 132 packets, SCTP queue 1073 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151797228 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2812 received 132 packets, SCTP queue 1073 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151807236 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 2843 received 132 packets, SCTP queue 532 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151817256 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 2875 received 132 packets, SCTP queue 532 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151827266 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2907 received 132 packets, SCTP queue 532 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151837266 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2939 received 132 packets, SCTP queue 532 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151847276 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 2971 received 132 packets, SCTP queue 532 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151857286 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 3002 received 132 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151867296 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 3034 received 132 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151877316 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 3066 received 132 packets, SCTP queue 541 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151887317 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 3098 received 132 packets, SCTP queue 541 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151897327 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 3130 received 132 packets, SCTP queue 541 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151907336 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 3161 received 132 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151917357 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 3193 received 132 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151927388 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 3225 received 132 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151937407 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 3257 received 132 packets, SCTP queue 3219 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151947413 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 3289 received 132 packets, SCTP queue 3219 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151957418 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 191 packets, sent 3321 received 132 packets, SCTP queue 3219 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151967436 device wjye7wvg stats: send 2000 B/s, delivered 7880 B/s, loss 28%, srtt 10 ms, unsynced 7815 B, backfill unsent 2542 B, in flight 190 packets, sent 3352 received 132 packets, SCTP queue 2687 B, 0 dropped by a full SCTP buffer

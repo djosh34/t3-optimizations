@@ -1,0 +1,2543 @@
+{
+  "profile": "D",
+  "about": "worst observed EDGE, inspired envelope",
+  "grade": "graded",
+  "client": "webapp",
+  "kind": "cold",
+  "seed": 1,
+  "commit": "0f01ba755fce-dirty",
+  "path": "WebRTC data channel from WebKit to the sidecar (UDP, str0m with the patched SCTP layer) over a veth pair in the lab; the app's HTTPS goes through the lab front. In production the UDP goes through Tailscale.",
+  "status": "done",
+  "deadline": "15m0s",
+  "runS": 412.769,
+  "appLoadS": 1.703,
+  "promptConfirmationS": 290.679,
+  "timeToFirstTextS": 322.56,
+  "completeS": 409.616,
+  "agentGotPromptS": 285.091,
+  "maxLagS": 36.808,
+  "medianLagS": 0,
+  "p95LagS": 15.808,
+  "longestSilenceS": 322.56,
+  "shownChars": 1596,
+  "producedChars": 1596,
+  "replyChars": 1596,
+  "approvalShownAfterS": 48.466,
+  "wireDownBytes": 756136,
+  "wireUpBytes": 417273,
+  "appReceivedBytes": 365224,
+  "appSentBytes": 125322,
+  "replyBytesReceived": 34860,
+  "duplicateReplyBytes": 0,
+  "webSocketsOpenedAfterSwitch": 0,
+  "lag": [
+    {
+      "atS": 0,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 1,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 2,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 3,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 4,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 5,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 6,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 7,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 8,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 9,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 10,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 11,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 12,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 13,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 14,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 15,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 16,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 17,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 18,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 19,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 20,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 21,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 22,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 23,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 24,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 25,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 26,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 27,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 28,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 29,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 30,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 31,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 32,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 33,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 34,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 35,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 36,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 37,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 38,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 39,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 40,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 41,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 42,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 43,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 44,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 45,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 46,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 47,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 48,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 49,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 50,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 51,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 52,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 53,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 54,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 55,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 56,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 57,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 58,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 59,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 60,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 61,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 62,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 63,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 64,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 65,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 66,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 67,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 68,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 69,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 70,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 71,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 72,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 73,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 74,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 75,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 76,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 77,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 78,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 79,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 80,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 81,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 82,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 83,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 84,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 85,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 86,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 87,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 88,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 89,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 90,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 91,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 92,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 93,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 94,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 95,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 96,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 97,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 98,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 99,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 100,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 101,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 102,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 103,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 104,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 105,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 106,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 107,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 108,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 109,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 110,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 111,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 112,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 113,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 114,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 115,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 116,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 117,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 118,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 119,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 120,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 121,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 122,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 123,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 124,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 125,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 126,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 127,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 128,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 129,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 130,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 131,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 132,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 133,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 134,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 135,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 136,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 137,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 138,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 139,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 140,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 141,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 142,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 143,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 144,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 145,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 146,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 147,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 148,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 149,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 150,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 151,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 152,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 153,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 154,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 155,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 156,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 157,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 158,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 159,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 160,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 161,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 162,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 163,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 164,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 165,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 166,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 167,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 168,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 169,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 170,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 171,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 172,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 173,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 174,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 175,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 176,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 177,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 178,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 179,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 180,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 181,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 182,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 183,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 184,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 185,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 186,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 187,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 188,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 189,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 190,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 191,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 192,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 193,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 194,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 195,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 196,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 197,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 198,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 199,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 200,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 201,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 202,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 203,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 204,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 205,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 206,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 207,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 208,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 209,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 210,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 211,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 212,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 213,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 214,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 215,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 216,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 217,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 218,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 219,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 220,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 221,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 222,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 223,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 224,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 225,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 226,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 227,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 228,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 229,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 230,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 231,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 232,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 233,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 234,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 235,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 236,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 237,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 238,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 239,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 240,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 241,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 242,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 243,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 244,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 245,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 246,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 247,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 248,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 249,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 250,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 251,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 252,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 253,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 254,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 255,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 256,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 257,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 258,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 259,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 260,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 261,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 262,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 263,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 264,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 265,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 266,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 267,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 268,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 269,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 270,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 271,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 272,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 273,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 274,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 275,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 276,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 277,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 278,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 279,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 280,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 281,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 282,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 283,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 284,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 285,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 286,
+      "lagS": 0.808,
+      "shown": 0,
+      "produced": 37
+    },
+    {
+      "atS": 287,
+      "lagS": 1.808,
+      "shown": 0,
+      "produced": 77
+    },
+    {
+      "atS": 288,
+      "lagS": 2.808,
+      "shown": 0,
+      "produced": 117
+    },
+    {
+      "atS": 289,
+      "lagS": 3.808,
+      "shown": 0,
+      "produced": 157
+    },
+    {
+      "atS": 290,
+      "lagS": 4.808,
+      "shown": 0,
+      "produced": 197
+    },
+    {
+      "atS": 291,
+      "lagS": 5.808,
+      "shown": 0,
+      "produced": 239
+    },
+    {
+      "atS": 292,
+      "lagS": 6.808,
+      "shown": 0,
+      "produced": 279
+    },
+    {
+      "atS": 293,
+      "lagS": 7.808,
+      "shown": 0,
+      "produced": 318
+    },
+    {
+      "atS": 294,
+      "lagS": 8.808,
+      "shown": 0,
+      "produced": 357
+    },
+    {
+      "atS": 295,
+      "lagS": 9.808,
+      "shown": 0,
+      "produced": 397
+    },
+    {
+      "atS": 296,
+      "lagS": 10.808,
+      "shown": 0,
+      "produced": 435
+    },
+    {
+      "atS": 297,
+      "lagS": 11.808,
+      "shown": 0,
+      "produced": 478
+    },
+    {
+      "atS": 298,
+      "lagS": 12.808,
+      "shown": 0,
+      "produced": 519
+    },
+    {
+      "atS": 299,
+      "lagS": 13.808,
+      "shown": 0,
+      "produced": 558
+    },
+    {
+      "atS": 300,
+      "lagS": 14.808,
+      "shown": 0,
+      "produced": 597
+    },
+    {
+      "atS": 301,
+      "lagS": 15.808,
+      "shown": 0,
+      "produced": 635
+    },
+    {
+      "atS": 302,
+      "lagS": 16.808,
+      "shown": 0,
+      "produced": 677
+    },
+    {
+      "atS": 303,
+      "lagS": 17.808,
+      "shown": 0,
+      "produced": 718
+    },
+    {
+      "atS": 304,
+      "lagS": 18.808,
+      "shown": 0,
+      "produced": 758
+    },
+    {
+      "atS": 305,
+      "lagS": 19.808,
+      "shown": 0,
+      "produced": 799
+    },
+    {
+      "atS": 306,
+      "lagS": 20.808,
+      "shown": 0,
+      "produced": 839
+    },
+    {
+      "atS": 307,
+      "lagS": 21.808,
+      "shown": 0,
+      "produced": 882
+    },
+    {
+      "atS": 308,
+      "lagS": 22.808,
+      "shown": 0,
+      "produced": 922
+    },
+    {
+      "atS": 309,
+      "lagS": 23.808,
+      "shown": 0,
+      "produced": 961
+    },
+    {
+      "atS": 310,
+      "lagS": 24.808,
+      "shown": 0,
+      "produced": 1000
+    },
+    {
+      "atS": 311,
+      "lagS": 25.808,
+      "shown": 0,
+      "produced": 1041
+    },
+    {
+      "atS": 312,
+      "lagS": 26.808,
+      "shown": 0,
+      "produced": 1077
+    },
+    {
+      "atS": 313,
+      "lagS": 27.808,
+      "shown": 0,
+      "produced": 1077
+    },
+    {
+      "atS": 314,
+      "lagS": 28.808,
+      "shown": 0,
+      "produced": 1077
+    },
+    {
+      "atS": 315,
+      "lagS": 29.808,
+      "shown": 0,
+      "produced": 1077
+    },
+    {
+      "atS": 316,
+      "lagS": 30.808,
+      "shown": 0,
+      "produced": 1077
+    },
+    {
+      "atS": 317,
+      "lagS": 31.808,
+      "shown": 0,
+      "produced": 1077
+    },
+    {
+      "atS": 318,
+      "lagS": 32.808,
+      "shown": 0,
+      "produced": 1077
+    },
+    {
+      "atS": 319,
+      "lagS": 33.808,
+      "shown": 0,
+      "produced": 1077
+    },
+    {
+      "atS": 320,
+      "lagS": 34.808,
+      "shown": 0,
+      "produced": 1077
+    },
+    {
+      "atS": 321,
+      "lagS": 35.808,
+      "shown": 0,
+      "produced": 1077
+    },
+    {
+      "atS": 322,
+      "lagS": 36.808,
+      "shown": 0,
+      "produced": 1077
+    },
+    {
+      "atS": 323,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 324,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 325,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 326,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 327,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 328,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 329,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 330,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 331,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 332,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 333,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 334,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 335,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 336,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 337,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 338,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 339,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 340,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 341,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 342,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 343,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 344,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 345,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 346,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 347,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 348,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 349,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 350,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 351,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 352,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 353,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 354,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 355,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 356,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 357,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 358,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 359,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 360,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 361,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 362,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 363,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 364,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 365,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 366,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 367,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 368,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 369,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 370,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 371,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 372,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 373,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 374,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 375,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 376,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 377,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 378,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 379,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 380,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 381,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 382,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 383,
+      "lagS": 0.26,
+      "shown": 1077,
+      "produced": 1094
+    },
+    {
+      "atS": 384,
+      "lagS": 1.26,
+      "shown": 1077,
+      "produced": 1132
+    },
+    {
+      "atS": 385,
+      "lagS": 2.26,
+      "shown": 1077,
+      "produced": 1169
+    },
+    {
+      "atS": 386,
+      "lagS": 3.26,
+      "shown": 1077,
+      "produced": 1208
+    },
+    {
+      "atS": 387,
+      "lagS": 4.26,
+      "shown": 1077,
+      "produced": 1250
+    },
+    {
+      "atS": 388,
+      "lagS": 5.26,
+      "shown": 1077,
+      "produced": 1288
+    },
+    {
+      "atS": 389,
+      "lagS": 6.26,
+      "shown": 1077,
+      "produced": 1328
+    },
+    {
+      "atS": 390,
+      "lagS": 7.26,
+      "shown": 1077,
+      "produced": 1367
+    },
+    {
+      "atS": 391,
+      "lagS": 8.26,
+      "shown": 1077,
+      "produced": 1402
+    },
+    {
+      "atS": 392,
+      "lagS": 9.26,
+      "shown": 1077,
+      "produced": 1435
+    },
+    {
+      "atS": 393,
+      "lagS": 10.26,
+      "shown": 1077,
+      "produced": 1472
+    },
+    {
+      "atS": 394,
+      "lagS": 11.26,
+      "shown": 1077,
+      "produced": 1505
+    },
+    {
+      "atS": 395,
+      "lagS": 12.26,
+      "shown": 1077,
+      "produced": 1538
+    },
+    {
+      "atS": 396,
+      "lagS": 13.26,
+      "shown": 1077,
+      "produced": 1571
+    },
+    {
+      "atS": 397,
+      "lagS": 14.26,
+      "shown": 1077,
+      "produced": 1596
+    },
+    {
+      "atS": 398,
+      "lagS": 15.26,
+      "shown": 1077,
+      "produced": 1596
+    },
+    {
+      "atS": 399,
+      "lagS": 12.208,
+      "shown": 1237,
+      "produced": 1596
+    },
+    {
+      "atS": 400,
+      "lagS": 13.208,
+      "shown": 1237,
+      "produced": 1596
+    },
+    {
+      "atS": 401,
+      "lagS": 14.208,
+      "shown": 1237,
+      "produced": 1596
+    },
+    {
+      "atS": 402,
+      "lagS": 15.208,
+      "shown": 1237,
+      "produced": 1596
+    },
+    {
+      "atS": 403,
+      "lagS": 8.308,
+      "shown": 1524,
+      "produced": 1596
+    },
+    {
+      "atS": 404,
+      "lagS": 9.308,
+      "shown": 1524,
+      "produced": 1596
+    },
+    {
+      "atS": 405,
+      "lagS": 10.308,
+      "shown": 1524,
+      "produced": 1596
+    },
+    {
+      "atS": 406,
+      "lagS": 11.308,
+      "shown": 1524,
+      "produced": 1596
+    },
+    {
+      "atS": 407,
+      "lagS": 12.308,
+      "shown": 1524,
+      "produced": 1596
+    },
+    {
+      "atS": 408,
+      "lagS": 13.308,
+      "shown": 1524,
+      "produced": 1596
+    },
+    {
+      "atS": 409,
+      "lagS": 14.308,
+      "shown": 1524,
+      "produced": 1596
+    }
+  ],
+  "notes": [
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":2184,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":2184,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":2676,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":3168,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":3168,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":3661,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":3661,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":3661,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":4154,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":4154,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":4647,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":4647,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":4813,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":5306,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":5306,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":3,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":null,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":0,\"sentWireBytes\":0,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":5799,\"inflightPackets\":0,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":4,\"iceRestarts\":0,\"newConnections\":1,\"handshakeMs\":154790,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":3,\"sentWireBytes\":3564,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":5799,\"inflightPackets\":3,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":4,\"iceRestarts\":0,\"newConnections\":1,\"handshakeMs\":154790,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":3,\"sentWireBytes\":3564,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":5799,\"inflightPackets\":3,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":4,\"iceRestarts\":0,\"newConnections\":1,\"handshakeMs\":154790,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":3,\"sentWireBytes\":3564,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":6292,\"inflightPackets\":3,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":4,\"iceRestarts\":0,\"newConnections\":1,\"handshakeMs\":154790,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":3,\"sentWireBytes\":3564,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":6292,\"inflightPackets\":3,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":4,\"iceRestarts\":0,\"newConnections\":1,\"handshakeMs\":154790,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":3,\"sentWireBytes\":3564,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":6785,\"inflightPackets\":3,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":4,\"iceRestarts\":0,\"newConnections\":1,\"handshakeMs\":154790,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":3,\"sentWireBytes\":3564,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":6785,\"inflightPackets\":3,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":67758,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":5,\"sentWireBytes\":5940,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":6785,\"inflightPackets\":2,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":67758,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":5,\"sentWireBytes\":5940,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":7278,\"inflightPackets\":2,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":67758,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":5,\"sentWireBytes\":5940,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":7278,\"inflightPackets\":2,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":67758,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":5,\"sentWireBytes\":5940,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":7771,\"inflightPackets\":2,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc connecting\",\"open\":false,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":67758,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":5,\"sentWireBytes\":5940,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":7771,\"inflightPackets\":2,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc open\",\"open\":true,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":47245,\"lastDataAt\":null,\"silences\":0,\"longestSilenceMs\":0,\"longestRecoveredGapMs\":0},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":null,\"minRttMs\":null,\"sentPackets\":14,\"sentWireBytes\":16632,\"receivedPackets\":0,\"receivedWireBytes\":0,\"lastHeardMs\":null,\"unsyncedBytes\":7771,\"inflightPackets\":9,\"duplicateBytes\":0}}",
+    "prompt queued",
+    "prompt sent",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 190/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":47245,\"lastDataAt\":1794150918722,\"silences\":0,\"longestSilenceMs\":351,\"longestRecoveredGapMs\":351},\"stats\":{\"sendRate\":3000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":10228.265625,\"minRttMs\":10089,\"sentPackets\":22,\"sentWireBytes\":25371,\"receivedPackets\":22,\"receivedWireBytes\":25928,\"lastHeardMs\":285218,\"unsyncedBytes\":7586,\"inflightPackets\":14,\"duplicateBytes\":0}}",
+    "prompt confirmed",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108 239/849\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 259/901\",\"attempts\":\"662/662 662/662\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":47245,\"lastDataAt\":1794150927325,\"silences\":0,\"longestSilenceMs\":1542,\"longestRecoveredGapMs\":1542},\"stats\":{\"sendRate\":3000,\"deliveredRate\":951.7051956969559,\"loss\":0.41666666666666663,\"srttMs\":10823.255701124668,\"minRttMs\":9515,\"sentPackets\":29,\"sentWireBytes\":31365,\"receivedPackets\":56,\"receivedWireBytes\":63281,\"lastHeardMs\":293821,\"unsyncedBytes\":6421,\"inflightPackets\":13,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108 849/849\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 385/901\",\"attempts\":\"662/662 662/662 15/638\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":47245,\"lastDataAt\":1794150939326,\"silences\":1,\"longestSilenceMs\":6431,\"longestRecoveredGapMs\":6431},\"stats\":{\"sendRate\":3000,\"deliveredRate\":951.7051956969559,\"loss\":0.41666666666666663,\"srttMs\":10823.255701124668,\"minRttMs\":9515,\"sentPackets\":29,\"sentWireBytes\":31365,\"receivedPackets\":121,\"receivedWireBytes\":101589,\"lastHeardMs\":305822,\"unsyncedBytes\":6913,\"inflightPackets\":13,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108 849/849\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 646/901\",\"attempts\":\"662/662 662/662 15/638\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":47245,\"lastDataAt\":1794150948888,\"silences\":1,\"longestSilenceMs\":6431,\"longestRecoveredGapMs\":6431},\"stats\":{\"sendRate\":3000,\"deliveredRate\":951.7051956969559,\"loss\":0.41666666666666663,\"srttMs\":10823.255701124668,\"minRttMs\":9515,\"sentPackets\":41,\"sentWireBytes\":34791,\"receivedPackets\":164,\"receivedWireBytes\":127590,\"lastHeardMs\":315384,\"unsyncedBytes\":6913,\"inflightPackets\":25,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21 1340/1340\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108 849/849 339/1554\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 646/901\",\"attempts\":\"662/662 662/662 15/638\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":47245,\"lastDataAt\":1794150959335,\"silences\":1,\"longestSilenceMs\":6431,\"longestRecoveredGapMs\":6431},\"stats\":{\"sendRate\":3000,\"deliveredRate\":705.3874620307507,\"loss\":0.45166666666666666,\"srttMs\":10588.336396173574,\"minRttMs\":9515,\"sentPackets\":69,\"sentWireBytes\":42778,\"receivedPackets\":190,\"receivedWireBytes\":144326,\"lastHeardMs\":325831,\"unsyncedBytes\":6177,\"inflightPackets\":48,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21 1340/1340\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108 849/849 1142/1554\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 646/901\",\"attempts\":\"662/662 662/662 15/638\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":47245,\"lastDataAt\":1794150968886,\"silences\":1,\"longestSilenceMs\":6431,\"longestRecoveredGapMs\":6431},\"stats\":{\"sendRate\":3000,\"deliveredRate\":575.1064506942528,\"loss\":0.5161666666666667,\"srttMs\":10322.401140405344,\"minRttMs\":8984,\"sentPackets\":95,\"sentWireBytes\":50094,\"receivedPackets\":217,\"receivedWireBytes\":159890,\"lastHeardMs\":335382,\"unsyncedBytes\":5873,\"inflightPackets\":63,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21 1340/1340\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108 849/849 1554/1554 932/932 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 891/901\",\"attempts\":\"662/662 662/662 15/638\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":47245,\"lastDataAt\":1794150979014,\"silences\":1,\"longestSilenceMs\":6431,\"longestRecoveredGapMs\":6431},\"stats\":{\"sendRate\":3000,\"deliveredRate\":866.641053073778,\"loss\":0.39138320512820507,\"srttMs\":10490.896548925799,\"minRttMs\":8984,\"sentPackets\":133,\"sentWireBytes\":60775,\"receivedPackets\":267,\"receivedWireBytes\":187149,\"lastHeardMs\":345510,\"unsyncedBytes\":3290,\"inflightPackets\":74,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014\",\"assistant\":\"32/32 21/21 1340/1340\",\"user\":\"10/10 9/9\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108 849/849 1554/1554 932/932 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 891/901\",\"attempts\":\"662/662 662/662 15/638\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\",\"runtimeRequests\":\"308/1011\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":47245,\"lastDataAt\":1794150986919,\"silences\":1,\"longestSilenceMs\":6431,\"longestRecoveredGapMs\":6431},\"stats\":{\"sendRate\":3000,\"deliveredRate\":762.9487131928519,\"loss\":0.19177777051282047,\"srttMs\":10427.744870425253,\"minRttMs\":8984,\"sentPackets\":159,\"sentWireBytes\":68052,\"receivedPackets\":312,\"receivedWireBytes\":207325,\"lastHeardMs\":353415,\"unsyncedBytes\":2303,\"inflightPackets\":67,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014 342/839\",\"assistant\":\"32/32 21/21 1340/1340\",\"user\":\"10/10 9/9 34/64\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108 849/849 1554/1554 932/932 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 901/901\",\"attempts\":\"662/662 662/662 638/638\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\",\"runtimeRequests\":\"1011/1011\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":47245,\"lastDataAt\":1794151000881,\"silences\":2,\"longestSilenceMs\":6920,\"longestRecoveredGapMs\":6920},\"stats\":{\"sendRate\":3000,\"deliveredRate\":738.3913719622691,\"loss\":0.1842444393589743,\"srttMs\":10612.526761622095,\"minRttMs\":8984,\"sentPackets\":178,\"sentWireBytes\":73487,\"receivedPackets\":376,\"receivedWireBytes\":232398,\"lastHeardMs\":367377,\"unsyncedBytes\":1314,\"inflightPackets\":76,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014 839/839\",\"assistant\":\"32/32 21/21 1340/1340\",\"user\":\"10/10 9/9 64/64\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108 849/849 1554/1554 932/932 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 901/901\",\"attempts\":\"662/662 662/662 638/638\",\"nodes\":\"809/809 1025/1025 809/809\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\",\"runtimeRequests\":\"1011/1011\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":47245,\"lastDataAt\":1794151011771,\"silences\":2,\"longestSilenceMs\":6920,\"longestRecoveredGapMs\":6920},\"stats\":{\"sendRate\":3000,\"deliveredRate\":545.828664206341,\"loss\":0.380971107551282,\"srttMs\":11203.085916419333,\"minRttMs\":8984,\"sentPackets\":197,\"sentWireBytes\":80224,\"receivedPackets\":422,\"receivedWireBytes\":253706,\"lastHeardMs\":378267,\"unsyncedBytes\":1806,\"inflightPackets\":91,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014 839/839\",\"assistant\":\"32/32 21/21 1340/1340\",\"user\":\"10/10 9/9 64/64\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108 849/849 1554/1554 932/932 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 901/901 550/550\",\"attempts\":\"662/662 662/662 638/638\",\"nodes\":\"809/809 1025/1025 809/809 1293/1377 777/965 515/1025\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\",\"runtimeRequests\":\"1011/1011\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":47245,\"lastDataAt\":1794151022249,\"silences\":2,\"longestSilenceMs\":6920,\"longestRecoveredGapMs\":6920},\"stats\":{\"sendRate\":3000,\"deliveredRate\":1128.9127286294238,\"loss\":0.3236323644392586,\"srttMs\":10981.24408668593,\"minRttMs\":8984,\"sentPackets\":222,\"sentWireBytes\":91682,\"receivedPackets\":507,\"receivedWireBytes\":290000,\"lastHeardMs\":388744,\"unsyncedBytes\":1385,\"inflightPackets\":82,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014 839/839\",\"assistant\":\"32/32 21/21 1340/1340 321/444\",\"user\":\"10/10 9/9 64/64\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108 849/849 1554/1554 932/932 1108/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 901/901 550/550\",\"attempts\":\"662/662 662/662 638/638\",\"nodes\":\"809/809 1025/1025 809/809 1293/1377 965/965 515/1025\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\",\"runtimeRequests\":\"1011/1011\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":47245,\"lastDataAt\":1794151032560,\"silences\":2,\"longestSilenceMs\":6920,\"longestRecoveredGapMs\":6920},\"stats\":{\"sendRate\":3000,\"deliveredRate\":1385.047765594294,\"loss\":0.23357985857523667,\"srttMs\":11291.762680720984,\"minRttMs\":9021,\"sentPackets\":260,\"sentWireBytes\":106716,\"receivedPackets\":572,\"receivedWireBytes\":323731,\"lastHeardMs\":399056,\"unsyncedBytes\":512,\"inflightPackets\":85,\"duplicateBytes\":0}}",
+    "Scroll to end shows",
+    "webapp {\"objects\":{\"runs\":\"971/971 1014/1014 391/971\",\"assistant\":\"32/32 21/21 1340/1340 708/723\",\"user\":\"10/10 9/9 64/64\",\"checkpointScopes\":\"726/726\",\"turnItems\":\"1299/1299 1058/1058 860/860 870/870 1058/1058 1108/1108 1108/1108 849/849 1554/1554 932/932 1108/1108 439/1108\",\"thread\":\"951/951\",\"messages\":\"550/550 456/456 901/901 550/550\",\"attempts\":\"662/662 662/662 638/638\",\"nodes\":\"809/809 1025/1025 809/809 1293/1377 965/965 592/1025\",\"checkpoints\":\"613/613 613/613 779/779\",\"providerThreads\":\"810/810\",\"providerSessions\":\"2688/2688\",\"providerTurns\":\"778/778\",\"frame\":\"1032/1032\",\"runtimeRequests\":\"401/1054\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":5,\"iceRestarts\":0,\"newConnections\":2,\"handshakeMs\":47245,\"lastDataAt\":1794151043894,\"silences\":2,\"longestSilenceMs\":6920,\"longestRecoveredGapMs\":6920},\"stats\":{\"sendRate\":3000,\"deliveredRate\":908.4964957472105,\"loss\":0.3602391036125182,\"srttMs\":10880.396529824146,\"minRttMs\":9021,\"sentPackets\":293,\"sentWireBytes\":121033,\"receivedPackets\":652,\"receivedWireBytes\":356105,\"lastHeardMs\":410390,\"unsyncedBytes\":492,\"inflightPackets\":92,\"duplicateBytes\":0}}",
+    "shim trace\n15:10:34.190 fetch GET /api/auth/session\n15:10:34.194 fetched GET /api/auth/session 200\n15:10:34.336 fetch GET /.well-known/t3/environment\n15:10:34.338 fetched GET /.well-known/t3/environment 200\n15:10:34.359 fetch GET /.well-known/t3/environment\n15:10:34.360 fetched GET /.well-known/t3/environment 200\n15:10:34.373 rpc 0 subscribeServerConfig\n15:10:34.374 chunk 0 38690 bytes\n15:10:34.403 in Ack 0\n15:10:34.406 rpc 1 subscribeServerLifecycle\n15:10:34.407 rpc 2 subscribeServerLifecycle\n15:10:34.411 fetch GET /api/auth/session\n15:10:34.412 fetched GET /api/auth/session 200\n15:10:34.413 rpc 3 subscribeDeviceState\n15:10:34.416 rpc 4 preview.reportProfiles\n15:10:34.547 rpc 5 subscribeProjectClones\n15:10:34.628 rpc 6 server.reportClientActivity\n15:10:34.634 rpc 7 orchestration.subscribeThread\n15:10:34.635 chunk 7 32012 bytes\n15:10:34.638 in Ack 7\n15:10:34.648 fetch GET /api/orchestration/shell\n15:10:34.720 rpc 8 server.refreshProviders\n15:10:34.856 rpc 9 orchestration.dispatchCommand thread.visit\n15:10:34.952 fetched GET /api/orchestration/shell 200\n15:10:34.953 rpc 10 subscribeTerminalMetadata\n15:10:34.954 rpc 11 subscribePreviewEvents\n15:10:34.956 rpc 12 subscribeVcsStatus\n15:10:34.959 rpc 13 orchestration.subscribeShell\n15:10:34.959 chunk 13 2847 bytes\n15:10:34.961 rpc 14 assets.createUrl\n15:10:34.962 rpc 15 preview.list\n15:10:34.962 rpc 16 projects.readFile\n15:10:34.963 rpc 17 assets.createUrl\n15:10:35.033 in Ack 13\n15:10:35.331 fetch POST /api/observability/v1/traces\n15:10:35.331 fetched POST /api/observability/v1/traces 204\n15:10:36.641 fetch POST /api/observability/v1/traces\n15:10:36.641 fetched POST /api/observability/v1/traces 204\n15:10:39.368 in Ping \n15:10:44.369 in Ping \n15:10:49.369 in Ping \n15:10:49.630 in Interrupt 6\n15:10:49.882 rpc 18 server.reportClientActivity\n15:10:50.633 fetch POST /api/observability/v1/traces\n15:10:50.633 fetched POST /api/observability/v1/traces 204\n15:10:54.370 in Ping \n15:10:59.370 in Ping \n15:11:04.370 in Ping \n15:11:04.883 in Interrupt 18\n15:11:05.135 rpc 19 server.reportClientActivity\n15:11:05.884 fetch POST /api/observability/v1/traces\n15:11:05.884 fetched POST /api/observability/v1/traces 204\n15:11:09.370 in Ping \n15:11:14.372 in Ping \n15:11:19.372 in Ping \n15:11:20.137 in Interrupt 19\n15:11:21.138 fetch POST /api/observability/v1/traces\n15:11:21.138 fetched POST /api/observability/v1/traces 204\n15:11:24.372 in Ping \n15:11:24.590 rpc 20 server.reportClientActivity\n15:11:25.590 fetch POST /api/observability/v1/traces\n15:11:25.590 fetched POST /api/observability/v1/traces 204\n15:11:29.374 in Ping \n15:11:34.379 in Ping \n15:11:39.381 in Ping \n15:11:39.590 in Interrupt 20\n15:11:40.591 fetch POST /api/observability/v1/traces\n15:11:40.591 fetched POST /api/observability/v1/traces 204\n15:11:44.385 in Ping \n15:11:49.389 in Ping \n15:11:49.589 rpc 21 server.reportClientActivity\n15:11:50.589 fetch POST /api/observability/v1/traces\n15:11:50.590 fetched POST /api/observability/v1/traces 204\n15:11:54.393 in Ping \n15:11:59.397 in Ping \n15:12:04.401 in Ping \n15:12:04.590 in Interrupt 21\n15:12:05.591 fetch POST /api/observability/v1/traces\n15:12:05.592 fetched POST /api/observability/v1/traces 204\n15:12:09.405 in Ping \n15:12:14.410 in Ping \n15:12:14.597 rpc 22 server.reportClientActivity\n15:12:15.597 fetch POST /api/observability/v1/traces\n15:12:15.597 fetched POST /api/observability/v1/traces 204\n15:12:19.413 in Ping \n15:12:24.417 in Ping \n15:12:29.422 in Ping \n15:12:29.598 in Interrupt 22\n15:12:30.599 fetch POST /api/observability/v1/traces\n15:12:30.599 fetched POST /api/observability/v1/traces 204\n15:12:34.426 in Ping \n15:12:39.430 in Ping \n15:12:39.590 rpc 23 server.reportClientActivity\n15:12:40.591 fetch POST /api/observability/v1/traces\n15:12:40.591 fetched POST /api/observability/v1/traces 204\n15:12:44.436 in Ping \n15:12:49.437 in Ping \n15:12:54.441 in Ping \n15:12:54.591 in Interrupt 23\n15:12:55.592 fetch POST /api/observability/v1/traces\n15:12:55.592 fetched POST /api/observability/v1/traces 204\n15:12:59.445 in Ping \n15:13:04.449 in Ping \n15:13:04.591 rpc 24 server.reportClientActivity\n15:13:05.591 fetch POST /api/observability/v1/traces\n15:13:05.592 fetched POST /api/observability/v1/traces 204\n15:13:09.455 in Ping \n15:13:14.457 in Ping \n15:13:19.461 in Ping \n15:13:19.592 in Interrupt 24\n15:13:20.594 fetch POST /api/observability/v1/traces\n15:13:20.594 fetched POST /api/observability/v1/traces 204\n15:13:24.466 in Ping \n15:13:29.469 in Ping \n15:13:29.594 rpc 25 server.reportClientActivity\n15:13:30.595 fetch POST /api/observability/v1/traces\n15:13:30.595 fetched POST /api/observability/v1/traces 204\n15:13:34.474 in Ping \n15:13:39.478 in Ping \n15:13:44.481 in Ping \n15:13:44.595 in Interrupt 25\n15:13:45.596 fetch POST /api/observability/v1/traces\n15:13:45.596 fetched POST /api/observability/v1/traces 204\n15:13:49.485 in Ping \n15:13:54.492 in Ping \n15:13:54.593 rpc 26 server.reportClientActivity\n15:13:55.593 fetch POST /api/observability/v1/traces\n15:13:55.593 fetched POST /api/observability/v1/traces 204\n15:13:59.501 in Ping \n15:14:04.501 in Ping \n15:14:09.505 in Ping \n15:14:09.594 in Interrupt 26\n15:14:10.598 fetch POST /api/observability/v1/traces\n15:14:10.598 fetched POST /api/observability/v1/traces 204\n15:14:14.510 in Ping \n15:14:19.514 in Ping \n15:14:19.592 rpc 27 server.reportClientActivity\n15:14:20.594 fetch POST /api/observability/v1/traces\n15:14:20.594 fetched POST /api/observability/v1/traces 204\n15:14:24.517 in Ping \n15:14:29.521 in Ping \n15:14:34.525 in Ping \n15:14:34.594 in Interrupt 27\n15:14:35.598 fetch POST /api/observability/v1/traces\n15:14:35.598 fetched POST /api/observability/v1/traces 204\n15:14:39.530 in Ping \n15:14:44.535 in Ping \n15:14:44.602 rpc 28 server.reportClientActivity\n15:14:45.614 fetch POST /api/observability/v1/traces\n15:14:45.614 fetched POST /api/observability/v1/traces 204\n15:14:49.537 in Ping \n15:14:54.544 in Ping \n15:14:59.545 in Ping \n15:14:59.606 in Interrupt 28\n15:15:00.610 fetch POST /api/observability/v1/traces\n15:15:00.610 fetched POST /api/observability/v1/traces 204\n15:15:04.549 in Ping \n15:15:09.553 in Ping \n15:15:09.595 rpc 29 server.reportClientActivity\n15:15:10.598 fetch POST /api/observability/v1/traces\n15:15:10.599 fetched POST /api/observability/v1/traces 204\n15:15:14.558 in Ping \n15:15:14.902 exit 9 {\"_tag\":\"Success\",\"value\":{\"sequence\":69}}\n15:15:14.930 rpc 30 orchestration.dispatchCommand message.dispatch\n15:15:15.078 chunk 1 3864 bytes\n15:15:15.079 in Ack 1\n15:15:15.912 fetch POST /api/observability/v1/traces\n15:15:15.912 fetched POST /api/observability/v1/traces 204\n15:15:19.561 in Ping \n15:15:24.565 in Ping \n15:15:24.598 in Interrupt 29\n15:15:25.603 fetch POST /api/observability/v1/traces\n15:15:25.603 fetched POST /api/observability/v1/traces 204\n15:15:27.034 chunk 7 31988 bytes\n15:15:27.034 chunk 13 2823 bytes\n15:15:27.035 exit 30 {\"_tag\":\"Success\",\"value\":{\"sequence\":76}}\n15:15:27.035 exit 15 {\"_tag\":\"Success\",\"value\":{\"revision\":0,\"serverEpoch\":\"c84e6f7a-db80-41ab-9d73-17855884fb9a\",\"sessions\":[]}}\n15:15:27.035 exit 16 {\"_tag\":\"Success\",\"value\":{\"byteLength\":0,\"contents\":\"\",\"exists\":false,\"relativePath\":\"t3.json\",\"truncated\":false}}\n15:15:27.045 in Ack 7\n15:15:27.081 in Ack 13\n15:15:28.051 fetch POST /api/observability/v1/traces\n15:15:28.051 fetched POST /api/observability/v1/traces 204\n15:15:29.570 in Ping \n15:15:34.267 chunk 13 944 bytes\n15:15:34.267 in Ack 13\n15:15:34.573 in Ping \n15:15:34.667 rpc 31 server.reportClientActivity\n15:15:35.269 fetch POST /api/observability/v1/traces\n15:15:35.269 fetched POST /api/observability/v1/traces 204\n15:15:38.134 fetch POST /api/observability/v1/traces\n15:15:38.134 fetched POST /api/observability/v1/traces 204\n15:15:38.886 chunk 2 3864 bytes\n15:15:38.887 exit 8 {\"_tag\":\"Success\",\"value\":{\"providers\":[{\"auth\":{\"canLogout\":false,\"status\":\"unknown\"},\"checkedAt\":\"2026-11-08T15:10:11.654Z\",\"configurableProviders\":false,\"con\n15:15:38.887 in Ack 2\n15:15:39.577 in Ping \n15:15:39.888 fetch POST /api/observability/v1/traces\n15:15:39.888 fetched POST /api/observability/v1/traces 204\n15:15:40.443 chunk 12 1427 bytes\n15:15:40.443 exit 14 {\"_tag\":\"Success\",\"value\":{\"expiresAt\":1794153600000,\"relativeUrl\":\"/api/assets/eyJ2ZXJzaW9uIjoxLCJraW5kIjoicHJvamVjdC1mYXZpY29uIiwid29ya3NwYWNlUm9vdCI6Ii9ob21l\n15:15:40.443 exit 17 {\"_tag\":\"Success\",\"value\":{\"expiresAt\":1794154521359,\"imageDimensions\":{\"height\":48,\"width\":48},\"relativeUrl\":\"/api/assets/eyJ2ZXJzaW9uIjoxLCJraW5kIjoiYXR0YWNob\n15:15:40.444 in Ack 12\n15:15:41.448 fetch POST /api/observability/v1/traces\n15:15:41.448 fetched POST /api/observability/v1/traces 204\n15:15:44.582 in Ping \n15:15:49.585 in Ping \n15:15:49.670 in Interrupt 31\n15:15:50.219 chunk 7 34466 bytes\n15:15:50.222 in Ack 7\n15:15:50.472 chunk 7 34506 bytes\n15:15:50.473 in Ack 7\n15:15:50.675 fetch POST /api/observability/v1/traces\n15:15:50.675 fetched POST /api/observability/v1/traces 204\n15:15:51.865 chunk 7 34536 bytes\n15:15:51.867 in Ack 7\n15:15:52.116 chunk 7 34566 bytes\n15:15:52.117 in Ack 7\n15:15:52.366 chunk 7 34676 bytes\n15:15:52.368 in Ack 7\n15:15:52.616 chunk 7 34706 bytes\n15:15:52.617 in Ack 7\n15:15:52.866 chunk 7 34736 bytes\n15:15:52.867 in Ack 7\n15:15:52.898 fetch POST /api/observability/v1/traces\n15:15:52.898 fetched POST /api/observability/v1/traces 204\n15:15:53.660 chunk 7 34738 bytes\n15:15:53.661 in Ack 7\n15:15:54.590 in Ping \n15:15:54.664 fetch POST /api/observability/v1/traces\n15:15:54.664 fetched POST /api/observability/v1/traces 204\n15:15:55.138 chunk 7 34764 bytes\n15:15:55.139 in Ack 7\n15:15:55.388 chunk 7 34806 bytes\n15:15:55.389 in Ack 7\n15:15:56.140 fetch POST /api/observability/v1/traces\n15:15:56.140 fetched POST /api/observability/v1/traces 204\n15:15:58.519 chunk 7 35132 bytes\n15:15:58.523 in Ack 7\n15:15:58.770 chunk 7 35852 bytes\n15:15:58.771 in Ack 7\n15:15:59.020 chunk 7 37122 bytes\n15:15:59.021 in Ack 7\n15:15:59.524 fetch POST /api/observability/v1/traces\n15:15:59.524 fetched POST /api/observability/v1/traces 204\n15:15:59.593 in Ping \n15:15:59.603 rpc 32 server.reportClientActivity\n15:16:00.606 fetch POST /api/observability/v1/traces\n15:16:00.606 fetched POST /api/observability/v1/traces 204\n15:16:04.597 in Ping \n15:16:09.601 in Ping \n15:16:13.104 chunk 7 40636 bytes\n15:16:13.106 in Ack 7\n15:16:14.107 fetch POST /api/observability/v1/traces\n15:16:14.108 fetched POST /api/observability/v1/traces 204\n15:16:14.607 in Interrupt 32\n15:16:14.607 in Ping \n15:16:15.610 fetch POST /api/observability/v1/traces\n15:16:15.611 fetched POST /api/observability/v1/traces 204\n15:16:17.514 chunk 7 42725 bytes\n15:16:17.516 in Ack 7\n15:16:18.519 fetch POST /api/observability/v1/traces\n15:16:18.519 fetched POST /api/observability/v1/traces 204\n15:16:18.570 chunk 7 42727 bytes\n15:16:18.571 in Ack 7\n15:16:19.576 fetch POST /api/observability/v1/traces\n15:16:19.576 fetched POST /api/observability/v1/traces 204\n15:16:19.609 in Ping \n15:16:24.217 fetch POST /api/observability/v1/traces\n15:16:24.217 fetched POST /api/observability/v1/traces 204\n15:16:24.608 rpc 33 server.reportClientActivity\n15:16:24.613 in Ping \n15:16:25.610 fetch POST /api/observability/v1/traces\n15:16:25.610 fetched POST /api/observability/v1/traces 204\n15:16:29.617 in Ping \n15:16:34.621 in Ping \n15:16:35.238 chunk 7 43638 bytes\n15:16:35.239 in Ack 7\n15:16:35.989 chunk 13 3197 bytes\n15:16:35.990 in Ack 13\n15:16:35.993 rpc 34 orchestration.dispatchCommand thread.visit\n15:16:36.243 fetch POST /api/observability/v1/traces\n15:16:36.243 fetched POST /api/observability/v1/traces 204\n15:16:36.765 chunk 7 44649 bytes\n15:16:36.767 in Ack 7\n15:16:37.768 fetch POST /api/observability/v1/traces\n15:16:37.768 fetched POST /api/observability/v1/traces 204\n15:16:38.423 chunk 7 45288 bytes\n15:16:38.425 in Ack 7\n15:16:39.426 fetch POST /api/observability/v1/traces\n15:16:39.426 fetched POST /api/observability/v1/traces 204\n15:16:39.614 in Interrupt 33\n15:16:39.625 in Ping \n15:16:40.622 fetch POST /api/observability/v1/traces\n15:16:40.622 fetched POST /api/observability/v1/traces 204\n15:16:44.629 in Ping \n15:16:46.264 fetch POST /api/observability/v1/traces\n15:16:46.264 fetched POST /api/observability/v1/traces 204\n15:16:46.691 chunk 7 47292 bytes\n15:16:46.694 in Ack 7\n15:16:47.696 fetch POST /api/observability/v1/traces\n15:16:47.696 fetched POST /api/observability/v1/traces 204\n15:16:49.611 rpc 35 server.reportClientActivity\n15:16:49.633 in Ping \n15:16:50.614 fetch POST /api/observability/v1/traces\n15:16:50.614 fetched POST /api/observability/v1/traces 204\n15:16:51.513 chunk 7 48132 bytes\n15:16:51.515 in Ack 7\n15:16:52.517 fetch POST /api/observability/v1/traces\n15:16:52.517 fetched POST /api/observability/v1/traces 204\n15:16:53.154 chunk 3 876 bytes\n15:16:53.155 in Ack 3\n15:16:53.767 exit 34 {\"_tag\":\"Success\",\"value\":{\"sequence\":94}}\n15:16:53.771 rpc 36 orchestration.dispatchCommand runtime-request.respond\n15:16:54.638 in Ping \n15:16:54.769 fetch POST /api/observability/v1/traces\n15:16:54.769 fetched POST /api/observability/v1/traces 204\n15:16:56.267 fetch POST /api/observability/v1/traces\n15:16:56.267 fetched POST /api/observability/v1/traces 204\n15:16:56.841 chunk 7 50027 bytes\n15:16:56.843 in Ack 7\n15:16:57.843 fetch POST /api/observability/v1/traces\n15:16:57.843 fetched POST /api/observability/v1/traces 204\n15:16:59.641 in Ping \n15:17:03.034 exit 4 {\"_tag\":\"Success\",\"value\":null}\n15:17:03.049 rpc 37 preview.reportProfiles\n15:17:03.649 chunk 7 50993 bytes\n15:17:03.650 in Ack 7\n15:17:03.875 chunk 5 4 bytes\n15:17:03.875 in Ack 5\n15:17:04.039 fetch POST /api/observability/v1/traces\n15:17:04.040 fetched POST /api/observability/v1/traces 204\n15:17:04.157 chunk 13 944 bytes\n15:17:04.157 in Ack 13\n15:17:04.326 exit 36 {\"_tag\":\"Success\",\"value\":{\"sequence\":97}}\n15:17:04.407 chunk 7 53482 bytes\n15:17:04.411 in Ack 7\n15:17:04.628 in Interrupt 35\n15:17:04.645 in Ping \n15:17:04.849 chunk 7 53514 bytes\n15:17:04.851 in Ack 7\n15:17:05.102 chunk 7 53524 bytes\n15:17:05.104 in Ack 7\n15:17:05.172 fetch POST /api/observability/v1/traces\n15:17:05.172 fetched POST /api/observability/v1/traces 204\n15:17:05.181 rpc 38 orchestration.dispatchCommand runtime-request.respond\n15:17:05.351 chunk 7 53554 bytes\n15:17:05.354 in Ack 7\n15:17:05.625 chunk 7 53574 bytes\n15:17:05.627 in Ack 7\n15:17:05.876 chunk 7 53584 bytes\n15:17:05.877 in Ack 7\n15:17:06.182 fetch POST /api/observability/v1/traces\n15:17:06.182 fetched POST /api/observability/v1/traces 204\n15:17:06.351 chunk 7 53594 bytes\n15:17:06.352 in Ack 7\n15:17:06.607 chunk 7 53624 bytes\n15:17:06.612 in Ack 7\n15:17:06.857 chunk 7 53674 bytes\n15:17:06.859 in Ack 7\n15:17:07.108 chunk 7 53684 bytes\n15:17:07.109 in Ack 7\n15:17:07.354 fetch POST /api/observability/v1/traces\n15:17:07.354 fetched POST /api/observability/v1/traces 204\n15:17:07.559 chunk 7 53706 bytes\n15:17:07.560 in Ack 7\n15:17:07.810 chunk 7 53716 bytes\n15:17:07.811 in Ack 7\n15:17:08.070 chunk 7 53736 bytes\n15:17:08.073 in Ack 7\n15:17:08.323 chunk 7 53768 bytes\n15:17:08.325 in Ack 7\n15:17:08.562 fetch POST /api/observability/v1/traces\n15:17:08.562 fetched POST /api/observability/v1/traces 204\n15:17:08.575 chunk 7 53810 bytes\n15:17:08.577 in Ack 7\n15:17:09.578 fetch POST /api/observability/v1/traces\n15:17:09.578 fetched POST /api/observability/v1/traces 204\n15:17:09.649 in Ping \n15:17:10.230 chunk 7 53898 bytes\n15:17:10.232 in Ack 7\n15:17:10.481 chunk 7 53908 bytes\n15:17:10.483 in Ack 7\n15:17:10.733 chunk 7 53948 bytes\n15:17:10.734 in Ack 7\n15:17:10.984 chunk 7 53958 bytes\n15:17:10.987 in Ack 7\n15:17:11.232 fetch POST /api/observability/v1/traces\n15:17:11.233 fetched POST /api/observability/v1/traces 204\n15:17:11.233 chunk 7 53978 bytes\n15:17:11.234 in Ack 7\n15:17:11.484 chunk 7 53988 bytes\n15:17:11.485 in Ack 7\n15:17:11.734 chunk 7 54008 bytes\n15:17:11.736 in Ack 7\n15:17:11.987 chunk 7 54046 bytes\n15:17:11.988 in Ack 7\n15:17:12.237 fetch POST /api/observability/v1/traces\n15:17:12.237 fetched POST /api/observability/v1/traces 204\n15:17:12.238 chunk 7 54066 bytes\n15:17:12.239 in Ack 7\n15:17:12.489 chunk 7 54086 bytes\n15:17:12.490 in Ack 7\n15:17:12.739 chunk 7 54096 bytes\n15:17:12.741 in Ack 7\n15:17:13.050 chunk 7 54126 bytes\n15:17:13.053 in Ack 7\n15:17:13.247 fetch POST /api/observability/v1/traces\n15:17:13.247 fetched POST /api/observability/v1/traces 204\n15:17:13.303 chunk 7 54160 bytes\n15:17:13.305 in Ack 7\n15:17:13.554 chunk 7 54196 bytes\n15:17:13.557 in Ack 7\n15:17:14.306 fetch POST /api/observability/v1/traces\n15:17:14.306 fetched POST /api/observability/v1/traces 204\n15:17:14.627 rpc 39 server.reportClientActivity\n15:17:14.654 in Ping \n15:17:14.705 chunk 7 54272 bytes\n15:17:14.709 in Ack 7\n15:17:14.954 chunk 7 54310 bytes\n15:17:14.959 in Ack 7\n15:17:15.204 chunk 7 54330 bytes\n15:17:15.205 in Ack 7\n15:17:15.289 exit 6 {\"_tag\":\"Success\",\"value\":null}\n15:17:15.457 chunk 7 54350 bytes\n15:17:15.459 in Ack 7\n15:17:15.626 fetch POST /api/observability/v1/traces\n15:17:15.626 fetched POST /api/observability/v1/traces 204\n15:17:15.780 chunk 7 54362 bytes\n15:17:15.781 in Ack 7\n15:17:16.031 chunk 7 53367 bytes\n15:17:16.032 in Ack 7\n15:17:16.435 chunk 7 53377 bytes\n15:17:16.436 in Ack 7\n15:17:16.686 chunk 7 53407 bytes\n15:17:16.688 in Ack 7\n15:17:16.782 fetch POST /api/observability/v1/traces\n15:17:16.783 fetched POST /api/observability/v1/traces 204\n15:17:17.439 chunk 7 53417 bytes\n15:17:17.441 in Ack 7\n15:17:17.689 chunk 7 53471 bytes\n15:17:17.691 in Ack 7\n15:17:17.940 chunk 7 53567 bytes\n15:17:17.941 in Ack 7\n15:17:18.190 chunk 7 53609 bytes\n15:17:18.191 in Ack 7\n15:17:18.452 chunk 7 53837 bytes\n15:17:18.453 fetch POST /api/observability/v1/traces\n15:17:18.453 fetched POST /api/observability/v1/traces 204\n15:17:18.454 in Ack 7\n15:17:18.703 chunk 7 53893 bytes\n15:17:18.705 in Ack 7\n15:17:19.203 chunk 7 53053 bytes\n15:17:19.204 in Ack 7\n15:17:19.455 fetch POST /api/observability/v1/traces\n15:17:19.455 fetched POST /api/observability/v1/traces 204\n15:17:19.657 in Ping \n15:17:24.045 chunk 7 52414 bytes\n15:17:24.046 in Ack 7\n15:17:24.661 in Ping \n15:17:24.893 chunk 10 36 bytes\n15:17:24.894 in Ack 10\n15:17:25.047 fetch POST /api/observability/v1/traces\n15:17:25.047 fetched POST /api/observability/v1/traces 204\n15:17:25.341 chunk 7 52450 bytes\n15:17:25.342 in Ack 7\n15:17:26.372 fetch POST /api/observability/v1/traces\n15:17:26.372 fetched POST /api/observability/v1/traces 204"
+  ]
+}

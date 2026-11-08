@@ -1,0 +1,37 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794150533746 connected to t3
+sidecar: 1794150535082 device fogktsl9 paired
+sidecar: 1794150535660 device fogktsl9: generation 1 signaled
+sidecar: 1794150535666 data channel 1: ICE Checking
+sidecar: 1794150535714 data channel 1: ICE Completed
+sidecar: 1794150535715 data channel 1: DTLS up
+sidecar: 1794150535716 data channel 1 open
+sidecar: 1794150535717 device fogktsl9: now on Rtc(PeerId(1))
+sidecar: 1794150535717 device fogktsl9: lost its cache, syncing everything
+sidecar: 1794150540488 data channel 1 closed
+sidecar: 1794150540863 device fogktsl9: generation 2 connects without signaling
+sidecar: 1794150540863 data channel 2: ICE Checking
+sidecar: 1794150540909 data channel 2: ICE Completed
+sidecar: 1794150540909 data channel 2: DTLS up
+sidecar: 1794150540911 data channel 2 open
+sidecar: 1794150540972 device fogktsl9: now on Rtc(PeerId(2))
+sidecar: 1794150541346 device fogktsl9: command 20 (thread.visit) replied, backfill unsent 12849 B
+sidecar: 1794150542266 device fogktsl9 stats: send 11376 B/s, delivered 7584 B/s, loss 0%, srtt 27 ms, unsynced 13608 B, backfill unsent 12698 B, in flight 1 packets, sent 81 received 50 packets, SCTP queue 636 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150547576 device fogktsl9: command 37 (message.dispatch) replied, backfill unsent 0 B
+sidecar: 1794150547816 device fogktsl9: new newest text, backfill unsent 10533 B
+sidecar: 1794150548936 device fogktsl9: command 39 (thread.visit) replied, backfill unsent 15183 B
+sidecar: 1794150552266 device fogktsl9 stats: send 3797 B/s, delivered 6140 B/s, loss 5%, srtt 776 ms, unsynced 6290 B, backfill unsent 2940 B, in flight 13 packets, sent 209 received 152 packets, SCTP queue 4050 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150552356 device fogktsl9: command 42 (message.dispatch) replied, backfill unsent 2680 B
+sidecar: 1794150552776 device fogktsl9: new newest text, backfill unsent 5691 B
+sidecar: 1794150559376 device fogktsl9: command 43 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794150562272 device fogktsl9 stats: send 10120 B/s, delivered 7375 B/s, loss 2%, srtt 988 ms, unsynced 55 B, backfill unsent 0 B, in flight 60 packets, sent 397 received 209 packets, SCTP queue 4983 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150569416 device fogktsl9: command 45 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794150572282 device fogktsl9 stats: send 19169 B/s, delivered 7863 B/s, loss 47%, srtt 1094 ms, unsynced 65 B, backfill unsent 0 B, in flight 348 packets, sent 997 received 268 packets, SCTP queue 2439 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150582295 device fogktsl9 stats: send 42310 B/s, delivered 10072 B/s, loss 67%, srtt 1075 ms, unsynced 4243 B, backfill unsent 0 B, in flight 1138 packets, sent 2111 received 307 packets, SCTP queue 8162 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150583158 device fogktsl9: command 46 (runtime-request.respond) replied, backfill unsent 0 B
+sidecar: 1794150583176 device fogktsl9: new newest text, backfill unsent 2924 B
+sidecar: 1794150584681 device fogktsl9: command 47 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794150586207 device fogktsl9: command 48 (runtime-request.respond) replied, backfill unsent 0 B
+sidecar: 1794150592299 device fogktsl9 stats: send 42879 B/s, delivered 12591 B/s, loss 64%, srtt 1104 ms, unsynced 256 B, backfill unsent 0 B, in flight 1529 packets, sent 2714 received 393 packets, SCTP queue 21813 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150593486 device fogktsl9: command 52 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794150598756 device fogktsl9: command 53 (thread.visit) replied, backfill unsent 0 B

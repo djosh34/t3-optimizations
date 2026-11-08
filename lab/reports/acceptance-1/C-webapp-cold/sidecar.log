@@ -1,0 +1,45 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794150533946 connected to t3
+sidecar: 1794150535087 device oayrcyhf paired
+sidecar: 1794150535828 device oayrcyhf: generation 1 signaled
+sidecar: 1794150535846 data channel 1: ICE Checking
+sidecar: 1794150535906 data channel 1: ICE Completed
+sidecar: 1794150535907 data channel 1: DTLS up
+sidecar: 1794150535909 data channel 1 open
+sidecar: 1794150535909 device oayrcyhf: now on Rtc(PeerId(1))
+sidecar: 1794150535909 device oayrcyhf: lost its cache, syncing everything
+sidecar: 1794150540816 data channel 1 closed
+sidecar: 1794150541229 device oayrcyhf: generation 2 connects without signaling
+sidecar: 1794150541230 data channel 2: ICE Checking
+sidecar: 1794150541277 data channel 2: ICE Completed
+sidecar: 1794150541277 data channel 2: DTLS up
+sidecar: 1794150541279 data channel 2 open
+sidecar: 1794150541332 device oayrcyhf: now on Rtc(PeerId(2))
+sidecar: 1794150541676 device oayrcyhf: command 20 (thread.visit) replied, backfill unsent 14141 B
+sidecar: 1794150542338 device oayrcyhf stats: send 9360 B/s, delivered 6240 B/s, loss 0%, srtt 28 ms, unsynced 19420 B, backfill unsent 17380 B, in flight 1 packets, sent 77 received 37 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150547957 device oayrcyhf: command 37 (message.dispatch) replied, backfill unsent 0 B
+sidecar: 1794150548316 device oayrcyhf: new newest text, backfill unsent 10493 B
+sidecar: 1794150548397 device oayrcyhf: command 39 (thread.visit) replied, backfill unsent 10493 B
+sidecar: 1794150549386 device oayrcyhf: command 40 (thread.visit) replied, backfill unsent 15203 B
+sidecar: 1794150550414 data channel 2 closed
+sidecar: 1794150552103 device oayrcyhf: generation 3 connects without signaling
+sidecar: 1794150552103 data channel 3: ICE Checking
+sidecar: 1794150555598 data channel 3: ICE Completed
+sidecar: 1794150556613 data channel 3: DTLS up
+sidecar: 1794150559446 data channel 3 open
+sidecar: 1794150559531 device oayrcyhf: now on Rtc(PeerId(3))
+sidecar: 1794150559586 device oayrcyhf: command 50 (thread.visit) replied, backfill unsent 11497 B
+sidecar: 1794150560706 device oayrcyhf: command 58 (message.dispatch) replied, backfill unsent 12383 B
+sidecar: 1794150561036 device oayrcyhf: new newest text, backfill unsent 14281 B
+sidecar: 1794150562376 device oayrcyhf stats: send 3426 B/s, delivered 5643 B/s, loss 0%, srtt 703 ms, unsynced 24025 B, backfill unsent 14421 B, in flight 5 packets, sent 195 received 144 packets, SCTP queue 3827 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150568246 device oayrcyhf: command 60 (thread.visit) replied, backfill unsent 14461 B
+sidecar: 1794150572378 device oayrcyhf stats: send 4627 B/s, delivered 3463 B/s, loss 3%, srtt 951 ms, unsynced 14319 B, backfill unsent 12245 B, in flight 21 packets, sent 270 received 200 packets, SCTP queue 3447 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150578166 device oayrcyhf: command 63 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794150582396 device oayrcyhf stats: send 10008 B/s, delivered 7298 B/s, loss 0%, srtt 994 ms, unsynced 65 B, backfill unsent 0 B, in flight 82 packets, sent 527 received 264 packets, SCTP queue 5454 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150592057 device oayrcyhf: command 64 (runtime-request.respond) replied, backfill unsent 0 B
+sidecar: 1794150592062 device oayrcyhf: new newest text, backfill unsent 4814 B
+sidecar: 1794150592417 device oayrcyhf stats: send 20263 B/s, delivered 9021 B/s, loss 42%, srtt 1054 ms, unsynced 8604 B, backfill unsent 4814 B, in flight 295 packets, sent 1025 received 310 packets, SCTP queue 20816 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150593287 device oayrcyhf: command 65 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794150602016 device oayrcyhf: command 68 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794150602424 device oayrcyhf stats: send 42271 B/s, delivered 11080 B/s, loss 67%, srtt 1117 ms, unsynced 1837 B, backfill unsent 0 B, in flight 922 packets, sent 1891 received 379 packets, SCTP queue 29107 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150607666 device oayrcyhf: command 70 (thread.visit) replied, backfill unsent 0 B
