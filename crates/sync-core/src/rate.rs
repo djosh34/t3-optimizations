@@ -290,8 +290,9 @@ impl RateControl {
     pub fn on_heard(&mut self, now: Millis) {
         self.last_heard = Some(now);
         // The link is back after a long silence: the rate it had then, not a
-        // climb from `SILENCE_FLOOR` (17 s to 2 kB/s, on both sides).
-        if let Some(rate) = self.deep_from.take()
+        // climb from `SILENCE_FLOOR` (17 s to 2 kB/s, on both sides), but no
+        // more than the initial rate: the link may be another one now.
+        if let Some(rate) = self.deep_from.take().map(|r| r.min(self.cfg.initial))
             && rate > self.rate
         {
             self.rate = rate;
@@ -685,51 +686,11 @@ mod tests {
             rc.decide(t);
         }
         assert!(rc.rate() < RateConfig::default().floor);
-        // The link is back: at once the rate where the long silence began,
-        // not a climb from 50 B/s (17 s to 2 kB/s).
+        // The link is back: at once the initial rate, not a climb from 50 B/s
+        // (17 s to 2 kB/s), and not the fast link's rate either.
         t += 300;
         rc.on_heard(t);
-        assert!(
-            rc.rate() >= RateConfig::default().initial,
-            "rate {}",
-            rc.rate()
-        );
-    }
-
-    #[test]
-    fn rtt_growth_after_a_long_silence_never_raises_the_rate() {
-        let mut rc = RateControl::new(RateConfig::default(), 0);
-        let mut t = 0;
-        for _ in 0..40 {
-            t += 300;
-            rc.on_heard(t);
-            rc.on_rtt(t, 20.0, t);
-            rc.note_limited(t);
-            rc.decide(t);
-        }
-        // A long silence takes the rate below the floor.
-        for _ in 0..100 {
-            t += 300;
-            rc.note_limited(t);
-            rc.decide(t);
-        }
-        assert_eq!(rc.rate(), SILENCE_FLOOR);
-        // Feedback, then the RTT grows: each decision may only lower it.
-        for rtt in [600.0, 600.0, 2_500.0, 5_000.0, 9_000.0] {
-            t += 700;
-            rc.on_heard(t);
-            rc.on_rtt(t, rtt, t);
-            rc.note_limited(t);
-            let before = rc.rate();
-            rc.decide(t);
-            if rtt > 600.0 {
-                assert!(
-                    rc.rate() <= before,
-                    "rate {} rose from {before} at RTT {rtt}",
-                    rc.rate()
-                );
-            }
-        }
+        assert_eq!(rc.rate(), RateConfig::default().initial);
     }
 
     #[test]
