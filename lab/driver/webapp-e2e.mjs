@@ -305,6 +305,11 @@ await step("thread-fills-newest-first", async () => {
     await sleep(1_500);
   }
   await ask("shape clean");
+  // What the page asked for and got while it filled, for the run's log.
+  const trace = await page
+    .evaluate(() => (window.t3opt?.trace ?? []).filter((l) => / (fetch|fetched|rpc|exit) /.test(l)))
+    .catch(() => []);
+  for (const line of trace) log(`fill trace ${line}`);
   if (order[0] !== "newest") throw new Error(`shown in the order ${order.join(", ")}`);
   return order.join(" before ");
 });

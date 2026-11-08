@@ -41,7 +41,7 @@ export const shimTrace: string[] = [];
 
 function trace(line: string) {
   shimTrace.push(`${new Date().toISOString().slice(11, 23)} ${line}`);
-  if (shimTrace.length > 200) shimTrace.shift();
+  if (shimTrace.length > 1000) shimTrace.shift();
 }
 
 function emitShimEvent() {
@@ -525,7 +525,10 @@ export function installShim(input: ShimInput): void {
     const request = new Request(resource, init);
     const url = new URL(request.url);
     if (!isServerPath(url)) return input.realFetch(resource, init);
-    return handleFetch(input, request);
+    return handleFetch(input, request).then((response) => {
+      trace(`fetched ${request.method} ${url.pathname} ${response.status}`);
+      return response;
+    });
   };
   const Shimmed = function (url: string | URL, protocols?: string | string[]) {
     const u = new URL(url, location.href);
