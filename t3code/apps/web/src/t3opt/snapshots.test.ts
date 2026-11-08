@@ -106,10 +106,6 @@ describe("threadSnapshot", () => {
     };
     expect(after.visibleTurnItems.map((r) => [r.position, r.item.text])).toEqual([[0, "Hi there"]]);
     expect(after.messages.map((m) => m.text)).toEqual(["Hi there"]);
-    // A new revision of the text shows the old one until all of it is here.
-    put(objects, 5, { t: "t1", m: "m-u", k: "user" }, "Hi again", [[0, 3]], 2n);
-    const during = threadSnapshot(objects, "t1")?.projection as typeof after;
-    expect(during.messages.map((m) => m.text)).toEqual(["Hi there"]);
   });
 
   it("streams a growing text, not its shorter complete self", () => {
@@ -118,10 +114,19 @@ describe("threadSnapshot", () => {
     put(objects, 3, { t: "t1", c: "turnItems", i: "a" }, item("a", "assistant_message", 1, "m-a"));
     put(objects, 4, { t: "t1", m: "m-a", k: "assistant" }, "Hello");
     put(objects, 4, { t: "t1", m: "m-a", k: "assistant" }, "Hello world", [[0, 8]]);
-    const rows = threadSnapshot(objects, "t1")?.projection.visibleTurnItems as Array<{
-      item: { text: string };
-    }>;
-    expect(rows.map((r) => r.item.text)).toEqual(["Hello wo…"]);
+    const texts = () =>
+      (
+        threadSnapshot(objects, "t1")?.projection.visibleTurnItems as Array<{
+          item: { text: string };
+        }>
+      ).map((r) => r.item.text);
+    expect(texts()).toEqual(["Hello wo…"]);
+    // Also in a new revision after a complete one, partly here and growing:
+    // its newest bytes show, not the old revision.
+    put(objects, 4, { t: "t1", m: "m-a", k: "assistant" }, "Hello world");
+    put(objects, 4, { t: "t1", m: "m-a", k: "assistant" }, "Hallo world!", [[0, 3]], 2n);
+    put(objects, 4, { t: "t1", m: "m-a", k: "assistant" }, "Hallo world!", [[0, 3], [6, 12]], 2n);
+    expect(texts()).toEqual(["Hal…world!"]);
   });
 
   it("orders rows by ordinal and keeps the frame's inherited rows first", () => {

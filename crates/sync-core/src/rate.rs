@@ -485,7 +485,10 @@ impl RateControl {
                 Some(c) => DRAIN * c.min(self.rate),
                 None => DRAIN * self.rate,
             };
-            self.rate = target.max(self.rate / 2.0).max(self.cfg.floor);
+            // Never up: after a long silence the rate can be below the floor.
+            self.rate = target
+                .max(self.rate / 2.0)
+                .max(self.cfg.floor.min(self.rate));
             self.changed_at = now;
             self.slow_start = false;
             self.next_decision = now + interval as Millis;
@@ -646,6 +649,45 @@ mod tests {
             "rate {} did not grow from {slow}",
             rc.rate()
         );
+    }
+
+    #[test]
+    fn rtt_growth_below_the_floor_never_raises_the_rate() {
+        let mut rc = RateControl::new(RateConfig::default(), 0);
+        let mut t = 0;
+        for _ in 0..40 {
+            t += 300;
+            rc.on_heard(t);
+            rc.on_rtt(t, 20.0, t);
+            rc.note_limited(t);
+            rc.decide(t);
+        }
+        // A long silence takes the rate below the floor.
+        for _ in 0..100 {
+            t += 300;
+            rc.note_limited(t);
+            rc.decide(t);
+        }
+        assert_eq!(rc.rate(), SILENCE_FLOOR);
+        // Feedback, then the RTT grows: each decision may only lower it.
+        let mut last = f64::INFINITY;
+        for rtt in [600.0, 600.0, 2_500.0, 5_000.0, 9_000.0] {
+            t += 700;
+            rc.on_heard(t);
+            rc.on_rtt(t, rtt, t);
+            rc.note_limited(t);
+            let before = rc.rate();
+            rc.decide(t);
+            if rtt > 600.0 {
+                assert!(
+                    rc.rate() <= before,
+                    "rate {} rose from {before} at RTT {rtt}",
+                    rc.rate()
+                );
+            }
+            last = rc.rate();
+        }
+        assert!(last < RateConfig::default().floor, "rate {last}");
     }
 
     #[test]

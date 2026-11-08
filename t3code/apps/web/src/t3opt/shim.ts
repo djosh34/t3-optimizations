@@ -352,12 +352,12 @@ export class RpcServer {
         // after the last one's reply, and ignores a visit's reply: a visit
         // waiting for its reply held the owner's prompt back, 278 s on
         // profile D from a cold start (issue #46). It is answered at once
-        // and goes to the sidecar as a background call, out of the commands'
-        // order; a visit applied twice does no harm.
+        // and stays in the commands' order, so a later "mark unread" still
+        // comes after it; the next command waits only for it to arrive.
         if (command?.type === "thread.visit") {
           this.exit(id, { _tag: "Success", value: { sequence: 0 } });
           void this.engine
-            .request("call", { tag, payload }, true)
+            .request("command", payload)
             .then((r) => r.reply)
             .catch((error: unknown) => trace(`visit failed: ${String(error)}`));
           return;

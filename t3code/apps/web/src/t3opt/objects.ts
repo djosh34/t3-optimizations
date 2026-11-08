@@ -26,17 +26,12 @@ export interface Obj extends ObjectView {
   /** Every byte is here. A complete empty object is deleted. */
   readonly complete: boolean;
   /**
-   * The content of the last complete revision while a newer one arrives. The
-   * object stays on screen as it was: a thread's row missing from the list
-   * for seconds made the composer ignore Enter (issue #46).
+   * The content of the last complete revision while a newer one arrives. A
+   * JSON body (a row, an item) stays on screen as it was: a thread's row
+   * missing from the list for seconds made the composer ignore Enter (issue
+   * #46). Texts show what arrived of the current revision instead.
    */
   readonly lastComplete?: Uint8Array;
-}
-
-/** The content to show: this revision's when complete, else the last complete one. */
-function shownData(o: Obj): Uint8Array | null {
-  if (o.complete) return o.data;
-  return o.lastComplete ?? null;
 }
 
 const decoder = new TextDecoder();
@@ -52,8 +47,7 @@ function parseMeta(bytes: Uint8Array): Meta {
 
 /** The text of an object, with what has not arrived yet shown as an ellipsis. */
 export function textOf(o: Obj): string {
-  const shown = shownData(o);
-  if (shown !== null) return decoder.decode(shown);
+  if (o.complete) return decoder.decode(o.data);
   let out = "";
   let at = 0;
   for (const [start, end] of o.ranges) {
@@ -68,8 +62,8 @@ export function textOf(o: Obj): string {
 
 /** A complete object's JSON content, or the last complete revision's, or null. */
 export function jsonOf(o: Obj | undefined): unknown {
-  const shown = o ? shownData(o) : null;
-  if (shown === null || shown.length === 0) return null;
+  const shown = o?.complete ? o.data : o?.lastComplete;
+  if (shown === undefined || shown.length === 0) return null;
   try {
     return JSON.parse(decoder.decode(shown));
   } catch {
