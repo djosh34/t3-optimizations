@@ -170,13 +170,14 @@ func targets(runs []accepted) string {
 		if r.Profile == "F" || profileOf(r.Profile).TCPPath {
 			continue
 		}
-		if r.atConfirm > 0 && r.atText > 0 {
+		delivered := r.PromptConfirmationS != nil && r.TimeToFirstTextS != nil
+		if delivered && r.atConfirm > 0 && r.atText > 0 {
 			shown = append(shown, r)
 		} else {
 			untold = append(untold, r)
 		}
 	}
-	line("- The newest text and prompt acks overtake backfill in every run: %s. When the sidecar queued the prompt's reply and the reply's first newest text, it still had backfill (older messages, the thread list, other threads, images) it had never sent, which goes out after them, in %d runs. Not established in %d (no reply or no text, or no backfill waiting at that moment): %s. Not met means not established in every run, not a failure seen. Per run below.",
+	line("- The newest text and prompt acks overtake backfill in every run: %s. When the sidecar queued the prompt's reply and the reply's first newest text, it still had backfill (older messages, the thread list, other threads, images) it had never sent, which the priority order sends after them, and both then reached the phone, in %d runs. This shows the send order; on a lossy link a later packet can still arrive first. Not established in %d (the phone got no confirmation or no text, no line for a moment, or no backfill waiting then): %s. Not met means not established in every run, not a failure seen. Per run below.",
 		verdict(len(shown) > 0 && len(untold) == 0), len(shown), len(untold), names(untold))
 
 	var again []accepted

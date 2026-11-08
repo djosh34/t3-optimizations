@@ -32,6 +32,20 @@ sidecar: 3000 device d1: command 5 replied, backfill unsent 0 B
 	}
 }
 
+func TestBackfillNeedsTheConfirmationAndTextOnThePhone(t *testing.T) {
+	confirmed := 2.0
+	queued := accepted{Report: Report{Profile: "case50", Client: "webapp", Kind: "warm", Seed: 1}, atConfirm: 700, atText: 650}
+	out := targets([]accepted{queued})
+	if !strings.Contains(out, "overtake backfill in every run: **not met**") {
+		t.Errorf("queued but never delivered counted:\n%s", out)
+	}
+	queued.PromptConfirmationS, queued.TimeToFirstTextS = &confirmed, &confirmed
+	out = targets([]accepted{queued})
+	if !strings.Contains(out, "overtake backfill in every run: **met**") {
+		t.Errorf("queued ahead of backfill and delivered not counted:\n%s", out)
+	}
+}
+
 func TestTargetsSayWhichAreMet(t *testing.T) {
 	fast, slow := 3.0, 12.0
 	runs := []accepted{
