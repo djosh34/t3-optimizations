@@ -1,0 +1,13 @@
+{"t":1794141406392,"ev":"ws-open"}
+{"t":1794141406490,"ev":"ws-close"}
+{"t":1794141406995,"ev":"ws-open"}
+{"t":1794141407449,"ev":"paired"}
+{"t":1794141407522,"ev":"ws-close"}
+{"t":1794141408029,"ev":"ws-open"}
+{"t":1794141408457,"ev":"thread-open"}
+{"t":1794141414494,"ev":"screenshot","name":"ready"}
+{"t":1794141414497,"ev":"ready"}
+{"t":1794141414696,"ev":"app-loading"}
+{"t":1794142314544,"ev":"note","text":"app did not load: stopped"}
+{"t":1794142314697,"ev":"screenshot","name":"end"}
+{"t":1794142314698,"ev":"stats"}

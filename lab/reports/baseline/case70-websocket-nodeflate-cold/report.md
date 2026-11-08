@@ -1,6 +1,6 @@
-# case50, websocket-nodeflate, cold start, seed 1
+# case70, websocket-nodeflate, cold start, seed 1
 
-Profile case50 (graded): graded: 50% loss, 100 kbit/s. Commit cc6b9676f812.
+Profile case70 (graded): graded: 70% loss, 10 kbit/s. Commit e14300ea99fc.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -17,7 +17,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Newest-text lag: max / median / p95 | no text produced / no text produced / no text produced |
 | Longest silence | n/a, no prompt sent |
 | Approval shown after it was asked | never |
-| Bytes on the wire down / up | 17357 / 4421 |
+| Bytes on the wire down / up | 2000 / 1012 |
 | Bytes the app received / sent | 0 / 0 |
 | Reply text received / of it duplicates | 0 / 0 |
 | WebSockets opened after the switch | 0 |
@@ -32,8 +32,3 @@ Every 10 s after the prompt was sent.
 ## Driver notes
 
 - app did not load: stopped
-- screenshot end failed: page.screenshot: Timeout 15000ms exceeded.
-Call log:
-  - taking page screenshot
-  - waiting for fonts to load...
-
