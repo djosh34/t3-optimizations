@@ -34,9 +34,11 @@ const PathNote = "Kernel TCP over a veth pair in the lab. In production the phon
 type Input struct {
 	Profile, Grade, About string
 	Client, Kind          string
-	Seed                  int64
-	Commit                string
-	Deadline              time.Duration
+	// Server is the t3 server of a websocket run: fork or v0.1.7.
+	Server   string
+	Seed     int64
+	Commit   string
+	Deadline time.Duration
 	// Switched is when the lab applied the profile; End is when the run ended.
 	Switched, End time.Time
 	// Reply is the normalized measured reply.
@@ -69,6 +71,7 @@ type Report struct {
 	Grade    string `json:"grade"`
 	Client   string `json:"client"`
 	Kind     string `json:"kind"`
+	Server   string `json:"server,omitempty"`
 	Seed     int64  `json:"seed"`
 	Commit   string `json:"commit"`
 	Path     string `json:"path"`
@@ -117,7 +120,7 @@ func at(ms int64) time.Time { return time.UnixMilli(ms) }
 func Build(in Input) Report {
 	r := Report{
 		Profile: in.Profile, About: in.About, Grade: in.Grade,
-		Client: in.Client, Kind: in.Kind, Seed: in.Seed, Commit: in.Commit,
+		Client: in.Client, Kind: in.Kind, Server: in.Server, Seed: in.Seed, Commit: in.Commit,
 		Path:       cmp.Or(in.Path, PathNote),
 		Deadline:   in.Deadline.String(),
 		RunS:       secs(in.End.Sub(in.Switched)),
@@ -363,6 +366,9 @@ func (r Report) Markdown() string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# %s, %s, %s start, seed %d\n\n", r.Profile, r.Client, r.Kind, r.Seed)
 	fmt.Fprintf(&b, "Profile %s (%s): %s. Commit %s.\n\n", r.Profile, r.Grade, r.About, r.Commit)
+	if r.Server != "" {
+		fmt.Fprintf(&b, "t3 server: %s.\n\n", r.Server)
+	}
 	fmt.Fprintf(&b, "%s\n\n", r.Path)
 	fmt.Fprintf(&b, "**Status: %s** after %.0f s (deadline %s).\n\n", r.Status, r.RunS, r.Deadline)
 	b.WriteString("| Measure | Value |\n|---|---|\n")

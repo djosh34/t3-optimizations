@@ -31,6 +31,7 @@ const usage = `usage:
   ./bin/lab summary <reports dir>
   ./bin/lab acceptance <web app reports dir> <baseline reports dir>
   ./bin/lab pipe-summary <reports dir>
+  ./bin/lab servers <reports dir>   v0.1.7 against the forked server (issue #47)
   ./bin/lab render <run dir>...   rewrite report.md from report.json
 
 The lab runs these itself:
@@ -82,6 +83,11 @@ func dispatch(ctx context.Context, cmd string, args []string) error {
 			return errors.New("usage: lab acceptance <web app reports dir> <baseline reports dir>")
 		}
 		return report.Acceptance(args[0], args[1])
+	case "servers":
+		if len(args) != 1 {
+			return errors.New("usage: lab servers <reports dir>")
+		}
+		return report.ServerCompare(args[0])
 	case "pipe-summary":
 		if len(args) != 1 {
 			return errors.New("usage: lab pipe-summary <reports dir>")
@@ -105,6 +111,7 @@ func runCmd(ctx context.Context, args []string) error {
 	name := fs.String("profile", "", "profile name; see `lab profiles`")
 	seed := fs.Int64("seed", 1, "seed for netem and the fault schedule")
 	client := fs.String("client", "websocket", "client: websocket, websocket-nodeflate, sidecar-native, or the pipe clients pipe, pipe-unpatched and udp")
+	server := fs.String("server", run.ServerFork, "t3 server for the websocket clients: fork (t3code/) or v0.1.7 (lab/scripts/build-baseline-server.sh)")
 	kind := fs.String("kind", "warm", "warm: start connected, then switch to the profile; cold: open the app under the profile")
 	deadline := fs.Duration("deadline", 0, "override the profile's deadline (15m, 60m for the soak; pipe runs measure for 2m)")
 	out := fs.String("out", "", "directory for the run's report and raw data (default lab/reports/runs)")
@@ -139,6 +146,7 @@ func runCmd(ctx context.Context, args []string) error {
 		Seed:     *seed,
 		Client:   *client,
 		Kind:     *kind,
+		Server:   *server,
 		Deadline: *deadline,
 		OutDir:   *out,
 		Name:     *runName,

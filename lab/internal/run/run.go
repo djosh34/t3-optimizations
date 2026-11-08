@@ -30,6 +30,13 @@ import (
 // built from; lab/scripts/build-baseline-client.sh names the same one.
 const BaselineCommit = "22099f5fdb147f0efee0704fb21b4e19946d736f"
 
+// Servers the lab runs: the forked server from t3code/, or the untouched
+// v0.1.7 server from lab/scripts/build-baseline-server.sh.
+const (
+	ServerFork = "fork"
+	ServerV017 = "v0.1.7"
+)
+
 // CharsPerSecond is the fake agent's reply rate in every run.
 const CharsPerSecond = 50
 
@@ -45,6 +52,8 @@ type Options struct {
 	Client string
 	// Kind is warm or cold.
 	Kind string
+	// Server is ServerFork or ServerV017; empty means ServerFork.
+	Server string
 	// Deadline overrides the profile's deadline when set.
 	Deadline time.Duration
 	OutDir   string
@@ -75,6 +84,15 @@ func Run(ctx context.Context, o Options) (string, error) {
 	if o.Client == ClientSidecarNative && o.Profile.TCPPath {
 		return "", fmt.Errorf("profile %s carries the link in a TCP tunnel, which the native phone does not use yet; use --client webapp", o.Profile.Name)
 	}
+	if o.Server == "" {
+		o.Server = ServerFork
+	}
+	if o.Server != ServerFork && o.Server != ServerV017 {
+		return "", fmt.Errorf("unknown server %q: use %s or %s", o.Server, ServerFork, ServerV017)
+	}
+	if o.Server == ServerV017 && (pipe || sidecar) {
+		return "", fmt.Errorf("--server %s runs only the websocket clients", ServerV017)
+	}
 	if o.Kind != "warm" && o.Kind != "cold" {
 		return "", fmt.Errorf("unknown kind %q: use warm or cold", o.Kind)
 	}
@@ -94,6 +112,14 @@ func Run(ctx context.Context, o Options) (string, error) {
 	}
 	repo := filepath.Dir(o.LabDir)
 	staticDir := filepath.Join(u.Home, ".cache", "t3lab", "baseline-client-"+BaselineCommit[:12], "dist")
+	t3code := filepath.Join(repo, "t3code")
+	if o.Server == ServerV017 {
+		cache := filepath.Join(u.Home, ".cache", "t3lab", "baseline-server-"+BaselineCommit[:12])
+		if _, err := os.Stat(filepath.Join(cache, "ready")); err != nil {
+			return "", fmt.Errorf("no v0.1.7 server at %s; run lab/scripts/build-baseline-server.sh as yourself first", cache)
+		}
+		t3code = filepath.Join(cache, "t3code")
+	}
 	var server, sidecarBin, nativeBin, webDir string
 	if pipe {
 		if server, err = pipeServer(o.LabDir, o.Client); err != nil {
@@ -162,12 +188,13 @@ func Run(ctx context.Context, o Options) (string, error) {
 	if sidecar {
 		in, err = s.executeSidecar(ctx, repo, phoneDir, sidecarBin, nativeBin, webDir)
 	} else {
-		in, err = s.execute(ctx, repo, staticDir, phoneDir)
+		in, err = s.execute(ctx, t3code, staticDir, phoneDir)
 	}
 	if err != nil {
 		return "", err
 	}
 	in.Commit = commit
+	in.Server = o.Server
 	r := report.Build(in)
 	return r.Headline(), r.Write(runDir, u.WriteFile)
 }
@@ -180,7 +207,9 @@ type scenario struct {
 	deadline time.Duration
 }
 
-func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir string) (in report.Input, err error) {
+// execute runs the scenario with the WebSocket client against the t3 server
+// in the t3code tree.
+func (s *scenario) execute(parent context.Context, t3code, staticDir, phoneDir string) (in report.Input, err error) {
 	o, u, lab := s.o, s.u, s.lab
 	// A lab process that exits before the lab stops it fails the run, and
 	// the run's error says why.
@@ -208,7 +237,7 @@ func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir str
 		soak = soakParts
 	}
 	server, err := t3server.Start(procs.ctx, t3server.Config{
-		User: u, NS: lab.ServerNS, LabID: lab.ID, T3Code: filepath.Join(repo, "t3code"), RunDir: s.runDir,
+		User: u, NS: lab.ServerNS, LabID: lab.ID, T3Code: t3code, RunDir: s.runDir,
 		LabExe: o.LabExe, StaticDir: staticDir, Node: o.Node, CharsPerSecond: CharsPerSecond, SoakParts: soak,
 	})
 	if err != nil {

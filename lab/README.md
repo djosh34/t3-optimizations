@@ -25,6 +25,7 @@ scripts/run-baseline.sh 3               # every baseline run, 3 at a time, into 
 `run` flags:
 
 - `--client`: `websocket` (the web client as Safari runs it, with WebSocket compression) or `websocket-nodeflate` (no compression, like the unchanged iOS app, which never negotiates it; issue #7). `sidecar-native` is the sync protocol through the sidecar on the data channel, with a native phone in the web app's place; `webapp` is the home-screen web app in WebKit through the sidecar; see [Sidecar runs](#sidecar-runs). The pipe clients `pipe`, `pipe-unpatched` and `udp` run ticks instead of the t3 web client; see [Pipe runs](#pipe-runs).
+- `--server`: the t3 server of the WebSocket clients. `fork` (default) is the forked server from `t3code/`; `v0.1.7` is the untouched v0.1.7 server, prepared once with `lab/scripts/build-baseline-server.sh`. See [The unchanged iOS app](#the-unchanged-ios-app).
 - `--kind`: `warm` (default) starts connected on a clean link and then switches to the profile. `cold` sets everything up on the clean link, closes the page, switches to the profile, and then opens the app again.
 - `--seed`: seeds netem. The same seed gives the same fault sequence. Timings still differ from run to run, because the browser and the server do not run in lockstep.
 - `--deadline`: overrides the run's deadline (15 minutes, 60 for `soak`). A run that is not done by then reports "not done by deadline" instead of waiting.
@@ -190,6 +191,18 @@ sudo ./bin/lab webapp-e2e                              # --outage 60m for the lo
 The steps: pair with a code from `t3 pair`; the service worker takes over; add a project and start a thread from the app; stream a reply and answer its approval; interrupt a reply; attach an image to a prompt (the upload goes through the sidecar); send a prompt on case 70 (a screenshot of each prompt state, the status line and the details panel); a thread fills in newest first after the phone lost its cache; reload with the old connection alive; recover from an outage on the same connection (ICE restart, no new connection); reopen history and images with HTTPS to the server blocked; open the app with the link down; fall back to the WebSocket when UDP goes away under an open page, and with UDP blocked from the start; update to a new build; a thread deleted while the sidecar was down leaves the phone; the cache lost with the token kept; the token lost, which pairs again.
 
 The driver asks the lab for what it cannot do itself (`shape case70`, `outage on`, `block udp on`, `block https on`, `swap build`, `delete-offline <thread>`, `mint-code`); the lab answers on its stdin. `lab/scripts/t3-command.mjs` deletes the thread through the forked server's own RPC while the sidecar is down. The run directory has `e2e.md` with each step's result, `phone.jsonl` and the screenshots in `phone/`.
+
+## The unchanged iOS app
+
+The forked server carries two changes for the unchanged iOS app ([issue #47](https://github.com/djosh34/t3-optimizations/issues/47)): it acknowledges stream chunks in a window, as upstream main does, and a client that has not acknowledged a chunk for a second gets the latest text once instead of every update that queued meanwhile. `scripts/run-ios-app.sh` runs `websocket-nodeflate` (the iOS app never negotiates compression) against the untouched v0.1.7 server and against the fork, on the same profiles and seeds, into [reports/ios-app](reports/ios-app/README.md); `./bin/lab servers <dir>` writes its table.
+
+```sh
+lab/scripts/build-baseline-server.sh    # once, as yourself: the v0.1.7 server, into ~/.cache/t3lab
+sudo ./bin/lab run --profile case50 --seed 1 --client websocket-nodeflate --server v0.1.7
+scripts/run-ios-app.sh 3                # every run, 3 at a time
+```
+
+The v0.1.7 server runs from the tree the build script extracts and serves the web client built in that tree, the same v0.1.7 client the fork serves from `build-baseline-client.sh`.
 
 ## CI
 
