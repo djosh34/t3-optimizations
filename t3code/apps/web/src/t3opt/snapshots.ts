@@ -102,7 +102,7 @@ function withText(
 ): Json | null {
   if (key === undefined || typeof entity.text !== "string") return entity;
   const t = texts.get(key);
-  if (!isStreamedText(c, entity) && !t?.complete) return null;
+  if (!isStreamedText(c, entity) && !t?.complete && !t?.lastComplete) return null;
   const text = t ? textOf(t) : "";
   const cached = filled.get(entity);
   if (cached?.text === text) return cached.value;

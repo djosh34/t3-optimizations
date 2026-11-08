@@ -25,6 +25,18 @@ export interface Obj extends ObjectView {
   readonly metaJson: Meta;
   /** Every byte is here. A complete empty object is deleted. */
   readonly complete: boolean;
+  /**
+   * The content of the last complete revision while a newer one arrives. The
+   * object stays on screen as it was: a thread's row missing from the list
+   * for seconds made the composer ignore Enter (issue #46).
+   */
+  readonly lastComplete?: Uint8Array;
+}
+
+/** The content to show: this revision's when complete, else the last complete one. */
+function shownData(o: Obj): Uint8Array | null {
+  if (o.complete) return o.data;
+  return o.lastComplete ?? null;
 }
 
 const decoder = new TextDecoder();
@@ -40,7 +52,8 @@ function parseMeta(bytes: Uint8Array): Meta {
 
 /** The text of an object, with what has not arrived yet shown as an ellipsis. */
 export function textOf(o: Obj): string {
-  if (o.complete) return decoder.decode(o.data);
+  const shown = shownData(o);
+  if (shown !== null) return decoder.decode(shown);
   let out = "";
   let at = 0;
   for (const [start, end] of o.ranges) {
@@ -53,11 +66,12 @@ export function textOf(o: Obj): string {
   return out;
 }
 
-/** A complete object's JSON content, or null. */
+/** A complete object's JSON content, or the last complete revision's, or null. */
 export function jsonOf(o: Obj | undefined): unknown {
-  if (!o?.complete || o.len === 0) return null;
+  const shown = o ? shownData(o) : null;
+  if (shown === null || shown.length === 0) return null;
   try {
-    return JSON.parse(decoder.decode(o.data));
+    return JSON.parse(decoder.decode(shown));
   } catch {
     return null;
   }
@@ -103,7 +117,17 @@ export class Objects {
     }
     const metaJson = parseMeta(view.meta);
     const have = view.ranges.reduce((n, [s, e]) => n + (e - s), 0);
-    const o: Obj = { ...view, id, metaJson, complete: view.rev > 0n && have >= view.len };
+    const complete = view.rev > 0n && have >= view.len;
+    const prev = this.byId.get(id);
+    // Kept only across a new revision: a text growing within one shows its
+    // newest bytes as they come.
+    const lastComplete =
+      complete || prev === undefined
+        ? undefined
+        : prev.rev !== view.rev && prev.complete
+          ? prev.data
+          : prev.lastComplete;
+    const o: Obj = { ...view, id, metaJson, complete, ...(lastComplete ? { lastComplete } : {}) };
     this.byId.set(id, o);
     const index = metaJson.t !== undefined ? this.byThread : this.byKind;
     const name = metaJson.t ?? metaJson.c ?? "";

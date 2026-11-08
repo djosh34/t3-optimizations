@@ -348,9 +348,20 @@ export class RpcServer {
         break;
       }
       case "orchestration.dispatchCommand": {
-        // Every command, also those the client sends by itself (thread.visit):
-        // the client sends the next one only after the last one's reply.
-        const command = payload as Json | null;
+        // The client sends a thread's commands one after the other, each
+        // after the last one's reply, and ignores a visit's reply: a visit
+        // waiting for its reply held the owner's prompt back, 278 s on
+        // profile D from a cold start (issue #46). It is answered at once
+        // and goes to the sidecar as a background call, out of the commands'
+        // order; a visit applied twice does no harm.
+        if (command?.type === "thread.visit") {
+          this.exit(id, { _tag: "Success", value: { sequence: 0 } });
+          void this.engine
+            .request("call", { tag, payload }, true)
+            .then((r) => r.reply)
+            .catch((error: unknown) => trace(`visit failed: ${String(error)}`));
+          return;
+        }
         const { seq, reply } = await this.engine.request("command", payload);
         if (command?.type === "message.dispatch") trackPrompt(this.engine, seq, reply);
         const r = readReply(await reply);

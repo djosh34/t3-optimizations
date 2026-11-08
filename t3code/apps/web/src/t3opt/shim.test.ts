@@ -100,6 +100,23 @@ describe("a followed stream", () => {
   });
 });
 
+describe("orchestration.dispatchCommand", () => {
+  it("answers a thread visit at once and sends it as a background call", () => {
+    const { engine, request } = fakeEngine([]);
+    // The sidecar never replies: the visit must not wait for it.
+    request.mockImplementation(() => new Promise(() => {}));
+    const { rpc, sent } = server(engine);
+    const payload = { type: "thread.visit", threadId: "t1", visitedAt: "a" };
+    rpc.handle({ _tag: "Request", id: 1, tag: "orchestration.dispatchCommand", payload });
+    expect(sent.filter((f) => f._tag === "Exit" && f.requestId === 1)).toHaveLength(1);
+    expect(request).toHaveBeenCalledWith(
+      "call",
+      { tag: "orchestration.dispatchCommand", payload },
+      true,
+    );
+  });
+});
+
 describe("server.refreshProviders", () => {
   const success = (value: unknown) => ({ exit: { _tag: "Success", value } });
   const exitsFor = (sent: Frame[], id: number) =>
