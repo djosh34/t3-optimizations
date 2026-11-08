@@ -2445,6 +2445,10 @@ impl Association {
         self.stats.inc_datas();
 
         let can_push = self.payload_queue.can_push(d, self.peer_last_tsn);
+        // t3-optimizations patch: see the skip after `stream_handle_data`.
+        let never_retransmitted = self.streams.get(&d.stream_identifier).is_some_and(|s| {
+            s.reliability_type == ReliabilityType::Rexmit && s.reliability_value == 0
+        });
         let mut stream_handle_data = false;
         let mut defer_stream_data = false;
         if can_push && self.data_is_above_pending_reset(d) {
@@ -2514,6 +2518,28 @@ impl Association {
             // DATA first so a complete message reusing the skipped SSN remains
             // readable, while a genuinely abandoned SSN can still be advanced.
             self.apply_deferred_forward_tsns(d.stream_identifier);
+
+            // t3-optimizations patch: the phone's data channel is unordered
+            // and never retransmits (`maxRetransmits: 0`, which the channel's
+            // open message set on this stream), so a TSN still missing when a
+            // later one of that stream arrives is lost for good. Ack past it
+            // now, as if the peer's FORWARD-TSN had come. At 70% loss that
+            // FORWARD-TSN takes several tries; until then the cumulative ack
+            // stays put, the browser's retransmit timer is never restarted,
+            // and each time it fires the browser's window drops to one packet
+            // (issue #46). A late copy of a skipped TSN is then a duplicate.
+            // This assumes the peer sends only on such streams once one is
+            // open, as the web app does.
+            if self.use_forward_tsn
+                && d.unordered
+                && never_retransmitted
+                && sna32gt(d.tsn, self.peer_last_tsn.wrapping_add(1))
+            {
+                let skip_to = d.tsn.wrapping_sub(1);
+                self.payload_queue.pop_up_to(skip_to);
+                self.peer_last_tsn = skip_to;
+                self.apply_unordered_forward_tsn_to_current_streams(skip_to);
+            }
         }
 
         self.handle_peer_last_tsn_and_acknowledgement(immediate_sack)

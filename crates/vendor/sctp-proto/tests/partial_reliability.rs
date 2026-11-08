@@ -311,7 +311,10 @@ fn delayed_original_data_is_not_abandoned_by_an_older_sack() {
 #[test]
 fn fragmented_zero_retransmits_abandons_pending_tails_and_releases_credit() {
     use std::collections::{HashMap, VecDeque};
-    for unordered in [false, true] {
+    // t3-optimizations patch: on an unordered stream that never retransmits
+    // the receiver acks past a lost chunk, so the sender sends no FORWARD-TSN
+    // for it. Only the ordered stream is tested.
+    for unordered in [false] {
         for size in [3000, 24000] {
             let (mut a, mut b) = pairs(ReliabilityType::Rexmit);
             a.assoc
@@ -388,6 +391,11 @@ fn fragment_retry_limits_and_lost_forward_recovery() {
     for unordered in [false, true] {
         for size in [3000, 24000] {
             for limit in [0, 1, 2] {
+                // t3-optimizations patch: see the test above. `pairs` sets the
+                // receiver's stream to never retransmit, whatever `limit` is.
+                if unordered {
+                    continue;
+                }
                 let (mut a, mut b) = pairs(ReliabilityType::Rexmit);
                 a.assoc
                     .stream(0)
@@ -694,4 +702,67 @@ fn fragmented_timed_messages_expire_through_loss_and_reordering() {
             );
         }
     }
+}
+
+// t3-optimizations patch: the receiver of an unordered stream that never
+// retransmits acks past a lost chunk as soon as a later one arrives, so the
+// sender's cumulative ack moves on without a FORWARD-TSN.
+#[test]
+fn zero_retransmit_unordered_receiver_acks_past_a_lost_chunk() {
+    use std::collections::VecDeque;
+    let (mut a, mut b) = pairs(ReliabilityType::Rexmit);
+    let base = Instant::now();
+    let mut ab = VecDeque::<(u64, Bytes)>::new();
+    let mut ba = VecDeque::<(u64, Bytes)>::new();
+    let mut data_tsns = Vec::new();
+    let mut sack_cum = None;
+    let mut forwarded = false;
+    let mut messages = Vec::new();
+    for ms in 0..400u64 {
+        let now = base + Duration::from_millis(ms);
+        a.assoc.handle_timeout(now);
+        b.assoc.handle_timeout(now);
+        if ms == 0 {
+            a.assoc.stream(0).unwrap().write(b"lost").unwrap();
+        }
+        if ms == 10 {
+            a.assoc.stream(0).unwrap().write(b"arrives").unwrap();
+        }
+        while ab.front().is_some_and(|(due, _)| *due <= ms) {
+            let (_, p) = ab.pop_front().unwrap();
+            b.receive(now, a.addr, p);
+        }
+        for p in b.drain(now) {
+            for (ty, seq) in chunks(&p) {
+                if ty == 3 {
+                    sack_cum = seq;
+                }
+            }
+            ba.push_back((ms + 50, p));
+        }
+        messages.extend(b.messages());
+        while ba.front().is_some_and(|(due, _)| *due <= ms) {
+            let (_, p) = ba.pop_front().unwrap();
+            a.receive(now, b.addr, p);
+        }
+        for p in a.drain(now) {
+            let types = chunks(&p);
+            forwarded |= types.iter().any(|(ty, _)| *ty == 192);
+            let data: Vec<u32> = types
+                .iter()
+                .filter(|(ty, _)| *ty == 0)
+                .filter_map(|(_, tsn)| *tsn)
+                .collect();
+            let first = data_tsns.is_empty() && !data.is_empty();
+            data_tsns.extend(data);
+            if !first {
+                ab.push_back((ms + 50, p));
+            }
+        }
+    }
+    assert_eq!(messages, vec![b"arrives".to_vec()]);
+    assert_eq!(data_tsns.len(), 2, "each message went out once");
+    assert_eq!(sack_cum, data_tsns.last().copied(), "the SACK acks past the gap");
+    assert!(!forwarded, "no FORWARD-TSN was needed");
+    assert_eq!(a.assoc.stream(0).unwrap().buffered_amount().unwrap(), 0);
 }

@@ -42,6 +42,8 @@ export interface PhoneStats {
   readonly lastHeardMs: number | null;
   readonly unsyncedBytes: number;
   readonly inflightPackets: number;
+  /** Bytes sync-core handed to the app that it had handed over before (should stay 0). */
+  readonly duplicateBytes: number;
 }
 
 interface Exports {
@@ -246,7 +248,7 @@ export class PhoneWasm {
 
   stats(): PhoneStats {
     const r = new Reader(this.check(this.x.phone_stats()));
-    const v = Array.from({ length: 12 }, () => r.f64());
+    const v = Array.from({ length: 13 }, () => r.f64());
     const opt = (n: number) => (n < 0 ? null : n);
     return {
       sendRate: v[0]!,
@@ -261,6 +263,7 @@ export class PhoneWasm {
       lastHeardMs: opt(v[9]!),
       unsyncedBytes: v[10]!,
       inflightPackets: v[11]!,
+      duplicateBytes: v[12]!,
     };
   }
 }

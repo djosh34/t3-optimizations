@@ -182,7 +182,7 @@ impl BrowserSctp {
     /// A retransmit timeout: with `maxRetransmits: 0` everything in flight
     /// is abandoned, and the window drops to one packet.
     fn expire(&mut self, now: Millis) {
-        if !self.t3.is_some_and(|t| now >= t) {
+        if self.t3.is_none_or(|t| now < t) {
             return;
         }
         self.outstanding.clear();

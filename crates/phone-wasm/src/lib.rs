@@ -20,15 +20,45 @@
 //! - object view: `u32` meta length, meta, `u64` revision, `u64` length,
 //!   `u32` range count, `u64` start and end per range, then the whole
 //!   content (zeros where the phone has no bytes yet);
-//! - stats: 12 `f64`s in the order of [`stats_values`], -1 for none.
+//! - stats: 13 `f64`s in the order of [`stats_values`], -1 for none.
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 
-use sync_core::{Config, EntryState, Key, Millis, Phone, Received};
+use sync_core::{Config, Delivered, EntryState, Key, Millis, Phone, RangeSet, Received};
 
 thread_local! {
     static PHONE: RefCell<Option<Phone>> = const { RefCell::new(None) };
     static OUT: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
+    static HANDED: RefCell<Handed> = RefCell::new(Handed::default());
+}
+
+/// What sync-core handed to the app as new since the page started, by
+/// object and revision, to check that no byte is handed over twice (issue
+/// #46). It watches only what `receive` returns, so it does not trust the
+/// inbox it checks.
+#[derive(Default)]
+pub struct Handed {
+    bytes: HashMap<Key, (u64, RangeSet)>,
+    pub duplicates: u64,
+}
+
+impl Handed {
+    pub fn note(&mut self, delivered: &[Delivered]) {
+        for d in delivered {
+            let (rev, set) = self.bytes.entry(d.key).or_insert((d.rev, RangeSet::new()));
+            // A new revision is new content.
+            if *rev != d.rev {
+                *rev = d.rev;
+                *set = RangeSet::new();
+            }
+            for r in &d.new {
+                let missing: u64 = set.gaps(r.clone()).iter().map(|g| g.end - g.start).sum();
+                self.duplicates += (r.end - r.start) - missing;
+                set.insert(r.clone());
+            }
+        }
+    }
 }
 
 fn ms(now: f64) -> Millis {
@@ -75,6 +105,15 @@ fn install(phone: Phone) {
             *p = Some(phone);
         }
     });
+    HANDED.with(|h| {
+        if let Ok(mut h) = h.try_borrow_mut() {
+            *h = Handed::default();
+        }
+    });
+}
+
+fn duplicates() -> u64 {
+    HANDED.with(|h| h.try_borrow().map_or(0, |h| h.duplicates))
 }
 
 /// The bytes the caller wrote at `ptr`.
@@ -160,8 +199,8 @@ pub fn encode_object(phone: &Phone, id: u64) -> Option<Vec<u8>> {
 /// The stats as numbers: send rate and delivered rate (wire bytes per
 /// second), loss (0 to 1), smoothed and lowest RTT (ms), packets and wire
 /// bytes sent and received, when the server was last heard (ms), unsynced
-/// bytes, packets in flight.
-pub fn stats_values(phone: &Phone) -> [f64; 12] {
+/// bytes, packets in flight, and bytes handed to the app twice.
+pub fn stats_values(phone: &Phone, duplicates: u64) -> [f64; 13] {
     let s = phone.stats();
     [
         s.send_rate,
@@ -176,6 +215,7 @@ pub fn stats_values(phone: &Phone) -> [f64; 12] {
         s.last_heard.map_or(-1.0, |t| t as f64),
         s.unsynced_bytes as f64,
         s.inflight_packets as f64,
+        duplicates as f64,
     ]
 }
 
@@ -294,6 +334,11 @@ pub unsafe extern "C" fn phone_receive(ptr: *const u8, len: usize, now: f64) -> 
         let r = p
             .receive(ms(now), packet)
             .map_err(|e| format!("undecodable packet: {e:?}"))?;
+        HANDED.with(|h| {
+            if let Ok(mut h) = h.try_borrow_mut() {
+                h.note(&r.delivered);
+            }
+        });
         Ok(encode_received(p, &r))
     })
 }
@@ -413,7 +458,7 @@ pub extern "C" fn phone_object_ids() -> i32 {
 #[unsafe(no_mangle)]
 pub extern "C" fn phone_stats() -> i32 {
     with_phone(|p| {
-        Ok(stats_values(p)
+        Ok(stats_values(p, duplicates())
             .iter()
             .flat_map(|v| v.to_le_bytes())
             .collect())
@@ -514,5 +559,21 @@ mod tests {
         assert!(split_load(&[5, 0, 0, 0, 1]).is_err());
         assert!(split_load(&[1, 0]).is_err());
         assert_eq!(split_load(&[1, 0, 0, 0, 7]).unwrap().0, &[7]);
+    }
+
+    #[test]
+    fn bytes_handed_over_twice_are_counted() {
+        let d = |rev, new: std::ops::Range<u64>| Delivered {
+            key: Key::Object(1),
+            rev,
+            new: vec![new],
+        };
+        let mut h = Handed::default();
+        h.note(&[d(1, 0..10)]);
+        h.note(&[d(1, 5..20)]);
+        assert_eq!(h.duplicates, 5);
+        // A new revision is new content.
+        h.note(&[d(2, 0..10)]);
+        assert_eq!(h.duplicates, 5);
     }
 }

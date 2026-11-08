@@ -72,8 +72,8 @@ func Run(ctx context.Context, o Options) (string, error) {
 	if o.Client != "websocket" && o.Client != "websocket-nodeflate" && !pipe && !sidecar {
 		return "", fmt.Errorf("unknown client %q: use websocket, websocket-nodeflate, sidecar-native, webapp, pipe, pipe-unpatched or udp", o.Client)
 	}
-	if sidecar && o.Profile.TCPPath {
-		return "", fmt.Errorf("profile %s carries the link in a TCP tunnel, which sidecar runs do not set up yet", o.Profile.Name)
+	if o.Client == ClientSidecarNative && o.Profile.TCPPath {
+		return "", fmt.Errorf("profile %s carries the link in a TCP tunnel, which the native phone does not use yet; use --client webapp", o.Profile.Name)
 	}
 	if o.Kind != "warm" && o.Kind != "cold" {
 		return "", fmt.Errorf("unknown kind %q: use warm or cold", o.Kind)
@@ -197,23 +197,11 @@ func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir str
 	}
 	defer procs.stop()
 
-	origin := "https://" + netlab.ServerAddr + ":" + frontPort
-	if o.Profile.TCPPath {
-		if err := lab.CreateTunnel(ctx, u.UID); err != nil {
-			return report.Input{}, err
-		}
-		for _, side := range []struct{ ns, flag, addr, log string }{
-			{lab.ServerNS, "--listen", netlab.ServerAddr + ":" + tunnelPort, "tunnel-server.log"},
-			{lab.PhoneNS, "--connect", netlab.ServerAddr + ":" + tunnelPort, "tunnel-phone.log"},
-		} {
-			exited, err := s.startLabProcess(procs.ctx, side.ns, side.log, "tunnel", "--dev", lab.TunnelIf(), side.flag, side.addr)
-			if err != nil {
-				return report.Input{}, err
-			}
-			procs.watch(side.log, exited)
-		}
-		origin = "https://" + netlab.TunnelServerAddr + ":" + frontPort
+	serverAddr, err := s.startTunnel(ctx, procs)
+	if err != nil {
+		return report.Input{}, err
 	}
+	origin := "https://" + serverAddr + ":" + frontPort
 
 	soak := 0
 	if o.Profile.Soak {
@@ -256,6 +244,30 @@ func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir str
 		return report.Input{}, err
 	}
 	return s.drive(ctx, driver, reply, "")
+}
+
+// startTunnel sets up the TCP outer path when the profile asks for it, and
+// returns the server's address as the phone reaches it: through the tunnel,
+// or on the veth pair.
+func (s *scenario) startTunnel(ctx context.Context, procs *processes) (string, error) {
+	if !s.o.Profile.TCPPath {
+		return netlab.ServerAddr, nil
+	}
+	lab := s.lab
+	if err := lab.CreateTunnel(ctx, s.u.UID); err != nil {
+		return "", err
+	}
+	for _, side := range []struct{ ns, flag, addr, log string }{
+		{lab.ServerNS, "--listen", netlab.ServerAddr + ":" + tunnelPort, "tunnel-server.log"},
+		{lab.PhoneNS, "--connect", netlab.ServerAddr + ":" + tunnelPort, "tunnel-phone.log"},
+	} {
+		exited, err := s.startLabProcess(procs.ctx, side.ns, side.log, "tunnel", "--dev", lab.TunnelIf(), side.flag, side.addr)
+		if err != nil {
+			return "", err
+		}
+		procs.watch(side.log, exited)
+	}
+	return netlab.TunnelServerAddr, nil
 }
 
 // drive runs the measured part of a t3 scenario with a started phone

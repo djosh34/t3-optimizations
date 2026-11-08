@@ -65,14 +65,15 @@ const IDLE_RESTART: Millis = 2_000;
 /// Sending with no packet from the other side for as long as this many of
 /// its packets usually take to arrive, and at least this many smoothed RTTs
 /// and `SILENCE_MIN`, halves the rate at each decision. By chance such a
-/// silence comes in about one of 1,000 spells (e^-7). Right after a switch
-/// from a clean link it is found within a second, before the sender has
-/// filled a slow link's queue for long (issue #46: a queue full of the clean
-/// link's packets held the browser's SCTP acks back for 15 s or more, and
-/// the phone could send nothing).
+/// silence comes in about one of 1,000 spells (e^-7). The minimum allows
+/// for a browser, which acks only once it has stored what came. Right after
+/// a switch from a clean link the silence is found within a second or two,
+/// before the sender has filled a slow link's queue for long (issue #46: a
+/// queue full of the clean link's packets held back the SCTP acks of
+/// WebKit's sender for 15 s or more, and the phone could send nothing).
 const SILENCE_PACKETS: f64 = 7.0;
 const SILENCE_RTTS: f64 = 4.0;
-const SILENCE_MIN: Millis = 500;
+const SILENCE_MIN: Millis = 1_000;
 /// The rate of packets from the other side is averaged over spans this long.
 const HEARD_SPAN: Millis = 1_000;
 /// Reports at least this far apart, and this many packets sent, give one

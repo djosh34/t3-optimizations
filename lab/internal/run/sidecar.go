@@ -38,6 +38,9 @@ const sidecarPath = "WebRTC data channel (UDP, str0m with the patched SCTP layer
 const webappPath = "WebRTC data channel from WebKit to the sidecar (UDP, str0m with the patched SCTP layer) " +
 	"over a veth pair in the lab; the app's HTTPS goes through the lab front. In production the UDP goes through Tailscale."
 
+const webappTCPPath = "WebRTC data channel from WebKit to the sidecar, its UDP and the app's HTTPS carried " +
+	"in one TCP connection across the shaped link (MTU 1280), like a Tailscale DERP relay."
+
 // sidecarBinaries returns the sidecar and the native phone, built by
 // lab/scripts/build-sidecar.sh, and for the web app its build from
 // lab/scripts/build-webapp.sh.
@@ -87,6 +90,12 @@ func (s *scenario) executeSidecar(parent context.Context, repo, phoneDir, sideca
 		return in, err
 	}
 	procs.watch("t3 server", server.Exited())
+	// On the TCP outer path the phone reaches the sidecar's HTTPS front and
+	// UDP port through the tunnel.
+	phoneSide, err := s.startTunnel(ctx, procs)
+	if err != nil {
+		return in, err
+	}
 	origin := fmt.Sprintf("http://%s:%d", netlab.ServerAddr, sidecarHTTPPort)
 	setupCtx, cancelSetup := context.WithTimeout(ctx, setupTimeout)
 	defer cancelSetup()
@@ -107,7 +116,7 @@ func (s *scenario) executeSidecar(parent context.Context, repo, phoneDir, sideca
 		"--t3-command", strings.Join(server.CLI(), " "),
 		"--data-dir", filepath.Join(s.runDir, "sidecar"),
 		"--http", fmt.Sprintf("%s:%d", netlab.ServerAddr, sidecarHTTPPort),
-		"--udp", fmt.Sprintf("%s:%d", netlab.ServerAddr, sidecarUDPPort),
+		"--udp", fmt.Sprintf("%s:%d", phoneSide, sidecarUDPPort),
 	}
 	if webDir != "" {
 		args = append(args, "--web-dir", webDir)
@@ -128,7 +137,7 @@ func (s *scenario) executeSidecar(parent context.Context, repo, phoneDir, sideca
 			return in, err
 		}
 		procs.watch("front", exited)
-		front := "https://" + netlab.ServerAddr + ":" + frontPort
+		front := "https://" + phoneSide + ":" + frontPort
 		driver, err := phone.StartDriver(ctx, lab, u, "driver.mjs", phone.Config{
 			Origin: front, PairURL: front + "/pair#token=" + code, ThreadID: threadID,
 			Prompt: agent.MeasuredPrompt, ImagePrompt: agent.ImagePrompt,
@@ -138,7 +147,11 @@ func (s *scenario) executeSidecar(parent context.Context, repo, phoneDir, sideca
 		if err != nil {
 			return in, err
 		}
-		return s.drive(ctx, driver, reply, webappPath)
+		path := webappPath
+		if o.Profile.TCPPath {
+			path = webappTCPPath
+		}
+		return s.drive(ctx, driver, reply, path)
 	}
 
 	if err := u.Install(nativeBin, filepath.Join(phoneDir, "native-phone")); err != nil {

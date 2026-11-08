@@ -240,8 +240,14 @@ async function watchWebapp(page) {
 
 async function webappBytes(page) {
   return page.evaluate(() => {
-    const s = window.t3opt?.engine?.status().stats;
-    return { rx: s?.receivedWireBytes ?? 0, tx: s?.sentWireBytes ?? 0 };
+    const status = window.t3opt?.engine?.status();
+    const s = status?.stats;
+    return {
+      rx: s?.receivedWireBytes ?? 0,
+      tx: s?.sentWireBytes ?? 0,
+      content: status?.receivedContentBytes ?? 0,
+      duplicates: s?.duplicateBytes ?? 0,
+    };
   });
 }
 
@@ -305,6 +311,10 @@ async function setup() {
     await editor.click({ timeout: 10_000 }).catch(() => {});
   }
   await waitForText(page, "I received the image", 120_000);
+  // The web app shows a reply's text before its turn has ended, with a
+  // "running" pill. A prompt typed then waits as a follow-up until the turn
+  // ends, so the run would measure the setup turn's sync.
+  await page.getByText("running", { exact: true }).first().waitFor({ state: "hidden", timeout: 120_000 });
   await screenshot(page, "ready");
 }
 
@@ -325,7 +335,9 @@ if (go !== "go") {
 }
 stats.rxBytes = 0;
 stats.txBytes = 0;
-const webappStart = cfg.webapp ? await webappBytes(page).catch(() => ({ rx: 0, tx: 0 })) : null;
+const webappStart = cfg.webapp
+  ? await webappBytes(page).catch(() => ({ rx: 0, tx: 0, content: 0, duplicates: 0 }))
+  : null;
 void nextCommand().then(() => {
   stopping = true;
   stopRequested();
@@ -396,6 +408,10 @@ if (webappStart !== null) {
   const end = await webappBytes(page).catch(() => webappStart);
   stats.rxBytes = end.rx - webappStart.rx;
   stats.txBytes = end.tx - webappStart.tx;
+  // The app gets content from sync-core, not reply text over a WebSocket:
+  // all content it received, and of it what it had received before.
+  stats.replyBytes = end.content - webappStart.content;
+  stats.duplicateReplyBytes = end.duplicates - webappStart.duplicates;
   // The shim's last calls and fetches, to see what shared the link with the prompt.
   const trace = await page.evaluate(() => window.t3opt?.trace ?? []).catch(() => []);
   emit("note", { text: `shim trace\n${trace.join("\n")}` });
