@@ -349,7 +349,15 @@ await step("history-and-images-without-http", async () => {
     await openThread(cfg.threadId);
     await waitText("The lab thread is set up", 60_000);
     await waitText("I received the image", 60_000);
+    // The timeline keeps only rows near the viewport in the page: scroll to the
+    // reply below the image, then up until the image row is there.
+    await page.getByText("I received the image").first().scrollIntoViewIfNeeded({ timeout: 30_000 });
     const image = page.locator('img[src^="blob:"]').first();
+    for (let i = 0; i < 10 && !(await image.isVisible().catch(() => false)); i++) {
+      await page.mouse.move(200, 400);
+      await page.mouse.wheel(0, -500);
+      await sleep(500);
+    }
     await image.waitFor({ timeout: 60_000 });
     await image.scrollIntoViewIfNeeded();
     await shot("no-http");
