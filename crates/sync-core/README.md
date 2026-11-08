@@ -71,9 +71,9 @@ The sender paces packets at a send rate in wire bytes per second, counting 93 by
 - About once per round trip, on RTT samples of packets sent after the last change: if RTT grew (25% above the base, plus 150 ms or three times the measured jitter), the rate drops to 75% of the lower of itself and the measured send capacity, but never below half. Otherwise, with data waiting, it grows by half (at the start) or a quarter, at most that much above the measured capacity.
 - One fresh sample above twice the base plus a second counts as RTT growth on its own: at heavy loss samples are rare, and waiting for three more lets the queue grow.
 - The base is the lowest RTT of the last 60 s. If draining to 30% of the rate does not bring the RTT down, the path itself got slower: its RTT becomes the base, and the rate goes back to where the drains started, but not above the measured capacity.
-- Sending with nothing at all heard from the other side for 15 s (or four smoothed RTTs, if longer) lowers the rate to 75% at each decision, and the next RTT samples start a new base in slow start. Either the link went down, or the rate is so far above a link that just got slower that its queue drops the other side's acks too: in the lab, after a switch from the clean link to 10 kbit/s, the sidecar kept its clean-link rate, WebKit's acks never got through, and no RTT sample ever came to lower it (issue #45). An idle side still sends a packet a second, so at 70% loss 15 s without one happens by chance in about 0.5% of such spells.
-- After 2 s with nothing to send, the rate starts again from 2 kB/s. It never goes below 150 B/s.
-- Packets hold about 100 ms of what the link delivers, between 200 and 1100 bytes, so a queue that counts packets stays short on a slow link.
+- Sending with nothing at all heard from the other side for as long as seven of its packets usually take to arrive (and at least four smoothed RTTs and 1 s) halves the rate at each decision, but not below the initial 2 kB/s, and the next RTT samples start a new base in slow start. By chance such a silence comes in about one of 1,000 spells. Either the link went down, or the rate is far above a link that just got slower. In the lab, after a switch from the clean link to case 70, the sidecar kept its clean-link rate for 20 s: its queue held back the SCTP acks of WebKit's sender, which then sent next to nothing, and the prompt took 34 to 52 s (issues #45, #46). Now the silence is found within a second or two. Lower than 2 kB/s a silent sender hears too little to find the rate again: in the simulator both sides fell to the floor and stayed there. At 70% loss before a 10 kbit/s queue, 2 kB/s does not fill the queue.
+- After 2 s with nothing to send, the rate starts again from 2 kB/s. A side that had data but was not asked for packets (the browser's SCTP held them back) was not idle and keeps what it measured. The rate never goes below 150 B/s.
+- Packets hold about 100 ms of what the link delivers, between 200 and 1100 bytes, so a queue that counts packets stays short on a slow link. A command, a call or a reply grows its packet to go out whole: it is of use only whole, and in pieces every piece must arrive.
 
 ## Commands and calls
 
@@ -103,4 +103,10 @@ cargo run --release -p sync-core --example sim -- case50 1 3 180    # 3 minutes 
 
 The tests in `tests/sim.rs` run both cases, a reply faster than the link with a second prompt, page kills between receipt and storage, duplication with reordering, and the send rate at 70% loss. Results of the full runs are on issue #43.
 
-What the simulator does not model: the browser's own SCTP on the phone-to-server direction (issue #49 measured stalls of up to 7.6 s there at 70% loss), the cost of a new connection after a page kill, and timers that do not run in lockstep.
+A `-webkit` case (`case70-webkit`, `case50-webkit`) sends the phone's packets through a model of WebKit's SCTP sender (`src/sim/browser.rs`): a window that drops to one packet when its retransmit timer fires, a timer that backs off up to 3 s, SACKs that travel on the server's direction, and the web app's 1200-byte send buffer. The backfill starts 3 s before the profile applies, so the server is sending at the clean link's rate when the link turns bad, as in the lab.
+
+```sh
+cargo run --release -p sync-core --example sim -- case70-webkit 1 30 180
+```
+
+What the simulator does not model: WebKit's ICE agent, which stops sending when its checks go unanswered (issue #46), the cost of a new connection after a page kill, and timers that do not run in lockstep. The WebKit model is gentler than WebKit in the lab: over 30 seeds it confirms case 70's prompt within 10 s on all but one, where the lab took longer on some seeds.
