@@ -187,7 +187,7 @@ impl World {
         Some(object_id(&["text", thread, key]))
     }
 
-    /// Whether an object is a turn item, or its text, of the thread's
+    /// Whether an object is a message item, or its text, of the thread's
     /// current turn: from its newest user message on.
     pub fn in_current_turn(&self, thread: &str, id: u64) -> bool {
         self.threads
