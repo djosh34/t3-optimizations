@@ -1,0 +1,12 @@
+{"t":1794142688774,"ev":"ws-open"}
+{"t":1794142689313,"ev":"paired"}
+{"t":1794142689405,"ev":"ws-close"}
+{"t":1794142689857,"ev":"ws-open"}
+{"t":1794142690400,"ev":"thread-open"}
+{"t":1794142696273,"ev":"screenshot","name":"ready"}
+{"t":1794142696273,"ev":"ready"}
+{"t":1794142696893,"ev":"prompt-sent"}
+{"t":1794142701534,"ev":"prompt-confirmed"}
+{"t":1794142729620,"ev":"ws-close"}
+{"t":1794143597120,"ev":"screenshot","name":"end"}
+{"t":1794143597120,"ev":"stats","rxBytes":10758,"txBytes":1784}
