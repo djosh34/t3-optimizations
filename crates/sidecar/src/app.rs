@@ -807,8 +807,19 @@ impl App {
         };
         let success = exit["_tag"].as_str() == Some("Success");
         match pending {
-            Pending::Call { device, seq } | Pending::Command { device, seq } => {
+            Pending::Call { device, seq } => {
                 self.reply(&device, seq, &json!({"exit": exit}));
+            }
+            Pending::Command { device, seq } => {
+                self.reply(&device, seq, &json!({"exit": exit}));
+                // The reply goes out before any backfill not sent yet: the
+                // lab's acceptance report reads this line (issue #46).
+                if let Some(d) = self.devices.get(&device) {
+                    log(format!(
+                        "device {device}: command {seq} replied, backfill unsent {} B",
+                        d.server.stats().unsent_backfill_bytes
+                    ));
+                }
             }
             Pending::AssetUrl { id, mime } => match exit["value"]["relativeUrl"].as_str() {
                 Some(url) if success => {

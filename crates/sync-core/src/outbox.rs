@@ -79,7 +79,8 @@ pub(crate) struct OutObject {
     sent: Vec<Sent>,
     /// When a chunk of `rev` last went out.
     rev_sent_at: Option<Millis>,
-    /// Bytes of `rev` that went out on this connection, in any pass.
+    /// Bytes of `rev` that ever went out to the peer, in any pass and on any
+    /// connection; forgotten with the revision or the peer's cache.
     ever_sent: RangeSet,
 }
 
@@ -212,16 +213,18 @@ impl OutObject {
         self.acked.insert(range);
     }
 
-    /// Forgets what is in flight; the bytes become eligible at once.
+    /// Forgets what is in flight; the bytes become eligible at once. What
+    /// went out stays in `ever_sent`: the peer keeps what it stored across
+    /// connections.
     fn forget_sent(&mut self) {
         self.sent.clear();
         self.rev_sent_at = None;
-        self.ever_sent = RangeSet::new();
     }
 
     /// Forgets everything the peer stored.
     fn forget_peer(&mut self) {
         self.forget_sent();
+        self.ever_sent = RangeSet::new();
         self.acked = RangeSet::new();
         self.rev_acked = false;
         self.keep = 0;
@@ -365,6 +368,7 @@ impl Outbox {
         o.rev_acked = false;
         o.acked.truncate(prefix);
         o.forget_sent();
+        o.ever_sent = RangeSet::new();
         o.meta = meta;
         o.content = content;
     }
@@ -406,9 +410,9 @@ impl Outbox {
     }
 
     /// Bytes of the classes below `Status` (older messages, the thread
-    /// list, other threads and images) not sent at all on this connection:
-    /// neither stored by the peer nor in flight, so the peer cannot have
-    /// them.
+    /// list, other threads and images) that never went out to the peer, so
+    /// it cannot have them. A sidecar restored from its saved state knows
+    /// only what the peer acked before.
     pub fn unsent_backfill_bytes(&self) -> u64 {
         self.objects
             .values()
@@ -876,8 +880,11 @@ mod tests {
             .sum();
         assert!(sent > 0, "some backfill fits after the tail");
         assert_eq!(ob.unsent_backfill_bytes(), 3_000 - sent);
-        // A new connection: nothing went out on it yet.
+        // A new connection: what went out may be on the peer already.
         ob.forget_sent();
+        assert_eq!(ob.unsent_backfill_bytes(), 3_000 - sent);
+        // The peer lost its cache: nothing of it is there.
+        ob.forget_peer();
         assert_eq!(ob.unsent_backfill_bytes(), 3_000);
     }
 }

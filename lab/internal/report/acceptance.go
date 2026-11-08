@@ -27,28 +27,10 @@ const (
 type accepted struct {
 	Report
 	dir string
-	// The backfill backlog around the prompt's confirmation and around
-	// the first reply text on screen.
-	atConfirm, atText around
-}
-
-// around is the backfill (the classes below status) the sidecar had not
-// sent at all, in its last stats line before a moment and its first one
-// after; -1 where there is no such line or no such moment. Bytes never sent
-// cannot have reached the phone; backfill added between the two lines
-// would also show as unsent after.
-type around struct{ before, after int64 }
-
-// overtook says whether the moment came while backfill waited: unsent
-// backfill both before and after it. False also when it cannot be told: no
-// stats line on one side, no backfill waiting before, or backfill that
-// drained between the two lines.
-func (a around) overtook() bool {
-	return a.before > 0 && a.after > 0
-}
-
-func (a around) String() string {
-	return fmtBytes(a.before) + " → " + fmtBytes(a.after)
+	// Backfill bytes the sidecar had not sent yet when it queued the
+	// prompt's reply and the reply's first newest text; -1 when the log has
+	// no such line.
+	atConfirm, atText int64
 }
 
 // Acceptance prints the acceptance report of issue #46: each target of the
@@ -188,14 +170,14 @@ func targets(runs []accepted) string {
 		if r.Profile == "F" || profileOf(r.Profile).TCPPath {
 			continue
 		}
-		if r.atConfirm.overtook() && r.atText.overtook() {
+		if r.atConfirm > 0 && r.atText > 0 {
 			shown = append(shown, r)
 		} else {
 			untold = append(untold, r)
 		}
 	}
-	line("- The newest text and prompt acks overtake backfill in every run: %s where it can be told. Both the confirmation and the first reply text reached the phone while backfill (older messages, the thread list, other threads, images) the sidecar had not sent at all still waited, by its stats lines just before and just after each (every 10 s), in %d runs; backfill added between two lines would count too, so this is evidence, not proof. It cannot be told in %d (no prompt or no text, no stats line on one side, no backfill waiting before, or backfill drained between the two lines): %s. Per run below.",
-		verdict(len(shown) > 0), len(shown), len(untold), names(untold))
+	line("- The newest text and prompt acks overtake backfill in every run: %s. When the sidecar queued the prompt's reply and the reply's first newest text, it still had backfill (older messages, the thread list, other threads, images) it had never sent, which goes out after them, in %d runs. Not established in %d (no reply or no text, or no backfill waiting at that moment): %s. Not met means not established in every run, not a failure seen. Per run below.",
+		verdict(len(shown) > 0 && len(untold) == 0), len(shown), len(untold), names(untold))
 
 	var again []accepted
 	for _, r := range runs {
@@ -206,10 +188,10 @@ func targets(runs []accepted) string {
 	line("- Open defect: the web app's composer ignored Enter, and the driver pressed it again, in %d of %d runs: %s. A user who does not press again never gets the prompt sent. The prompt's times count from the first Enter.",
 		len(again), len(runs), list(again, func(r accepted) string { return fmt.Sprintf("%d more", enterAgain(r.Report)) }))
 	line("")
-	line("Profile F and `derp` are reported with no target. Backfill bytes not sent at all, in the sidecar's stats lines before → after the confirmation, and before → after the first reply text:")
+	line("Profile F and `derp` are reported with no target. Backfill bytes never sent when the sidecar queued the prompt's reply / the reply's first newest text:")
 	line("")
 	for _, r := range runs {
-		line("- %s: %s; %s", r.Name(), r.atConfirm, r.atText)
+		line("- %s: %s / %s", r.Name(), fmtBytes(r.atConfirm), fmtBytes(r.atText))
 	}
 	return b.String()
 }
@@ -301,30 +283,31 @@ func loadAccepted(dir string) ([]accepted, error) {
 	return runs, nil
 }
 
-// statsLine matches the sidecar's stats lines: their time and the backfill
-// bytes not sent at all on the connection.
-var statsLine = regexp.MustCompile(`^sidecar: (\d+) device \S+ stats: .*backfill unsent (\d+) B`)
+// The sidecar's lines at the two moments: its time, and the backfill bytes
+// it had never sent.
+var (
+	replyLine = regexp.MustCompile(`^sidecar: (\d+) device \S+: command \d+ replied, backfill unsent (\d+) B`)
+	textLine  = regexp.MustCompile(`^sidecar: (\d+) device \S+: new newest text, backfill unsent (\d+) B`)
+)
 
-// backfill reads the run's sidecar log and phone events and returns the
-// backfill backlog around the prompt's confirmation and around the first
-// reply text.
-func backfill(dir string) (atConfirm, atText around, err error) {
-	atConfirm, atText = around{-1, -1}, around{-1, -1}
+// backfill reads the run's sidecar log and returns the backfill bytes the
+// sidecar had never sent at the first command reply and the first new
+// newest text after the prompt was typed; -1 for a moment the log lacks.
+func backfill(dir string) (atConfirm, atText int64, err error) {
+	atConfirm, atText = -1, -1
 	events, err := readEvents(filepath.Join(dir, "phone.jsonl"))
 	if err != nil {
 		return atConfirm, atText, err
 	}
-	var confirmed, text int64
-	sent := false
+	var sent int64
 	for _, ev := range events {
-		switch {
-		case ev.Ev == "prompt-sent":
-			sent = true
-		case ev.Ev == "prompt-confirmed" && confirmed == 0:
-			confirmed = ev.T
-		case ev.Ev == "text" && sent && ev.N > 0 && text == 0:
-			text = ev.T
+		if ev.Ev == "prompt-sent" {
+			sent = ev.T
+			break
 		}
+	}
+	if sent == 0 {
+		return atConfirm, atText, nil
 	}
 	f, err := os.Open(filepath.Join(dir, "sidecar.log"))
 	if os.IsNotExist(err) {
@@ -334,28 +317,21 @@ func backfill(dir string) (atConfirm, atText around, err error) {
 		return atConfirm, atText, err
 	}
 	defer f.Close()
-	note := func(a *around, moment, t, n int64) {
-		switch {
-		case moment == 0:
-		case t <= moment:
-			a.before = n
-		case a.after < 0:
-			a.after = n
+	first := func(re *regexp.Regexp, line string, into *int64) {
+		m := re.FindStringSubmatch(line)
+		if m == nil || *into >= 0 {
+			return
+		}
+		t, err1 := strconv.ParseInt(m[1], 10, 64)
+		n, err2 := strconv.ParseInt(m[2], 10, 64)
+		if err1 == nil && err2 == nil && t >= sent {
+			*into = n
 		}
 	}
 	s := bufio.NewScanner(f)
 	for s.Scan() {
-		m := statsLine.FindStringSubmatch(s.Text())
-		if m == nil {
-			continue
-		}
-		t, err1 := strconv.ParseInt(m[1], 10, 64)
-		n, err2 := strconv.ParseInt(m[2], 10, 64)
-		if err1 != nil || err2 != nil {
-			continue
-		}
-		note(&atConfirm, confirmed, t, n)
-		note(&atText, text, t, n)
+		first(replyLine, s.Text(), &atConfirm)
+		first(textLine, s.Text(), &atText)
 	}
 	return atConfirm, atText, s.Err()
 }

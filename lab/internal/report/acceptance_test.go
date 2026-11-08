@@ -7,16 +7,16 @@ import (
 	"testing"
 )
 
-func TestBackfillIsReadAroundEachMoment(t *testing.T) {
+func TestBackfillIsReadAtTheMomentsAfterThePrompt(t *testing.T) {
 	dir := t.TempDir()
 	events := `{"t":1000,"ev":"prompt-sent"}
 {"t":2500,"ev":"prompt-confirmed"}
-{"t":4500,"ev":"text","n":12}
 `
 	log := `sidecar ready
-sidecar: 2000 device d1 stats: send 2000 B/s, unsynced 1200 B, backfill unsent 900 B, in flight 3 packets
-sidecar: 4000 device d1 stats: send 2000 B/s, unsynced 600 B, backfill unsent 400 B, in flight 3 packets
-sidecar: 6000 device d1 stats: send 2000 B/s, unsynced 0 B, backfill unsent 0 B, in flight 0 packets
+sidecar: 500 device d1: command 3 replied, backfill unsent 9000 B
+sidecar: 1500 device d1: command 4 replied, backfill unsent 700 B
+sidecar: 1600 device d1: new newest text, backfill unsent 650 B
+sidecar: 3000 device d1: command 5 replied, backfill unsent 0 B
 `
 	for name, data := range map[string]string{"phone.jsonl": events, "sidecar.log": log} {
 		if err := os.WriteFile(filepath.Join(dir, name), []byte(data), 0o644); err != nil {
@@ -27,23 +27,17 @@ sidecar: 6000 device d1 stats: send 2000 B/s, unsynced 0 B, backfill unsent 0 B,
 	if err != nil {
 		t.Fatal(err)
 	}
-	if atConfirm != (around{900, 400}) || atText != (around{400, 0}) {
-		t.Errorf("got %v and %v, want 900 → 400 and 400 → 0", atConfirm, atText)
-	}
-	if !atConfirm.overtook() {
-		t.Errorf("the confirmation overtook backfill")
-	}
-	if atText.overtook() {
-		t.Errorf("backfill drained between the lines around the first text: cannot be told")
+	if atConfirm != 700 || atText != 650 {
+		t.Errorf("got %d and %d, want 700 and 650", atConfirm, atText)
 	}
 }
 
 func TestTargetsSayWhichAreMet(t *testing.T) {
 	fast, slow := 3.0, 12.0
 	runs := []accepted{
-		{Report: Report{Profile: "case70", Client: "webapp", Kind: "warm", Seed: 1, PromptConfirmationS: &fast}, atConfirm: around{-1, -1}, atText: around{-1, -1}},
+		{Report: Report{Profile: "case70", Client: "webapp", Kind: "warm", Seed: 1, PromptConfirmationS: &fast}, atConfirm: -1, atText: -1},
 		{Report: Report{Profile: "case70", Client: "webapp", Kind: "warm", Seed: 2, PromptConfirmationS: &slow,
-			Notes: []string{"the prompt is still in the composer: Enter again"}}, atConfirm: around{-1, -1}, atText: around{-1, -1}},
+			Notes: []string{"the prompt is still in the composer: Enter again"}}, atConfirm: -1, atText: -1},
 	}
 	out := targets(runs)
 	if !strings.Contains(out, "within 10 s: **not met**. case70-webapp-warm 3.0s, case70-webapp-warm-s2 12.0s.") {

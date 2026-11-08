@@ -301,6 +301,11 @@ impl Server {
             .collect()
     }
 
+    /// Whether an object with this id was set.
+    pub fn has(&self, id: u64) -> bool {
+        self.ep.out.get(Key::Object(id)).is_some()
+    }
+
     /// Whether the phone has stored everything.
     pub fn is_synced(&self) -> bool {
         self.ep.out.is_synced()

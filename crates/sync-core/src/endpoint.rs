@@ -77,8 +77,7 @@ pub struct Stats {
     pub last_heard: Option<Millis>,
     /// Bytes the other side has not stored yet.
     pub unsynced_bytes: u64,
-    /// Bytes of the classes below `Status` (backfill) not sent at all on
-    /// this connection.
+    /// Bytes of the classes below `Status` (backfill) that never went out.
     pub unsent_backfill_bytes: u64,
     pub inflight_packets: usize,
 }

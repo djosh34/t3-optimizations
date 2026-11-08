@@ -55,6 +55,16 @@ impl Device {
         for id in ids {
             let Some(obj) = world.get(id) else { continue };
             let class = class_of(world, id, obj, self.focus.as_deref());
+            if class == Class::Tail && !self.server.has(id) {
+                // A new message's newest text goes out before any backfill
+                // not sent yet: the lab's acceptance report reads this line
+                // (issue #46).
+                log(format!(
+                    "device {}: new newest text, backfill unsent {} B",
+                    self.record.id,
+                    self.server.stats().unsent_backfill_bytes
+                ));
+            }
             // The world checks ids and meta sizes; an error here is a bug
             // there, and the object is left out.
             match self
