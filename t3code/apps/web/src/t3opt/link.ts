@@ -16,12 +16,12 @@ const DEAD_ICE_UP_MS = 20_000;
 /** A first WebRTC connection whose ICE has not connected by then falls back to the WebSocket. */
 const FALLBACK_AFTER_MS = 20_000;
 /**
- * An open connection silent this long, with ICE not up at any time of it, opens
- * the WebSocket as a probe; when the probe is open and the silence lasts another
- * `SWITCH_AFTER_PROBE_MS`, UDP is blocked and the WebSocket takes over. In an
- * outage the probe cannot connect, and an ICE restart brings the data back first.
+ * Silent this long with ICE down for the last `PROBE_ICE_DOWN_MS`: a WebSocket
+ * probe opens. Open and still silent `SWITCH_AFTER_PROBE_MS` later, UDP is blocked
+ * and it takes over; in an outage it cannot connect, and ICE recovers first.
  */
 const PROBE_WS_AFTER_MS = 60_000;
+const PROBE_ICE_DOWN_MS = 40_000;
 const SWITCH_AFTER_PROBE_MS = 20_000;
 /** WebRTC is tried again this often while it failed to connect. */
 const RTC_RETRY_MS = 10_000;
@@ -113,6 +113,8 @@ interface Rtc {
   restart: number;
   readonly createdAt: number;
   iceUpSince: number | null;
+  /** Since when ICE is not connected, without a break. */
+  iceDownSince: number | null;
   /** ICE connected once: UDP gets through, a slow handshake is loss, not a block. */
   iceEverUp: boolean;
   /** How long ICE was connected while the sidecar was silent, up to `iceUpSince`. */
@@ -303,6 +305,7 @@ export class Link {
       restart: 0,
       createdAt: Date.now(),
       iceUpSince: null,
+      iceDownSince: null,
       iceEverUp: false,
       iceUpInSilenceMs: 0,
       lastRestartAt: null,
@@ -336,8 +339,10 @@ export class Link {
       const state = pc.iceConnectionState;
       if (state === "connected" || state === "completed") {
         rtc.iceUpSince ??= Date.now();
+        rtc.iceDownSince = null;
         rtc.iceEverUp = true;
       } else {
+        rtc.iceDownSince ??= Date.now();
         if (rtc.iceUpSince !== null) rtc.iceUpInSilenceMs += Date.now() - rtc.iceUpSince;
         rtc.iceUpSince = null;
       }
@@ -508,7 +513,8 @@ export class Link {
     const silentFor = now - (this.lastDataAt ?? rtc.createdAt);
     if (silentFor < RESTART_AFTER_MS) return;
     const iceUp = rtc.iceUpInSilenceMs + (rtc.iceUpSince === null ? 0 : now - rtc.iceUpSince);
-    if (!this.wsOnly && silentFor >= PROBE_WS_AFTER_MS && iceUp === 0) {
+    const iceDown = rtc.iceDownSince === null ? 0 : now - rtc.iceDownSince;
+    if (!this.wsOnly && silentFor >= PROBE_WS_AFTER_MS && iceDown >= PROBE_ICE_DOWN_MS) {
       if (this.probe === null) this.probe = this.newWebSocket();
       else if (this.probeOpenAt !== null && now - this.probeOpenAt >= SWITCH_AFTER_PROBE_MS) {
         this.switchToProbe(rtc, now);
