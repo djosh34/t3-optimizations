@@ -40,7 +40,7 @@ export type TimelineScrollDirection = "up" | "down";
 export type TimelineNavigation =
   | { readonly source: "wheel"; readonly direction: TimelineScrollDirection }
   | { readonly source: "touch" }
-  | { readonly source: "pointer"; readonly onScrollbar: boolean }
+  | { readonly source: "pointer"; readonly onScrollbar: boolean; readonly onControl: boolean }
   | { readonly source: "key"; readonly key: string; readonly direction: TimelineScrollDirection }
   | { readonly source: "scroll" }
   | { readonly source: "command"; readonly releasesFollow: boolean };
@@ -61,6 +61,7 @@ export interface TimelineViewport {
 }
 
 const UP_KEYS = new Set(["PageUp", "Home", "ArrowUp"]);
+const CONTROL_SELECTOR = 'button, a, input, textarea, select, [role="button"]';
 const DOWN_KEYS = new Set(["PageDown", "End", "ArrowDown", " "]);
 
 /**
@@ -84,7 +85,11 @@ export function attachTimelineViewport(scrollNode: HTMLElement): TimelineViewpor
   // Scrollbar drags produce no wheel/touch events; they are the only
   // pointerdowns whose target is the scroll node itself rather than a row.
   const handlePointerDown = (event: PointerEvent) =>
-    emit({ source: "pointer", onScrollbar: event.target === scrollNode });
+    emit({
+      source: "pointer",
+      onScrollbar: event.target === scrollNode,
+      onControl: event.target instanceof Element && event.target.closest(CONTROL_SELECTOR) !== null,
+    });
   // Clicking message text can leave DOM focus on body, and keyboard scrolling
   // bypasses wheel and pointer events, so scroll keys are heard app-wide.
   // Body keys belong to the main timeline; a side chat's hears only its own.
@@ -190,6 +195,9 @@ export function navigationReleasesFollow(
     case "key":
       return navigation.direction === "up" ? viewport.contentScrollsUp() : viewport.awayFromEnd();
     case "pointer":
+      // A tap on a control in a row (Approve while the list still glides to
+      // the end) is not reading history.
+      if (navigation.onControl) return false;
       return navigation.onScrollbar ? viewport.contentScrollsUp() : viewport.awayFromEnd();
     case "touch":
       // Touch direction is not observable; an upward flick leaves the end

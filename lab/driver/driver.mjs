@@ -367,7 +367,7 @@ if (cfg.kind === "cold") {
 // is stalled, where a second Enter could send the prompt twice.
 let lastEnterAt = 0;
 async function enterAgainIfIgnored(page) {
-  if (!cfg.webapp || promptSentAt === undefined || Date.now() - lastEnterAt < 3_000) return;
+  if (!cfg.webapp || promptSentAt === undefined || Date.now() - lastEnterAt < 1_500) return;
   const editor = page.locator('[data-testid="composer-editor"]:visible').first();
   const text = (await editor.textContent({ timeout: 1_000 }).catch(() => "")) ?? "";
   if (!text.includes(cfg.prompt.slice(0, 24))) return;
