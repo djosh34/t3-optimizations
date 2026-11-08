@@ -36,7 +36,7 @@ impl EntryKind {
     pub(crate) fn order(self, seq: u64) -> u64 {
         match self {
             EntryKind::Command => u64::MAX - seq,
-            EntryKind::Call | EntryKind::BackgroundCall => u64::MAX / 2 - seq.min(u64::MAX / 2),
+            EntryKind::Call | EntryKind::BackgroundCall => (u64::MAX / 2).saturating_sub(seq),
         }
     }
 

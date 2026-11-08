@@ -765,7 +765,8 @@ fn a_commands_reply_goes_before_the_replies_to_earlier_calls() {
     for seq in &calls {
         p.server.reply(*seq, text(4_000)).expect("reply");
     }
-    p.server.reply(cmd, b"ok".to_vec()).expect("reply");
+    // Above the size that rides in every packet: the order decides.
+    p.server.reply(cmd, text(1_000)).expect("reply");
     let packet = p.next_server_packet();
     assert_eq!(packet.chunks.first().map(|c| c.key), Some(Key::Reply(cmd)));
 }
