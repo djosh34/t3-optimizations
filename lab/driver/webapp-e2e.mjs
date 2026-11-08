@@ -103,8 +103,24 @@ async function step(name, run, { takeover = false } = {}) {
 const composer = '[data-testid="composer-editor"]:visible';
 const composerOrExpand = `${composer}, button[aria-label="Expand composer"]:visible`;
 
+// A fresh server's sole startup project counts as a first run, and t3code
+// shows its welcome wizard over the app; a real owner's server does not.
+async function closeWelcomeThenWait(ready, timeout) {
+  const until = Date.now() + timeout;
+  const welcome = page.getByText("Connect your computers").first();
+  while (Date.now() < until) {
+    if (await welcome.isVisible().catch(() => false)) {
+      await page.getByRole("button", { name: "Close" }).first().click({ timeout: 5_000 }).catch(() => {});
+    } else if (await ready.isVisible().catch(() => false)) {
+      return;
+    }
+    await sleep(500);
+  }
+  await ready.waitFor({ timeout: 1_000 });
+}
+
 async function appReady(timeout = 120_000) {
-  await page.locator(composerOrExpand).first().waitFor({ timeout });
+  await closeWelcomeThenWait(page.locator(composerOrExpand).first(), timeout);
 }
 
 async function focusComposer(timeout = 60_000) {

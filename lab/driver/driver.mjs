@@ -248,10 +248,28 @@ const context = await browser.newContext({ ...device, ignoreHTTPSErrors: true })
 let page = await context.newPage();
 watchSockets(page);
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// A fresh server's sole startup project counts as a first run, and t3code
+// shows its welcome wizard over the app; a real owner's server does not.
+async function closeWelcomeThenWait(ready, timeout) {
+  const until = Date.now() + timeout;
+  const welcome = page.getByText("Connect your computers").first();
+  while (Date.now() < until) {
+    if (await welcome.isVisible().catch(() => false)) {
+      await page.getByRole("button", { name: "Close" }).first().click({ timeout: 5_000 }).catch(() => {});
+    } else if (await ready.isVisible().catch(() => false)) {
+      return;
+    }
+    await sleep(500);
+  }
+  await ready.waitFor({ timeout: 1_000 });
+}
+
 // Setup on the clean link: pair, open the thread, send the image turn.
 async function setup() {
   await page.goto(cfg.pairUrl, { waitUntil: "domcontentloaded", timeout: 120_000 });
-  await page.locator(composerOrExpand).first().waitFor({ timeout: 120_000 });
+  await closeWelcomeThenWait(page.locator(composerOrExpand).first(), 120_000);
   emit("paired");
   const descriptor = await page.evaluate(async () => {
     const response = await fetch("/.well-known/t3/environment");
