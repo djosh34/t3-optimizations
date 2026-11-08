@@ -9,12 +9,16 @@
 #
 # Usage, as yourself from lab/ after `go build -o bin/lab ./cmd/lab`,
 # scripts/build-sidecar.sh and scripts/build-webapp.sh:
-#   scripts/run-acceptance.sh [parallel runs, default 3] [profile ...]
+#   scripts/run-acceptance.sh [parallel runs, default 2] [profile ...]
+#
+# Keep the load average below the core count: each run's WebKit takes about
+# 1.7 cores (most of it software rendering), and a starved browser stretches
+# the timers the report grades. The report gives the load it ran under.
 set -euo pipefail
 
 lab="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$lab"
-jobs="${1:-3}"
+jobs="${1:-2}"
 shift || true
 raw="$lab/reports/runs/acceptance"
 dest="$lab/reports/acceptance"
@@ -70,8 +74,21 @@ one() {
 export -f one
 export raw dest
 
+# The 1-minute load average once a minute while the runs go.
+load="$raw/load.log"
+: >"$load"
+(while true; do
+  echo "$(date -u +%H:%M) $(cut -d' ' -f1 /proc/loadavg)" >>"$load"
+  sleep 60
+done) &
+sampler=$!
+trap 'kill "$sampler" 2>/dev/null' EXIT
+
 status=0
+started=$(date -u +%Y-%m-%dT%H:%MZ)
 printf '%s\n' "${runs[@]}" | xargs -P "$jobs" -L 1 bash -c 'one "$@"' _ || status=$?
+ended=$(date -u +%Y-%m-%dT%H:%MZ)
+kill "$sampler" 2>/dev/null || true
 
 {
   echo "# Acceptance on the full chaos lab"
@@ -79,6 +96,14 @@ printf '%s\n' "${runs[@]}" | xargs -P "$jobs" -L 1 bash -c 'one "$@"' _ || statu
   echo "The home-screen web app (\`--client webapp\`, issue #46) in WebKit on every profile of the lab, against the"
   echo "WebSocket baseline in [../baseline](../baseline/README.md) on the same profiles, starts and seed. See"
   echo "[lab/README.md](../../README.md) for the profiles and what each measure means."
+  echo
+  sort -n -k2 "$load" | awk -v jobs="$jobs" -v cores="$(nproc)" -v from="$started" -v to="$ended" '
+    { v[NR] = $2 }
+    END {
+      if (NR == 0) { printf "%s runs at once, %s to %s, on %s cores; no load samples.\n", jobs, from, to, cores; exit }
+      printf "%s runs at once, %s to %s, on %s cores. Load average (1 min, sampled every minute): median %s, peak %s.\n",
+        jobs, from, to, cores, v[int((NR + 1) / 2)], v[NR]
+    }'
   echo
   ./bin/lab acceptance "$dest" "$lab/reports/baseline"
   if [[ -s "$raw/failed" ]]; then

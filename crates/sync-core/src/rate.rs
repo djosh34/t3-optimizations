@@ -74,6 +74,12 @@ const IDLE_RESTART: Millis = 2_000;
 const SILENCE_PACKETS: f64 = 7.0;
 const SILENCE_RTTS: f64 = 4.0;
 const SILENCE_MIN: Millis = 1_000;
+/// A silence this many times as long goes on below the initial rate, down to
+/// the floor: on a link slower than the initial rate a sender that keeps it
+/// keeps the link's queue full, and the peer's acks and ICE replies coming
+/// the other way find no room (profile E, 125 B/s: 14 minutes without a
+/// packet from the phone; issue #46).
+const SILENCE_DEEP: f64 = 3.0;
 /// The rate of packets from the other side is averaged over spans this long.
 const HEARD_SPAN: Millis = 1_000;
 /// Reports at least this far apart, and this many packets sent, give one
@@ -403,13 +409,19 @@ impl RateControl {
         let needed = if self.slow_start { 1 } else { DECISION_SAMPLES };
         if self.fresh_count < needed && !far_above {
             let silence = self.silence();
-            let silent = self
+            let silent_for = self
                 .last_heard
-                .is_some_and(|t| now.saturating_sub(t) as f64 >= silence);
-            // Not below the initial rate: a silent link is an unknown one,
-            // and a sender far below it hears too little to find the rate
-            // again (both sides fell to the floor and stayed there).
-            let low = self.cfg.initial.min(self.rate);
+                .map_or(0.0, |t| now.saturating_sub(t) as f64);
+            let silent = self.last_heard.is_some() && silent_for >= silence;
+            // At first not below the initial rate: a silent link is an
+            // unknown one, and a sender far below it hears too little to find
+            // the rate again (both sides fell to the floor and stayed there).
+            // A long silence goes on to the floor.
+            let low = if silent_for >= SILENCE_DEEP * silence {
+                self.cfg.floor
+            } else {
+                self.cfg.initial.min(self.rate)
+            };
             if silent && self.limited && self.rate > low {
                 self.rate = (self.rate * SILENCE_DRAIN).max(low);
                 self.slow_start = true;
@@ -599,15 +611,25 @@ mod tests {
         }
         let fast = rc.rate();
         assert!(fast > 10_000.0, "rate {fast} did not grow on a clean link");
-        // Nothing comes back for 25 s while data waits.
-        for _ in 0..83 {
+        // Nothing comes back while data waits: for 2 s the rate stops at
+        // the initial rate, an unknown link's.
+        for _ in 0..7 {
+            t += 300;
+            rc.note_limited(t);
+            rc.decide(t);
+        }
+        let initial = RateConfig::default().initial;
+        assert!(rc.rate() >= initial, "rate {} below {initial}", rc.rate());
+        // 25 s: on a link slower than the initial rate the sender must not
+        // keep its queue full (profile E, 125 B/s: no ICE reply got through).
+        for _ in 0..76 {
             t += 300;
             rc.note_limited(t);
             rc.decide(t);
         }
         let slow = rc.rate();
         assert!(slow < fast / 10.0, "rate {slow} stayed near {fast}");
-        assert!(slow >= RateConfig::default().floor);
+        assert_eq!(slow, RateConfig::default().floor);
         // Feedback again: slow start.
         for _ in 0..10 {
             t += 700;
