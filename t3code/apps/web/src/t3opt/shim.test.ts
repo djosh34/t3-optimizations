@@ -11,9 +11,12 @@ describe("isBackgroundCall", () => {
     ["server.getSettings", false],
     ["attachments.createUploadUrl", false],
     ["git.status", false],
+    // Also when the client calls them by itself: the name cannot tell a tap from that.
+    ["projects.readFile", false],
+    ["preview.list", false],
+    ["server.refreshProviders", false],
     // What the client does by itself.
     ["server.reportClientActivity", true],
-    ["server.refreshProviders", true],
     ["preview.reportProfiles", true],
     ["subscribeResourceTelemetry", true],
   ])("%s goes at the background class: %s", (tag, background) => {

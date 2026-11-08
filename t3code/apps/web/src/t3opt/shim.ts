@@ -137,10 +137,7 @@ function whenReady<T>(engine: Engine, ready: () => T | null): Promise<T> {
  */
 const BACKGROUND_CALLS = new Set([
   "server.reportClientActivity",
-  "server.refreshProviders",
   "preview.reportProfiles",
-  "preview.list",
-  "projects.readFile",
   "attachments.delete",
   "subscribeResourceTelemetry",
   "subscribeDeviceState",
@@ -637,7 +634,10 @@ function shimXhr(ctx: FetchContext): typeof XMLHttpRequest {
           this.dispatchEvent(new ProgressEvent("loadend"));
         },
         () => {
-          if (!this.shimAborted) this.dispatchEvent(new ProgressEvent("error"));
+          if (this.shimAborted) return;
+          // Settled: the timeout must not fire after the error.
+          this.shimAborted = true;
+          this.dispatchEvent(new ProgressEvent("error"));
         },
       );
     }
