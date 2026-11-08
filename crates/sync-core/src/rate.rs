@@ -14,7 +14,7 @@ pub struct RateConfig {
     /// Send rate at the start, in wire bytes per second.
     pub initial: f64,
     /// The rate never goes below this, so alive signals and acks always go
-    /// out.
+    /// out; only a long silence takes it lower, to `SILENCE_FLOOR`.
     pub floor: f64,
     pub ceiling: f64,
 }
@@ -80,6 +80,9 @@ const SILENCE_MIN: Millis = 1_000;
 /// the other way find no room (profile E, 125 B/s: 14 minutes without a
 /// packet from the phone; issue #46).
 const SILENCE_DEEP: f64 = 3.0;
+/// Where a long silence ends, below `RateConfig::floor`: a quarter-full
+/// 1 kbit/s link (profile E), with room for what comes the other way.
+const SILENCE_FLOOR: f64 = 50.0;
 /// The rate of packets from the other side is averaged over spans this long.
 const HEARD_SPAN: Millis = 1_000;
 /// Reports at least this far apart, and this many packets sent, give one
@@ -416,9 +419,9 @@ impl RateControl {
             // At first not below the initial rate: a silent link is an
             // unknown one, and a sender far below it hears too little to find
             // the rate again (both sides fell to the floor and stayed there).
-            // A long silence goes on to the floor.
+            // A long silence goes on, to below the floor.
             let low = if silent_for >= SILENCE_DEEP * silence {
-                self.cfg.floor
+                SILENCE_FLOOR.min(self.cfg.floor)
             } else {
                 self.cfg.initial.min(self.rate)
             };
@@ -629,7 +632,7 @@ mod tests {
         }
         let slow = rc.rate();
         assert!(slow < fast / 10.0, "rate {slow} stayed near {fast}");
-        assert_eq!(slow, RateConfig::default().floor);
+        assert_eq!(slow, SILENCE_FLOOR);
         // Feedback again: slow start.
         for _ in 0..10 {
             t += 700;

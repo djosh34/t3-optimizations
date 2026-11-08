@@ -4,8 +4,13 @@
 
 import type { Pairing } from "./store";
 
-/** With nothing from the sidecar for this long, restart ICE, and again each time it passes. */
+/**
+ * With nothing from the sidecar for this long, restart ICE. Each restart in the same
+ * silence waits twice as long, up to `RESTART_MAX_MS`: a restart must have time to
+ * finish, and on a 1 kbit/s link at 75% loss a reply took longer than 8 s (issue #46).
+ */
 const RESTART_AFTER_MS = 8_000;
+const RESTART_MAX_MS = 30_000;
 /**
  * Silent this long with ICE up for `DEAD_ICE_UP_MS` of it: the sidecar lost the
  * connection. Both are long: a starved link at 70% loss can be silent with ICE up,
@@ -120,6 +125,8 @@ interface Rtc {
   /** How long ICE was connected while the sidecar was silent, up to `iceUpSince`. */
   iceUpInSilenceMs: number;
   lastRestartAt: number | null;
+  /** ICE restarts since the sidecar was last heard. */
+  restartsInSilence: number;
 }
 
 export class Link {
@@ -248,6 +255,7 @@ export class Link {
     if (this.rtc) {
       if (this.rtc.iceUpSince !== null) this.rtc.iceUpSince = now;
       this.rtc.iceUpInSilenceMs = 0;
+      this.rtc.restartsInSilence = 0;
     }
     if (this.trying !== `${this.transport} live`) this.set(`${this.transport} live`);
     this.hooks.onPacket(new Uint8Array(data));
@@ -309,6 +317,7 @@ export class Link {
       iceEverUp: false,
       iceUpInSilenceMs: 0,
       lastRestartAt: null,
+      restartsInSilence: 0,
     };
     this.rtc = rtc;
     // The connection it replaces is dead; closed, its ICE agent stops.
@@ -371,6 +380,7 @@ export class Link {
     const key = this.key;
     if (!key || this.keptAnswer === null) return;
     rtc.restart += 1;
+    rtc.restartsInSilence += 1;
     rtc.lastRestartAt = Date.now();
     if (rtc.iceUpSince !== null) rtc.iceUpInSilenceMs += rtc.lastRestartAt - rtc.iceUpSince;
     rtc.iceUpSince = null;
@@ -527,9 +537,13 @@ export class Link {
       this.tryRtc();
       return;
     }
+    const restartWait = Math.min(
+      RESTART_AFTER_MS * 2 ** Math.max(0, rtc.restartsInSilence - 1),
+      RESTART_MAX_MS,
+    );
     if (
       rtc.iceUpSince === null &&
-      (rtc.lastRestartAt === null || now - rtc.lastRestartAt >= RESTART_AFTER_MS)
+      (rtc.lastRestartAt === null || now - rtc.lastRestartAt >= restartWait)
     ) {
       await this.restartIce(rtc);
     }

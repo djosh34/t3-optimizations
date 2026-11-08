@@ -632,6 +632,13 @@ impl World {
         }
         let order = match entity["ordinal"].as_u64() {
             Some(o) if coll == "turnItems" => o,
+            // An approval or question the owner must answer goes first in
+            // the status class. With the next sequence number it went after
+            // every item of the current turn: on profile D the approval
+            // showed 103 s after it was asked (issue #46).
+            _ if coll == "runtimeRequests" && entity["status"].as_str() == Some("pending") => {
+                u64::MAX
+            }
             _ => self.next_seq(),
         };
         let status = STATUS_COLLECTIONS.contains(&coll)
@@ -1032,6 +1039,24 @@ mod tests {
             assert!(!w.in_current_turn("t1", body(id)), "{id} body");
             assert!(!w.in_current_turn("t1", text(id)), "{id} text");
         }
+    }
+
+    #[test]
+    fn a_pending_runtime_request_goes_first_in_its_class() {
+        let mut w = World::default();
+        let request = |status: &str| json!({"id": "rr1", "threadId": "t1", "status": status, "updatedAt": status});
+        w.apply_event(
+            "t1",
+            &event("turn-item.updated", item("a", 9, "text", true, "1")),
+        );
+        w.apply_event("t1", &event("runtime-request.updated", request("pending")));
+        let id = object_id(&["body", "t1", "runtimeRequests", "rr1"]);
+        let turn_item = object_id(&["body", "t1", "turnItems", "a"]);
+        let order = |w: &World, id| w.get(id).map(|o| o.order);
+        // The approval the owner must answer, ahead of the turn's items.
+        assert!(order(&w, id) > order(&w, turn_item));
+        w.apply_event("t1", &event("runtime-request.updated", request("resolved")));
+        assert!(order(&w, id) < order(&w, turn_item));
     }
 
     #[test]
