@@ -47,7 +47,7 @@ The lab needs root for `ip`, `tc` and docker, and does nothing else as root: the
 1. Cleanup removes what earlier labs left behind (anything named `t3lab*` whose lab process is gone). Running labs are left alone, so several runs can share the host.
 2. The lab creates the server namespace and a veth pair with GSO off, so netem sees wire-sized packets. Both ends have fixed MAC addresses and permanent neighbor entries for each other: with ARP over the shaped link, a neighbor entry fails now and then at heavy loss and the kernel drops what it queued for it, which a real phone link does not do. (The WebSocket baseline of issue #42 was measured before this fix.) It starts the phone container with no network, moves one veth end into the container's namespace and names it `t3lab<id>phone`. Playwright talks to WebKit over `docker exec`, so its control traffic never crosses the shaped link.
 3. In the server namespace it starts the forked t3 server from `t3code/` with `--base-dir` set to a fresh temp dir (deleted after the run), a home dir of its own and `PATH` without the host's provider CLIs. Its settings turn Codex and Claude off and add the fake agent as provider `lab`, so no prompt can reach a real model. It serves the baseline client build (`T3CODE_STATIC_DIR`). The lab front terminates TLS with a fresh self-signed certificate, like `tailscale serve` in production; the page is a secure context, so service workers work.
-4. The t3 CLI adds the project, starts the "Lab thread" with a short warm-up turn and mints a pairing URL. The phone pairs, opens the thread, and sends one turn with an image attached.
+4. The t3 CLI adds the project, starts the "Lab thread" with a short warm-up turn and mints a pairing URL. The phone pairs, opens the thread, and sends one turn with an image attached. It is ready once that turn has ended on the phone and the composer would start a new turn (its send button reads "Submit message"): a prompt typed earlier is steered into the running turn or queued.
 5. The lab applies the profile with `tc netem` on both veth ends (server end: down, phone end: up), then tells the phone to type the measured prompt.
 6. The fake agent streams the reply. Outages, flapping and the address change happen on the profile's schedule. The phone approves the approval request when it shows.
 7. The run ends when the phone shows the whole reply, or at the deadline. The lab deletes the container and the namespaces, also on Ctrl-C and on errors.
@@ -157,7 +157,7 @@ lab/scripts/build-sidecar.sh            # once, as yourself: lab/bin/sidecar and
 sudo ./bin/lab run --profile case70 --seed 1 --client sidecar-native
 ```
 
-The sidecar listens on 10.231.0.1:8480 (HTTP) and UDP 12444 in the server namespace; its log is `sidecar.log` in the run directory. The results of the graded cases are in [reports/sidecar](reports/sidecar/README.md). Profiles that carry the link in a TCP tunnel (`derp`) are not supported for this client yet.
+The sidecar listens on 10.231.0.1:8480 (HTTP) and UDP 12444 in the server namespace; its log is `sidecar.log` in the run directory. The results of the graded cases are in [reports/sidecar](reports/sidecar/README.md). Profiles that carry the link in a TCP tunnel (`derp`) are not supported for the native phone yet; the web app runs them.
 
 ## Web app runs
 
@@ -168,6 +168,15 @@ lab/scripts/build-sidecar.sh                        # once, as yourself
 lab/scripts/build-webapp.sh                         # lab/bin/webapp
 sudo ./bin/lab run --profile case70 --seed 1 --client webapp
 ```
+
+What differs from the WebSocket client's runs:
+
+- On `derp` the sidecar's UDP port and the HTTPS front are reached through the TCP tunnel, so everything the app sends crosses the shaped link in one TCP connection.
+- **Reply received / duplicates** counts all content sync-core handed the app after the switch, and of it the bytes it had handed over before (`crates/phone-wasm` checks each object's revision and ranges). It should stay 0.
+- The driver presses Enter again, 1.5 s apart, while the composer still holds the prompt (it ignored the first Enter in some runs, for reasons not found); the measure starts at the first Enter, and each retry is a note in the report. The WebSocket client never gets a second Enter: its composer may hold the text while its socket is stalled, and a second Enter could send the prompt twice.
+- The report notes each time the timeline shows "Scroll to end", that is, stopped following new text; the driver does not tap it.
+
+`scripts/run-acceptance.sh` runs the web app on every profile, from a warm start and on the graded profiles from a cold start too, with eight seeds of case 70 and case 50, into [reports/acceptance](reports/acceptance/README.md); `./bin/lab acceptance <dir> reports/baseline` writes its report with each target of issue #46 and the baseline beside every run.
 
 ### End to end
 
