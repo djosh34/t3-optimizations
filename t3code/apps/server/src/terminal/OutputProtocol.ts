@@ -102,9 +102,7 @@ export function withOutputWindow(
           const window = windowFor(clientId, String(response.requestId));
           if (window) {
             return Effect.flatMap(Clock.currentTimeMillis, (now) => {
-              window.sizes.push(
-                window.bytes ? Buffer.byteLength(JSON.stringify(response)) : 0,
-              );
+              window.sizes.push(window.bytes ? Buffer.byteLength(JSON.stringify(response)) : 0);
               window.sentAt.push(now);
               if (isFull(window, now)) {
                 window.held = true;
