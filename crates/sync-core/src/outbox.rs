@@ -79,6 +79,8 @@ pub(crate) struct OutObject {
     sent: Vec<Sent>,
     /// When a chunk of `rev` last went out.
     rev_sent_at: Option<Millis>,
+    /// Bytes of `rev` that went out on this connection, in any pass.
+    ever_sent: RangeSet,
 }
 
 #[derive(Debug, Clone)]
@@ -113,6 +115,7 @@ impl OutObject {
             keep,
             sent: Vec::new(),
             rev_sent_at: None,
+            ever_sent: RangeSet::new(),
         }
     }
 
@@ -213,6 +216,7 @@ impl OutObject {
     fn forget_sent(&mut self) {
         self.sent.clear();
         self.rev_sent_at = None;
+        self.ever_sent = RangeSet::new();
     }
 
     /// Forgets everything the peer stored.
@@ -331,6 +335,7 @@ impl Outbox {
                     keep: 0,
                     sent: Vec::new(),
                     rev_sent_at: None,
+                    ever_sent: RangeSet::new(),
                 },
             );
             return;
@@ -400,13 +405,21 @@ impl Outbox {
             .sum()
     }
 
-    /// Bytes the peer has not stored of the classes below `Status`: older
-    /// messages, the thread list, other threads and images.
-    pub fn unsynced_backfill_bytes(&self) -> u64 {
+    /// Bytes of the classes below `Status` (older messages, the thread
+    /// list, other threads and images) not sent at all on this connection:
+    /// neither stored by the peer nor in flight, so the peer cannot have
+    /// them.
+    pub fn unsent_backfill_bytes(&self) -> u64 {
         self.objects
             .values()
             .filter(|o| o.class > Class::Status)
-            .map(|o| o.len() - o.acked.len().min(o.len()))
+            .map(|o| {
+                let sent = o.ever_sent.ranges().iter().cloned();
+                gaps_of(o.acked.ranges(), sent, 0..o.len())
+                    .iter()
+                    .map(|r| r.end - r.start)
+                    .sum::<u64>()
+            })
             .sum()
     }
 
@@ -606,6 +619,13 @@ impl Outbox {
             }
         }
 
+        for (key, rev, range) in &record {
+            if let Some(o) = self.objects.get_mut(key)
+                && o.rev == *rev
+            {
+                o.ever_sent.insert(range.clone());
+            }
+        }
         for (key, range) in timed {
             if let Some(o) = self.objects.get_mut(&key) {
                 let rto = f.rto_of(o.class);
@@ -825,5 +845,39 @@ mod tests {
         ob.set(k, Class::Tail, 0, b"m".to_vec(), b"hello there".to_vec());
         let o = ob.get(k).expect("object");
         assert_eq!((o.rev, o.keep), (2, 0));
+    }
+
+    #[test]
+    fn unsent_backfill_counts_bytes_that_never_went_out() {
+        let mut ob = Outbox::default();
+        let tail = Key::Object(1);
+        let backfill = Key::Object(2);
+        ob.set(tail, Class::Tail, 0, Vec::new(), vec![b'a'; 100]);
+        ob.set(
+            backfill,
+            Class::Background,
+            0,
+            Vec::new(),
+            vec![b'b'; 3_000],
+        );
+        assert_eq!(ob.unsent_backfill_bytes(), 3_000);
+        let fill = Fill {
+            now: 0,
+            rto: 1_000,
+            fast_rto: 500,
+            copies: 1,
+        };
+        let mut out = Vec::new();
+        ob.fill(0, 600, 600, &fill, &mut out);
+        let sent: u64 = out
+            .iter()
+            .filter(|c| c.key == backfill)
+            .map(|c| c.body.raw_len())
+            .sum();
+        assert!(sent > 0, "some backfill fits after the tail");
+        assert_eq!(ob.unsent_backfill_bytes(), 3_000 - sent);
+        // A new connection: nothing went out on it yet.
+        ob.forget_sent();
+        assert_eq!(ob.unsent_backfill_bytes(), 3_000);
     }
 }

@@ -32,9 +32,11 @@ type accepted struct {
 	atConfirm, atText around
 }
 
-// around is the backfill the phone had not stored (the classes below
-// status) in the sidecar's last stats line before a moment and its first
-// one after; -1 where there is no such line or no such moment.
+// around is the backfill (the classes below status) the sidecar had not
+// sent at all, in its last stats line before a moment and its first one
+// after; -1 where there is no such line or no such moment. Bytes never sent
+// cannot have reached the phone; backfill added between the two lines
+// would also show as unsent after.
 type around struct{ before, after int64 }
 
 // overtook says whether the moment came while backfill waited: unsent
@@ -192,7 +194,7 @@ func targets(runs []accepted) string {
 			untold = append(untold, r)
 		}
 	}
-	line("- The newest text and prompt acks overtake backfill in every run: %s where it can be told. Both the confirmation and the first reply text reached the phone while backfill (older messages, the thread list, other threads, images) still waited, by the sidecar's stats lines just before and just after each (every 10 s), in %d runs. It cannot be told in %d (no prompt or no text, no stats line on one side, no backfill waiting before, or backfill drained between the two lines): %s. Per run below.",
+	line("- The newest text and prompt acks overtake backfill in every run: %s where it can be told. Both the confirmation and the first reply text reached the phone while backfill (older messages, the thread list, other threads, images) the sidecar had not sent at all still waited, by its stats lines just before and just after each (every 10 s), in %d runs; backfill added between two lines would count too, so this is evidence, not proof. It cannot be told in %d (no prompt or no text, no stats line on one side, no backfill waiting before, or backfill drained between the two lines): %s. Per run below.",
 		verdict(len(shown) > 0), len(shown), len(untold), names(untold))
 
 	var again []accepted
@@ -204,7 +206,7 @@ func targets(runs []accepted) string {
 	line("- Open defect: the web app's composer ignored Enter, and the driver pressed it again, in %d of %d runs: %s. A user who does not press again never gets the prompt sent. The prompt's times count from the first Enter.",
 		len(again), len(runs), list(again, func(r accepted) string { return fmt.Sprintf("%d more", enterAgain(r.Report)) }))
 	line("")
-	line("Profile F and `derp` are reported with no target. Backfill bytes not stored, in the sidecar's stats lines before → after the confirmation, and before → after the first reply text:")
+	line("Profile F and `derp` are reported with no target. Backfill bytes not sent at all, in the sidecar's stats lines before → after the confirmation, and before → after the first reply text:")
 	line("")
 	for _, r := range runs {
 		line("- %s: %s; %s", r.Name(), r.atConfirm, r.atText)
@@ -300,8 +302,8 @@ func loadAccepted(dir string) ([]accepted, error) {
 }
 
 // statsLine matches the sidecar's stats lines: their time and the backfill
-// bytes the phone has not stored yet.
-var statsLine = regexp.MustCompile(`^sidecar: (\d+) device \S+ stats: .*backfill (\d+) B`)
+// bytes not sent at all on the connection.
+var statsLine = regexp.MustCompile(`^sidecar: (\d+) device \S+ stats: .*backfill unsent (\d+) B`)
 
 // backfill reads the run's sidecar log and phone events and returns the
 // backfill backlog around the prompt's confirmation and around the first

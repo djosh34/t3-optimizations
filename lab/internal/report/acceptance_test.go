@@ -14,9 +14,9 @@ func TestBackfillIsReadAroundEachMoment(t *testing.T) {
 {"t":4500,"ev":"text","n":12}
 `
 	log := `sidecar ready
-sidecar: 2000 device d1 stats: send 2000 B/s, unsynced 1200 B, backfill 900 B, in flight 3 packets
-sidecar: 4000 device d1 stats: send 2000 B/s, unsynced 600 B, backfill 400 B, in flight 3 packets
-sidecar: 6000 device d1 stats: send 2000 B/s, unsynced 0 B, backfill 0 B, in flight 0 packets
+sidecar: 2000 device d1 stats: send 2000 B/s, unsynced 1200 B, backfill unsent 900 B, in flight 3 packets
+sidecar: 4000 device d1 stats: send 2000 B/s, unsynced 600 B, backfill unsent 400 B, in flight 3 packets
+sidecar: 6000 device d1 stats: send 2000 B/s, unsynced 0 B, backfill unsent 0 B, in flight 0 packets
 `
 	for name, data := range map[string]string{"phone.jsonl": events, "sidecar.log": log} {
 		if err := os.WriteFile(filepath.Join(dir, name), []byte(data), 0o644); err != nil {

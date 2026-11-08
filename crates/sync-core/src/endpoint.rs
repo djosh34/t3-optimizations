@@ -77,8 +77,9 @@ pub struct Stats {
     pub last_heard: Option<Millis>,
     /// Bytes the other side has not stored yet.
     pub unsynced_bytes: u64,
-    /// Of them, the bytes of the classes below `Status` (backfill).
-    pub unsynced_backfill_bytes: u64,
+    /// Bytes of the classes below `Status` (backfill) not sent at all on
+    /// this connection.
+    pub unsent_backfill_bytes: u64,
     pub inflight_packets: usize,
 }
 
@@ -271,7 +272,7 @@ impl Endpoint {
             srtt_ms: self.rate.srtt(),
             min_rtt_ms: self.rate.min_rtt(),
             unsynced_bytes: self.out.unsynced_bytes(),
-            unsynced_backfill_bytes: self.out.unsynced_backfill_bytes(),
+            unsent_backfill_bytes: self.out.unsent_backfill_bytes(),
             inflight_packets: self.out.inflight_packets(),
             ..self.stats.clone()
         }
