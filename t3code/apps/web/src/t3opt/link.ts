@@ -473,11 +473,17 @@ export class Link {
       }
       return;
     }
-    if (!this.opened && !this.rtc?.iceEverUp && now - this.startedAt > FALLBACK_AFTER_MS) {
-      // ICE never got through on this page: the network blocks UDP. The
-      // WebSocket carries packets; WebRTC is tried again from time to time.
-      // When ICE did connect, the handshake is only slow (it takes minutes
-      // at 70% loss), and TCP would do worse on such a link.
+    // ICE never got through on this connection (the page's first, or one after
+    // the channel closed): UDP is blocked, the WebSocket carries packets. ICE
+    // up means only a slow handshake (minutes at 70% loss), where TCP does worse.
+    const pending = this.rtc;
+    const blocked =
+      pending === null
+        ? !this.opened && now - this.startedAt > FALLBACK_AFTER_MS
+        : pending.dc.readyState !== "open" &&
+          !pending.iceEverUp &&
+          now - pending.createdAt > FALLBACK_AFTER_MS;
+    if (blocked) {
       this.rtc?.pc.close();
       this.rtc = null;
       this.lastRtcTry = now;

@@ -40,6 +40,12 @@ export class Engine {
   private batch: bigint | null = null;
   private committing = false;
   private pumpTimer: ReturnType<typeof setTimeout> | null = null;
+  /**
+   * Log writes not committed yet. Nothing goes out meanwhile: a page killed
+   * before the commit would number its next entry again, and get the reply
+   * meant for one the sidecar already ran.
+   */
+  private unsavedLog = 0;
   private readonly waiting = new Map<bigint, (reply: unknown) => void>();
   private readonly statusListeners = new Set<() => void>();
   private receivedContentBytes = 0;
@@ -190,6 +196,7 @@ export class Engine {
 
   /** Sends what the phone has to send now, and wakes when it next has. */
   pump(): void {
+    if (this.unsavedLog > 0) return;
     const now = performance.now();
     let sent = false;
     while (this.link.canSend()) {
@@ -216,10 +223,28 @@ export class Engine {
     const bytes = encoder.encode(JSON.stringify(payload));
     const seq = kind === "command" ? this.phone.command(bytes) : this.phone.call(bytes, background);
     const reply = new Promise<unknown>((resolve) => this.waiting.set(seq, resolve));
-    await this.store.set({ state: this.phone.saveState() });
+    this.unsavedLog += 1;
+    try {
+      await this.saveLog();
+    } finally {
+      this.unsavedLog -= 1;
+    }
     this.pump();
     this.statusChanged();
     return { seq, reply };
+  }
+
+  /** Stores the phone's state with its log; a failed write is tried again, as the entry cannot be taken back. */
+  private async saveLog(): Promise<void> {
+    for (let wait = 100; ; wait = Math.min(wait * 2, 5_000)) {
+      try {
+        await this.store.set({ state: this.phone.saveState() });
+        return;
+      } catch (error) {
+        console.warn("t3opt: storing the log failed, trying again", error);
+        await new Promise((resolve) => setTimeout(resolve, wait));
+      }
+    }
   }
 
   entryState(seq: bigint): EntryState | null {
