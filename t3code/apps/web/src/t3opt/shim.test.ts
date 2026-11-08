@@ -147,6 +147,8 @@ describe("server.refreshProviders", () => {
     request.mockImplementationOnce(() => Promise.reject(new Error("link closed")));
     rpc.handle({ _tag: "Request", id: 2, tag: "server.refreshProviders", payload });
     await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+    // Let the failed call's promise chain run, then count the replies.
+    for (let step = 0; step < 5; step++) await Promise.resolve();
     expect(exitsFor(sent, 2)).toEqual(["ok"]);
   });
 });

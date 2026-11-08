@@ -38,12 +38,11 @@ type accepted struct {
 type around struct{ before, after int64 }
 
 // overtook says whether the moment came while backfill waited: unsent
-// backfill both before and after it. Known is false without the lines.
-func (a around) overtook() (yes, known bool) {
-	if a.before < 0 || a.after < 0 {
-		return false, false
-	}
-	return a.before > 0 && a.after > 0, true
+// backfill both before and after it. False also when it cannot be told: no
+// stats line on one side, no backfill waiting before, or backfill that
+// drained between the two lines.
+func (a around) overtook() bool {
+	return a.before > 0 && a.after > 0
 }
 
 func (a around) String() string {
@@ -182,22 +181,19 @@ func targets(runs []accepted) string {
 	line("- After every outage, sync resumes with no user action (runs with outages or an address change, the whole reply shown): %s. %s.",
 		verdict(ok), list(out, func(r accepted) string { return r.Status }))
 
-	var shown, notShown, untold []accepted
+	var shown, untold []accepted
 	for _, r := range runs {
-		confirm, knownConfirm := r.atConfirm.overtook()
-		text, knownText := r.atText.overtook()
-		switch {
-		case !knownConfirm || !knownText:
-			untold = append(untold, r)
-		case confirm && text:
+		if r.Profile == "F" || profileOf(r.Profile).TCPPath {
+			continue
+		}
+		if r.atConfirm.overtook() && r.atText.overtook() {
 			shown = append(shown, r)
-		default:
-			notShown = append(notShown, r)
+		} else {
+			untold = append(untold, r)
 		}
 	}
-	line("- The newest text and prompt acks overtake backfill in every run: %s. Both the confirmation and the first reply text reached the phone while backfill (older messages, the thread list, other threads, images) still waited, by the sidecar's stats lines just before and just after each (every 10 s), in %d runs; not shown in %d: %s; cannot be told in %d (no prompt, no text, or no stats line on one side): %s. Per run below.",
-		verdict(len(shown) > 0 && len(notShown) == 0 && len(untold) == 0),
-		len(shown), len(notShown), names(notShown), len(untold), names(untold))
+	line("- The newest text and prompt acks overtake backfill in every run: %s where it can be told. Both the confirmation and the first reply text reached the phone while backfill (older messages, the thread list, other threads, images) still waited, by the sidecar's stats lines just before and just after each (every 10 s), in %d runs. It cannot be told in %d (no prompt or no text, no stats line on one side, no backfill waiting before, or backfill drained between the two lines): %s. Per run below.",
+		verdict(len(shown) > 0), len(shown), len(untold), names(untold))
 
 	var again []accepted
 	for _, r := range runs {

@@ -666,9 +666,9 @@ fn fit(
 }
 
 /// Bytes a chunk takes beyond its data and meta (`wire::chunk_len`): two
-/// tag bytes and up to seven varints (key, revision, total length, offset,
-/// keep, the meta's length and the body's lengths). With values under 2^35,
-/// five bytes each, that is at most 41.
+/// tag bytes and up to eight varints (key, revision, total length, offset,
+/// keep, the meta's length and the body's two lengths). With values under
+/// 2^35, five bytes each, that is at most 42.
 const CHUNK_HEAD_MAX: usize = 48;
 
 /// A chunk needs at least this much space to be worth starting.

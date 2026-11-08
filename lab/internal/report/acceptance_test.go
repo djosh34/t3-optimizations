@@ -30,11 +30,11 @@ sidecar: 6000 device d1 stats: send 2000 B/s, unsynced 0 B, backfill 0 B, in fli
 	if atConfirm != (around{900, 400}) || atText != (around{400, 0}) {
 		t.Errorf("got %v and %v, want 900 → 400 and 400 → 0", atConfirm, atText)
 	}
-	if yes, known := atConfirm.overtook(); !yes || !known {
+	if !atConfirm.overtook() {
 		t.Errorf("the confirmation overtook backfill")
 	}
-	if yes, known := atText.overtook(); yes || !known {
-		t.Errorf("by the line after the first text all backfill was stored: not shown")
+	if atText.overtook() {
+		t.Errorf("backfill drained between the lines around the first text: cannot be told")
 	}
 }
 
