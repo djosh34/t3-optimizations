@@ -15,6 +15,14 @@ const DEAD_AFTER_MS = 60_000;
 const DEAD_ICE_UP_MS = 20_000;
 /** A first WebRTC connection whose ICE has not connected by then falls back to the WebSocket. */
 const FALLBACK_AFTER_MS = 20_000;
+/**
+ * An open connection silent this long, with ICE not up at any time of it, opens
+ * the WebSocket as a probe; when the probe is open and the silence lasts another
+ * `SWITCH_AFTER_PROBE_MS`, UDP is blocked and the WebSocket takes over. In an
+ * outage the probe cannot connect, and an ICE restart brings the data back first.
+ */
+const PROBE_WS_AFTER_MS = 60_000;
+const SWITCH_AFTER_PROBE_MS = 20_000;
 /** WebRTC is tried again this often while it failed to connect. */
 const RTC_RETRY_MS = 10_000;
 /** And this often while the WebSocket carries packets. */
@@ -120,6 +128,9 @@ export class Link {
   /** The WebRTC connection: carrying packets, or being tried while the WebSocket does. */
   private rtc: Rtc | null = null;
   private ws: WebSocket | null = null;
+  /** A WebSocket opened while WebRTC is silent, to tell blocked UDP from an outage. */
+  private probe: WebSocket | null = null;
+  private probeOpenAt: number | null = null;
   private transport: Transport = "webrtc";
   /** Only the WebSocket, as asked with `?transport=websocket` or without WebRTC. */
   private wsOnly = false;
@@ -231,6 +242,7 @@ export class Link {
     }
     this.lastDataAt = now;
     this.lastDataOn = on;
+    if (this.probe !== null && on !== this.probe) this.closeProbe();
     if (this.rtc) {
       if (this.rtc.iceUpSince !== null) this.rtc.iceUpSince = now;
       this.rtc.iceUpInSilenceMs = 0;
@@ -270,7 +282,8 @@ export class Link {
     const key = this.key;
     if (!key) throw new Error("no key");
     const certificate = await this.certificateFor();
-    const replaces = this.rtc !== null;
+    const old = this.rtc;
+    const replaces = old !== null;
     const generation = this.generation + 1;
     this.generation = generation;
     await this.storage.save({ generation });
@@ -295,6 +308,8 @@ export class Link {
       lastRestartAt: null,
     };
     this.rtc = rtc;
+    // The connection it replaces is dead; closed, its ICE agent stops.
+    old?.pc.close();
     if (replaces) this.newConnections += 1;
     dc.onopen = () => {
       if (this.rtc !== rtc) return;
@@ -366,14 +381,21 @@ export class Link {
 
   private openWebSocket() {
     this.transport = "websocket";
+    this.set("websocket connecting");
+    this.ws = this.newWebSocket();
+  }
+
+  private newWebSocket(): WebSocket {
     const url = new URL("/sync", location.href);
     url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-    this.set("websocket connecting");
     const createdAt = Date.now();
     const ws = new WebSocket(url);
     ws.binaryType = "arraybuffer";
-    this.ws = ws;
     ws.onopen = () => {
+      if (this.probe === ws) {
+        this.probeOpenAt = Date.now();
+        return;
+      }
       if (this.ws !== ws) return;
       this.handshakeMs = Date.now() - createdAt;
       this.opened = true;
@@ -384,10 +406,39 @@ export class Link {
       if (this.ws === ws) this.received(ws, e.data);
     };
     ws.onclose = () => {
+      if (this.probe === ws) {
+        this.probe = null;
+        this.probeOpenAt = null;
+        return;
+      }
       if (this.ws !== ws) return;
       this.ws = null;
       this.set("websocket closed");
     };
+    return ws;
+  }
+
+  private closeProbe() {
+    const probe = this.probe;
+    this.probe = null;
+    this.probeOpenAt = null;
+    probe?.close();
+  }
+
+  /** The probe got through while WebRTC stayed silent: UDP is blocked, the WebSocket carries packets. */
+  private switchToProbe(rtc: Rtc, now: number) {
+    const ws = this.probe;
+    if (ws === null) return;
+    this.probe = null;
+    this.probeOpenAt = null;
+    rtc.pc.close();
+    this.rtc = null;
+    this.lastRtcTry = now;
+    this.transport = "websocket";
+    this.ws = ws;
+    this.handshakeMs = null;
+    this.hooks.onNewConnection();
+    this.set("websocket open");
   }
 
   /** Once a second: restarts ICE, makes a new connection, falls back, tries WebRTC again. */
@@ -451,6 +502,15 @@ export class Link {
     const silentFor = now - (this.lastDataAt ?? rtc.createdAt);
     if (silentFor < RESTART_AFTER_MS) return;
     const iceUp = rtc.iceUpInSilenceMs + (rtc.iceUpSince === null ? 0 : now - rtc.iceUpSince);
+    if (!this.wsOnly && silentFor >= PROBE_WS_AFTER_MS && iceUp === 0) {
+      if (this.probe === null) this.probe = this.newWebSocket();
+      else if (this.probeOpenAt !== null && now - this.probeOpenAt >= SWITCH_AFTER_PROBE_MS) {
+        this.switchToProbe(rtc, now);
+        return;
+      }
+    } else if (this.probe !== null) {
+      this.closeProbe();
+    }
     if (silentFor >= DEAD_AFTER_MS && iceUp >= DEAD_ICE_UP_MS) {
       this.tryRtc();
       return;

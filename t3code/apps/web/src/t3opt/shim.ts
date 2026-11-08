@@ -82,6 +82,40 @@ function readReply(reply: unknown): { exit: unknown } | { chunk: unknown[] } {
 }
 
 /** Resolves once `ready` returns a value; it is checked again on every change of synced state. */
+/**
+ * A synced image's `blob:` URL, one per attachment for the page's life. Null
+ * when its bytes did not come within `IMAGE_WAIT_MS` (the sidecar's fetch can
+ * fail): the call goes to the sidecar then.
+ */
+const imageUrls = new Map<string, string>();
+const IMAGE_WAIT_MS = 120_000;
+
+async function imageUrl(engine: Engine, attachment: string): Promise<string | null> {
+  const known = imageUrls.get(attachment);
+  if (known !== undefined) return known;
+  const blob = await new Promise<Blob | null>((resolve) => {
+    const now = imageBlob(engine.objects, attachment);
+    if (now !== null) {
+      resolve(now);
+      return;
+    }
+    const done = (b: Blob | null) => {
+      stop();
+      clearTimeout(timer);
+      resolve(b);
+    };
+    const stop = engine.objects.subscribe(() => {
+      const b = imageBlob(engine.objects, attachment);
+      if (b !== null) done(b);
+    });
+    const timer = setTimeout(() => done(null), IMAGE_WAIT_MS);
+  });
+  if (blob === null) return null;
+  const url = imageUrls.get(attachment) ?? URL.createObjectURL(blob);
+  imageUrls.set(attachment, url);
+  return url;
+}
+
 function whenReady<T>(engine: Engine, ready: () => T | null): Promise<T> {
   const now = ready();
   if (now !== null) return Promise.resolve(now);
@@ -244,12 +278,14 @@ class RpcServer {
         // Images come over the sync link, the last class, so the bytes can still
         // be on their way; the client keeps the URL it gets, so wait for them.
         if (attachment !== null && imageComing(objects, attachment)) {
-          const blob = await whenReady(this.engine, () => imageBlob(objects, attachment));
-          this.exit(id, {
-            _tag: "Success",
-            value: { relativeUrl: URL.createObjectURL(blob), expiresAt: Date.now() + 3_600_000 },
-          });
-          return;
+          const url = await imageUrl(this.engine, attachment);
+          if (url !== null) {
+            this.exit(id, {
+              _tag: "Success",
+              value: { relativeUrl: url, expiresAt: Date.now() + 3_600_000 },
+            });
+            return;
+          }
         }
         break;
       }
@@ -294,12 +330,12 @@ function trackPrompt(engine: Engine, seq: bigint, reply: Promise<unknown>) {
   };
   shimEvents.prompt = null;
   set("queued");
-  const poll = setInterval(() => {
+  const stop = engine.onStatus(() => {
     const state = engine.entryState(seq);
     if (state !== null && state !== shimEvents.prompt?.state) set(state);
-  }, 200);
+  });
   void reply.then((r) => {
-    clearInterval(poll);
+    stop();
     const exit = readReply(r);
     const ok = "exit" in exit && (exit.exit as Json | null)?._tag === "Success";
     set(ok ? "confirmed" : "failed");

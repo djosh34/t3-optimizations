@@ -191,11 +191,14 @@ export class Engine {
   /** Sends what the phone has to send now, and wakes when it next has. */
   pump(): void {
     const now = performance.now();
+    let sent = false;
     while (this.link.canSend()) {
       const p = this.phone.poll(now);
       if (p === null) break;
       this.link.send(p);
+      sent = true;
     }
+    if (sent) this.statusChanged();
     const at = this.phone.nextWakeup(now);
     if (this.pumpTimer !== null) clearTimeout(this.pumpTimer);
     this.pumpTimer = setTimeout(() => this.pump(), Math.max(1, Math.min(1_000, at - now)));

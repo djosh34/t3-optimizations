@@ -109,8 +109,10 @@ pub struct App {
     last_stats: Instant,
     /// Packets SCTP dropped for a full send buffer since the last stats line.
     dropped: u64,
-    /// A `server.getConfig` request is out.
+    /// A `server.getConfig` request is out, and the config changed again
+    /// since it went out: it is fetched once more when the reply comes.
     config_pending: bool,
+    config_again: bool,
     /// Objects phones kept from before a restart that the forked server no
     /// longer has were deleted.
     pruned: bool,
@@ -167,6 +169,7 @@ pub fn run(cfg: Config) -> Result<(), Error> {
         last_stats: Instant::now(),
         dropped: 0,
         config_pending: false,
+        config_again: false,
         pruned: false,
     };
     app.load_devices()?;
@@ -788,7 +791,9 @@ impl App {
     }
 
     fn fetch_config(&mut self) {
-        if !self.config_pending {
+        if self.config_pending {
+            self.config_again = true;
+        } else {
             self.config_pending = true;
             self.request("server.getConfig", json!({}), Pending::Config);
         }
@@ -835,6 +840,9 @@ impl App {
                     self.world.set_config(&exit["value"]);
                 } else {
                     log(format!("server config: {exit}"));
+                }
+                if std::mem::take(&mut self.config_again) {
+                    self.fetch_config();
                 }
             }
             Pending::ConfigStream => {

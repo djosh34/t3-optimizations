@@ -37,7 +37,7 @@ type E2EOptions struct {
 }
 
 // e2eSteps is the number of steps in driver/webapp-e2e.mjs.
-const e2eSteps = 17
+const e2eSteps = 18
 
 // e2eClean is the link between the steps that shape it: weak 4G.
 const e2eClean = "A"

@@ -26,8 +26,10 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
+      // The runtime cache holds lazy chunks of the build that loaded them; a new
+      // build has its own, so the old ones go with the old shell.
       for (const name of await caches.keys()) {
-        if (name !== SHELL && name !== RUNTIME) await caches.delete(name);
+        if (name !== SHELL) await caches.delete(name);
       }
       await self.clients.claim();
     })(),
