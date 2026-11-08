@@ -153,6 +153,8 @@ export function isBackgroundCall(tag: string): boolean {
   return BACKGROUND_CALLS.has(tag);
 }
 
+const FOLLOW_INTERVAL_MS = 250;
+
 /** A request id as the client sent it; replies carry it back unchanged. */
 type RequestId = string | number;
 
@@ -232,11 +234,31 @@ class RpcServer {
     this.send({ _tag: "Chunk", requestId: id, values });
   }
 
-  /** A stream answered from synced state: `values` again on every change. */
+  /**
+   * A stream answered from synced state: `values` again on every change, at
+   * most every `FOLLOW_INTERVAL_MS`. A thread snapshot is tens of kB: built,
+   * sent and rendered for every packet, it kept WebKit's main thread busy for
+   * half a minute at a time on case 50 (issue #46).
+   */
   private follow(id: RequestId, values: (first: boolean) => unknown[] | null) {
     let first = true;
     let last = "";
+    let lastRun = -Infinity;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const update = () => {
+      if (timer !== null) return;
+      const wait = lastRun + FOLLOW_INTERVAL_MS - performance.now();
+      if (wait > 0) {
+        timer = setTimeout(() => {
+          timer = null;
+          run();
+        }, wait);
+        return;
+      }
+      run();
+    };
+    const run = () => {
+      lastRun = performance.now();
       let v: unknown[] | null;
       try {
         v = values(first);
@@ -251,7 +273,11 @@ class RpcServer {
       first = false;
       this.chunk(id, v);
     };
-    const stop = this.engine.objects.subscribe(update);
+    const unsubscribe = this.engine.objects.subscribe(update);
+    const stop = () => {
+      unsubscribe();
+      if (timer !== null) clearTimeout(timer);
+    };
     this.streams.set(String(id), { pending: null, awaitingAck: false, replaces: true, stop });
     update();
   }

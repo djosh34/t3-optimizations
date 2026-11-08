@@ -112,9 +112,13 @@ pub fn class_of(world: &World, id: u64, obj: &Obj, focus: Option<&str>) -> Class
     if !current {
         return Class::Background;
     }
-    if obj.thread.as_deref().and_then(|t| world.tail(t)) == Some(id) {
+    let thread = obj.thread.as_deref();
+    if thread.and_then(|t| world.tail(t)) == Some(id) {
         Class::Tail
-    } else if obj.status {
+    } else if obj.status || thread.and_then(|t| world.tail_item(t)) == Some(id) {
+        // The newest assistant message's turn item goes with status even
+        // once finished: until it is here, the client shows that message as
+        // still streaming and holds back its last paragraph (issue #46).
         Class::Status
     } else {
         Class::History

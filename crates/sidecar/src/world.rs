@@ -112,6 +112,8 @@ struct ThreadState {
     text_kind: HashMap<String, String>,
     /// Ordinal and text key of each assistant message, for the tail.
     assistant: BTreeMap<u64, String>,
+    /// The turn item of each assistant message's text key.
+    assistant_items: HashMap<String, String>,
 }
 
 #[derive(Debug, Default)]
@@ -179,6 +181,14 @@ impl World {
     pub fn tail(&self, thread: &str) -> Option<u64> {
         let key = self.threads.get(thread)?.assistant.values().next_back()?;
         Some(object_id(&["text", thread, key]))
+    }
+
+    /// The body of the turn item of the thread's newest assistant message.
+    pub fn tail_item(&self, thread: &str) -> Option<u64> {
+        let state = self.threads.get(thread)?;
+        let key = state.assistant.values().next_back()?;
+        let item = state.assistant_items.get(key)?;
+        Some(object_id(&["body", thread, "turnItems", item]))
     }
 
     /// The listed threads.
@@ -684,11 +694,18 @@ impl World {
         // t3's ordinal takes the place of a provisional one.
         state.assistant.retain(|_, k| k != key);
         state.assistant.insert(ordinal, key.to_owned());
+        if let Some(id) = item["id"].as_str() {
+            state.assistant_items.insert(key.to_owned(), id.to_owned());
+        }
         let new_tail = state.assistant.values().next_back().cloned();
         if old_tail != new_tail {
-            // Both change class.
+            // Both change class, and so do their turn items.
             for k in [old_tail, new_tail].into_iter().flatten() {
                 self.changed.insert(object_id(&["text", thread, &k]));
+                if let Some(id) = state.assistant_items.get(&k) {
+                    self.changed
+                        .insert(object_id(&["body", thread, "turnItems", id]));
+                }
             }
         }
     }
@@ -968,6 +985,10 @@ mod tests {
             &event("turn-item.updated", item("b", 7, "second", true, "1")),
         );
         assert_eq!(w.tail("t1"), Some(object_id(&["text", "t1", "m-b"])));
+        assert_eq!(
+            w.tail_item("t1"),
+            Some(object_id(&["body", "t1", "turnItems", "b"]))
+        );
     }
 
     #[test]
