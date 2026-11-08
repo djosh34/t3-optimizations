@@ -1,0 +1,635 @@
+# case50, webapp, warm start, seed 7
+
+Profile case50 (graded): graded: 50% loss, 100 kbit/s. Commit fe6e6aee76ac.
+
+WebRTC data channel from WebKit to the sidecar (UDP, str0m with the patched SCTP layer) over a veth pair in the lab; the app's HTTPS goes through the lab front. In production the UDP goes through Tailscale.
+
+**Status: done** after 45 s (deadline 15m0s).
+
+| Measure | Value |
+|---|---|
+| Prompt confirmation | 1.2s |
+| Prompt reached the agent | 0.8s |
+| Time to first text | 1.7s |
+| Whole reply shown | 44.8s |
+| Reply shown / produced / total (chars) | 1596 / 1596 / 1596 |
+| Newest-text lag: max / median / p95 | 5.9s / 1.4s / 2.9s |
+| Longest silence | 3.5s |
+| Approval shown after it was asked | 1.0s |
+| Bytes on the wire down / up | 365866 / 123732 |
+| Bytes the app received / sent | 309183 / 72187 |
+
+## Newest-text lag over time
+
+Every 10 s after the prompt was sent.
+
+| After (s) | Lag (s) | Shown | Produced |
+|---|---|---|---|
+| 0 | 0.0 | 0 | 0 |
+| 10 | 2.8 | 254 | 369 |
+| 20 | 0.4 | 750 | 770 |
+| 30 | 0.7 | 1077 | 1109 |
+| 40 | 0.7 | 1456 | 1483 |
+| 44 | 1.3 | 1571 | 1596 |
+
+## Driver notes
+
+- webapp {"objects":{"frame":"1031/1031","turnItems":"870/870 1058/1058 1103/1103 860/860 1299/1299 1103/1103 1058/1058","thread":"951/951","runs":"1014/1014 971/971","assistant":"32/32 21/21","user":"10/10 9/9","attempts":"661/661 661/661","providerTurns":"776/776 15/776","nodes":"1022/1022 809/809 809/809","providerThreads":"809/809","providerSessions":"2685/2685","messages":"456/456 548/548","checkpoints":"779/779 307/613 779/779","checkpointScopes":"723/723"},"link":{"transport":"webrtc","trying":"webrtc live","open":true,"generation":2,"iceRestarts":0,"newConnections":0,"handshakeMs":298,"lastDataAt":1794174943497,"silences":0,"longestSilenceMs":1472,"longestRecoveredGapMs":1472},"stats":{"sendRate":7252.103463042141,"deliveredRate":3006.5144740189367,"loss":0,"srttMs":129.1782444779156,"minRttMs":2,"sentPackets":120,"sentWireBytes":35524,"receivedPackets":108,"receivedWireBytes":47725,"lastHeardMs":10186,"unsyncedBytes":998,"inflightPackets":16,"duplicateBytes":0}}
+- prompt queued
+- prompt sent
+- prompt confirmed
+- webapp {"objects":{"frame":"1031/1031","turnItems":"870/870 1058/1058 1103/1103 860/860 1299/1299 1103/1103 1058/1058 849/849 1078/1078","thread":"951/951","runs":"1014/1014 971/971","assistant":"32/32 21/21 440/455","user":"10/10 9/9","attempts":"661/661 661/661 309/637","providerTurns":"776/776 497/776","nodes":"1022/1022 809/809 809/809 17/1022","providerThreads":"419/811","providerSessions":"2685/2685","messages":"456/456 548/548 548/548","checkpoints":"421/613 605/613 779/779","checkpointScopes":"723/723"},"link":{"transport":"webrtc","trying":"webrtc live","open":true,"generation":2,"iceRestarts":0,"newConnections":0,"handshakeMs":298,"lastDataAt":1794174953645,"silences":0,"longestSilenceMs":1472,"longestRecoveredGapMs":1472},"stats":{"sendRate":2589.5305393194744,"deliveredRate":1987.9671249624303,"loss":0.41624,"srttMs":652.6047800655188,"minRttMs":2,"sentPackets":181,"sentWireBytes":48341,"receivedPackets":168,"receivedWireBytes":69754,"lastHeardMs":20335,"unsyncedBytes":0,"inflightPackets":21,"duplicateBytes":0}}
+- webapp {"objects":{"frame":"1031/1031","turnItems":"870/870 1058/1058 1103/1103 860/860 1299/1299 1103/1103 1058/1058 849/849 1078/1078","thread":"951/951","runs":"1014/1014 971/971 839/839","assistant":"32/32 21/21 953/953","user":"10/10 9/9 64/64","attempts":"661/661 661/661 637/637","providerTurns":"776/776 560/776 527/658","nodes":"1022/1022 809/809 809/809 1022/1022 721/785","providerThreads":"811/811","providerSessions":"2685/2685","messages":"456/456 548/548 548/548 547/547 264/451 595/901","checkpoints":"464/613 605/613 779/779","checkpointScopes":"669/723"},"link":{"transport":"webrtc","trying":"webrtc live","open":true,"generation":2,"iceRestarts":0,"newConnections":0,"handshakeMs":298,"lastDataAt":1794174963746,"silences":0,"longestSilenceMs":1472,"longestRecoveredGapMs":1472},"stats":{"sendRate":4080.60679893259,"deliveredRate":1096.0539215686272,"loss":0.5749,"srttMs":713.7686188385628,"minRttMs":595,"sentPackets":256,"sentWireBytes":64196,"receivedPackets":299,"receivedWireBytes":115242,"lastHeardMs":30435,"unsyncedBytes":0,"inflightPackets":45,"duplicateBytes":0}}
+- webapp {"objects":{"frame":"1031/1031","turnItems":"870/870 1058/1058 1103/1103 860/860 1299/1299 1103/1103 1058/1058 849/849 1103/1103 1015/1574 929/929 1078/1078","thread":"951/951","runs":"1014/1014 971/971 839/839","assistant":"32/32 21/21 1340/1340 108/108","user":"10/10 9/9 64/64","attempts":"661/661 661/661 637/637","providerTurns":"776/776 776/776 658/658","nodes":"1022/1022 809/809 809/809 1022/1022 785/785 870/987 445/1398 1022/1022","providerThreads":"811/811","providerSessions":"2685/2685","messages":"456/456 548/548 548/548 548/548 451/451 901/901","checkpoints":"613/613 613/613 779/779","checkpointScopes":"723/723","runtimeRequests":"1051/1051"},"link":{"transport":"webrtc","trying":"webrtc live","open":true,"generation":2,"iceRestarts":0,"newConnections":0,"handshakeMs":298,"lastDataAt":1794174974799,"silences":0,"longestSilenceMs":1472,"longestRecoveredGapMs":1472},"stats":{"sendRate":3000,"deliveredRate":1211.4233072316906,"loss":0.4666666666666667,"srttMs":780.5128838140786,"minRttMs":595,"sentPackets":314,"sentWireBytes":74427,"receivedPackets":487,"receivedWireBytes":224672,"lastHeardMs":41488,"unsyncedBytes":0,"inflightPackets":47,"duplicateBytes":0}}
+- webapp {"objects":{"frame":"1031/1031","turnItems":"870/870 1058/1058 1103/1103 860/860 1299/1299 1103/1103 1058/1058 849/849 1103/1103 1574/1574 953/953 1078/1078","thread":"951/951","runs":"1014/1014 971/971 839/839","assistant":"32/32 21/21 1340/1340 654/654","user":"10/10 9/9 64/64","attempts":"661/661 661/661 637/637","providerTurns":"776/776 776/776 658/658","nodes":"1022/1022 809/809 809/809 1022/1022 785/785 987/987 1398/1398 1022/1022","providerThreads":"811/811","providerSessions":"2685/2685","messages":"456/456 548/548 548/548 548/548 451/451 901/901 547/547","checkpoints":"613/613 613/613 779/779","checkpointScopes":"723/723","runtimeRequests":"1051/1051"},"link":{"transport":"webrtc","trying":"webrtc live","open":true,"generation":2,"iceRestarts":0,"newConnections":0,"handshakeMs":298,"lastDataAt":1794174985785,"silences":0,"longestSilenceMs":1472,"longestRecoveredGapMs":1472},"stats":{"sendRate":2888.870227064572,"deliveredRate":0,"loss":0.5340558771929824,"srttMs":915.6333163578599,"minRttMs":595,"sentPackets":415,"sentWireBytes":99685,"receivedPackets":745,"receivedWireBytes":327465,"lastHeardMs":52474,"unsyncedBytes":0,"inflightPackets":89,"duplicateBytes":0}}
+- shim trace
+21:55:33.578 fetch GET /api/auth/session
+21:55:33.579 fetched GET /api/auth/session 200
+21:55:33.775 fetch GET /.well-known/t3/environment
+21:55:33.776 fetched GET /.well-known/t3/environment 200
+21:55:33.785 fetch GET /.well-known/t3/environment
+21:55:33.786 fetched GET /.well-known/t3/environment 200
+21:55:33.790 rpc 0 subscribeServerConfig
+21:55:33.790 chunk 0 38678 bytes
+21:55:33.807 in Ack 0
+21:55:33.808 rpc 1 subscribeServerLifecycle
+21:55:33.809 rpc 2 subscribeServerLifecycle
+21:55:33.811 fetch GET /api/auth/session
+21:55:33.812 fetched GET /api/auth/session 200
+21:55:33.813 rpc 3 subscribeDeviceState
+21:55:33.814 rpc 4 preview.reportProfiles
+21:55:33.850 rpc 5 subscribeProjectClones
+21:55:33.869 fetch GET /api/orchestration/threads/mcp%3Add88ba75-9dab-4101-994d-eaec6236a359/bounded
+21:55:33.874 fetch GET /api/orchestration/shell
+21:55:33.892 rpc 6 server.refreshProviders
+21:55:33.930 rpc 7 orchestration.dispatchCommand thread.visit
+21:55:33.930 exit 7 {"_tag":"Success","value":{"sequence":0}}
+21:55:33.941 fetched GET /api/orchestration/shell 200
+21:55:33.941 rpc 8 subscribeTerminalMetadata
+21:55:33.942 rpc 9 subscribeVcsStatus
+21:55:33.942 rpc 10 subscribePreviewEvents
+21:55:33.944 rpc 11 orchestration.subscribeShell
+21:55:33.944 chunk 11 2779 bytes
+21:55:33.945 rpc 12 assets.createUrl
+21:55:33.946 rpc 13 preview.list
+21:55:33.947 rpc 14 projects.readFile
+21:55:33.949 in Ack 11
+21:55:34.191 exit 13 {"_tag":"Success","value":{"revision":0,"serverEpoch":"bb856baa-caf7-42e8-b159-24086cedff32","sessions":[]}}
+21:55:34.191 exit 14 {"_tag":"Success","value":{"byteLength":0,"contents":"","exists":false,"relativePath":"t3.json","truncated":false}}
+21:55:34.196 rpc 15 server.reportClientActivity
+21:55:34.450 chunk 1 3861 bytes
+21:55:34.450 in Ack 1
+21:55:34.690 chunk 2 3861 bytes
+21:55:34.691 in Ack 2
+21:55:34.777 fetch POST /api/observability/v1/traces
+21:55:34.777 fetched POST /api/observability/v1/traces 204
+21:55:34.879 chunk 11 2755 bytes
+21:55:34.879 exit 6 {"_tag":"Success","value":{"providers":[{"auth":{"canLogout":false,"status":"unknown"},"checkedAt":"2026-11-08T21:55:21.364Z","configurableProviders":false,"con
+21:55:34.879 chunk 9 472 bytes
+21:55:34.879 exit 12 {"_tag":"Success","value":{"expiresAt":1794177000000,"relativeUrl":"/api/assets/eyJ2ZXJzaW9uIjoxLCJraW5kIjoicHJvamVjdC1mYXZpY29uIiwid29ya3NwYWNlUm9vdCI6Ii9ob21l
+21:55:34.880 in Ack 11
+21:55:34.887 in Ack 9
+21:55:35.378 chunk 3 876 bytes
+21:55:35.378 exit 4 {"_tag":"Success","value":null}
+21:55:35.378 chunk 5 4 bytes
+21:55:35.378 chunk 8 36 bytes
+21:55:35.378 in Ack 3
+21:55:35.382 rpc 16 preview.reportProfiles
+21:55:35.382 in Ack 5
+21:55:35.382 in Ack 8
+21:55:35.385 chunk 11 2798 bytes
+21:55:35.386 in Ack 11
+21:55:35.478 exit 15 {"_tag":"Success","value":null}
+21:55:35.478 exit 16 {"_tag":"Success","value":null}
+21:55:35.749 fetched GET /api/orchestration/threads/mcp%3Add88ba75-9dab-4101-994d-eaec6236a359/bounded 200
+21:55:35.752 rpc 17 orchestration.subscribeThread
+21:55:35.753 chunk 17 8294 bytes
+21:55:35.761 in Interrupt 9
+21:55:35.764 rpc 18 subscribeVcsStatus
+21:55:35.809 in Ack 17
+21:55:35.881 fetch POST /api/observability/v1/traces
+21:55:35.881 fetched POST /api/observability/v1/traces 204
+21:55:35.907 chunk 18 472 bytes
+21:55:35.907 in Ack 18
+21:55:36.002 chunk 17 11271 bytes
+21:55:36.003 in Ack 17
+21:55:36.034 rpc 19 server.reportClientActivity
+21:55:36.252 chunk 17 12708 bytes
+21:55:36.253 in Ack 17
+21:55:36.502 chunk 17 13517 bytes
+21:55:36.504 in Ack 17
+21:55:36.641 rpc 20 attachments.createUploadUrl
+21:55:36.812 exit 19 {"_tag":"Success","value":null}
+21:55:36.812 chunk 17 18034 bytes
+21:55:36.820 in Ack 17
+21:55:36.862 exit 20 {"_tag":"Success","value":{"attachmentId":"pending-73b24054-4fb3-4a41-bec3-53c087638327","expiresAt":1794175536838,"relativeUrl":"/api/attachments/upload/eyJ2ZX
+21:55:36.863 fetch POST /api/attachments/upload/eyJ2ZXJzaW9uIjoxLCJraW5kIjoiYXR0YWNobWVudC11cGxvYWQiLCJ0eXBlIjoiaW1hZ2UiLCJhdHRhY2htZW50SWQiOiJwZW5kaW5nLTczYjI0MDU0LTRmYjMtNGE0MS1iZWMzLTUzYzA4NzYzODMyNyIsIm5hbWUiOiJsYWIucG5nIiwibWltZVR5cGUiOiJpbWFnZS9wbmciLCJzaXplQnl0ZXMiOjcwMzAsImV4cGlyZXNBdCI6MTc5NDE3NTUzNjgzOH0.4l1GvArF72DjWbx5PmgVxJWRewPNe7nIA7sQJpMSmOs
+21:55:37.004 fetch POST /api/observability/v1/traces
+21:55:37.004 fetched POST /api/observability/v1/traces 204
+21:55:37.062 chunk 17 19081 bytes
+21:55:37.063 in Ack 17
+21:55:37.312 chunk 17 21197 bytes
+21:55:37.313 in Ack 17
+21:55:37.324 in Interrupt 18
+21:55:37.326 rpc 21 subscribeVcsStatus
+21:55:37.371 chunk 21 472 bytes
+21:55:37.371 in Ack 21
+21:55:37.585 rpc 22 server.reportClientActivity
+21:55:38.064 fetch POST /api/observability/v1/traces
+21:55:38.064 fetched POST /api/observability/v1/traces 204
+21:55:38.758 exit 22 {"_tag":"Success","value":null}
+21:55:38.788 in Ping 
+21:55:39.831 rpc 23 orchestration.dispatchCommand message.dispatch
+21:55:40.370 fetch POST /api/observability/v1/traces
+21:55:40.370 fetched POST /api/observability/v1/traces 204
+21:55:40.429 exit 23 {"_tag":"Success","value":{"sequence":45}}
+21:55:40.431 rpc 24 attachments.delete
+21:55:40.588 exit 24 {"_tag":"Success","value":null}
+21:55:40.931 chunk 17 23662 bytes
+21:55:40.932 in Ack 17
+21:55:41.195 chunk 17 23626 bytes
+21:55:41.196 in Ack 17
+21:55:41.430 fetch POST /api/observability/v1/traces
+21:55:41.430 fetched POST /api/observability/v1/traces 204
+21:55:41.445 chunk 17 23676 bytes
+21:55:41.446 in Ack 17
+21:55:41.695 chunk 11 2820 bytes
+21:55:41.696 in Ack 11
+21:55:41.697 rpc 25 orchestration.dispatchCommand thread.visit
+21:55:41.697 exit 25 {"_tag":"Success","value":{"sequence":0}}
+21:55:41.945 chunk 17 24648 bytes
+21:55:41.945 in Ack 17
+21:55:42.195 chunk 11 2820 bytes
+21:55:42.195 chunk 17 28103 bytes
+21:55:42.196 in Ack 11
+21:55:42.201 in Ack 17
+21:55:42.204 rpc 26 assets.createUrl
+21:55:42.673 chunk 17 32116 bytes
+21:55:42.674 fetch POST /api/observability/v1/traces
+21:55:42.674 fetched POST /api/observability/v1/traces 204
+21:55:42.675 in Ack 17
+21:55:42.681 in Interrupt 21
+21:55:42.683 rpc 27 subscribeVcsStatus
+21:55:42.936 rpc 28 server.reportClientActivity
+21:55:43.317 chunk 27 472 bytes
+21:55:43.318 in Ack 27
+21:55:43.449 rpc 29 orchestration.dispatchCommand message.dispatch
+21:55:43.681 fetch POST /api/observability/v1/traces
+21:55:43.682 fetched POST /api/observability/v1/traces 204
+21:55:43.789 in Ping 
+21:55:44.432 exit 29 {"_tag":"Success","value":{"sequence":75}}
+21:55:44.567 chunk 17 32686 bytes
+21:55:44.570 in Ack 17
+21:55:44.816 chunk 17 35141 bytes
+21:55:44.818 in Ack 17
+21:55:45.083 chunk 17 35161 bytes
+21:55:45.088 in Ack 17
+21:55:45.334 chunk 17 35181 bytes
+21:55:45.336 in Ack 17
+21:55:45.434 fetch POST /api/observability/v1/traces
+21:55:45.434 fetched POST /api/observability/v1/traces 204
+21:55:45.585 chunk 17 35203 bytes
+21:55:45.586 in Ack 17
+21:55:46.094 chunk 17 35215 bytes
+21:55:46.097 in Ack 17
+21:55:46.344 chunk 17 35227 bytes
+21:55:46.346 in Ack 17
+21:55:46.587 fetch POST /api/observability/v1/traces
+21:55:46.587 fetched POST /api/observability/v1/traces 204
+21:55:46.599 chunk 17 35275 bytes
+21:55:46.602 in Ack 17
+21:55:47.603 fetch POST /api/observability/v1/traces
+21:55:47.603 fetched POST /api/observability/v1/traces 204
+21:55:47.632 chunk 17 35287 bytes
+21:55:47.633 in Ack 17
+21:55:47.883 chunk 17 35357 bytes
+21:55:47.884 in Ack 17
+21:55:48.270 chunk 17 35409 bytes
+21:55:48.271 in Ack 17
+21:55:48.634 fetch POST /api/observability/v1/traces
+21:55:48.634 fetched POST /api/observability/v1/traces 204
+21:55:48.651 chunk 17 35431 bytes
+21:55:48.653 in Ack 17
+21:55:48.789 in Ping 
+21:55:48.903 chunk 17 35441 bytes
+21:55:48.904 in Ack 17
+21:55:49.184 chunk 17 35463 bytes
+21:55:49.185 in Ack 17
+21:55:49.517 chunk 17 35501 bytes
+21:55:49.519 in Ack 17
+21:55:49.653 fetch POST /api/observability/v1/traces
+21:55:49.653 fetched POST /api/observability/v1/traces 204
+21:55:49.767 chunk 17 35511 bytes
+21:55:49.768 in Ack 17
+21:55:50.035 chunk 17 35543 bytes
+21:55:50.036 in Ack 17
+21:55:50.421 chunk 17 35575 bytes
+21:55:50.422 in Ack 17
+21:55:50.716 chunk 17 35605 bytes
+21:55:50.717 in Ack 17
+21:55:50.797 fetch POST /api/observability/v1/traces
+21:55:50.797 fetched POST /api/observability/v1/traces 204
+21:55:50.967 chunk 17 35625 bytes
+21:55:50.968 in Ack 17
+21:55:51.217 chunk 17 35699 bytes
+21:55:51.219 in Ack 17
+21:55:51.467 chunk 17 35793 bytes
+21:55:51.468 in Ack 17
+21:55:51.718 chunk 17 35803 bytes
+21:55:51.719 in Ack 17
+21:55:51.969 fetch POST /api/observability/v1/traces
+21:55:51.969 fetched POST /api/observability/v1/traces 204
+21:55:52.263 chunk 17 35825 bytes
+21:55:52.265 in Ack 17
+21:55:52.514 chunk 17 35845 bytes
+21:55:52.515 in Ack 17
+21:55:52.764 chunk 17 35857 bytes
+21:55:52.765 in Ack 17
+21:55:53.030 chunk 17 35869 bytes
+21:55:53.032 in Ack 17
+21:55:53.268 fetch POST /api/observability/v1/traces
+21:55:53.268 fetched POST /api/observability/v1/traces 204
+21:55:53.281 chunk 17 35909 bytes
+21:55:53.282 in Ack 17
+21:55:53.532 chunk 17 35939 bytes
+21:55:53.533 in Ack 17
+21:55:53.781 chunk 17 35967 bytes
+21:55:53.783 in Ack 17
+21:55:53.799 in Ping 
+21:55:54.037 chunk 17 35989 bytes
+21:55:54.043 in Ack 17
+21:55:54.284 fetch POST /api/observability/v1/traces
+21:55:54.284 fetched POST /api/observability/v1/traces 204
+21:55:54.287 chunk 17 36009 bytes
+21:55:54.289 in Ack 17
+21:55:54.538 chunk 17 36029 bytes
+21:55:54.539 in Ack 17
+21:55:54.788 chunk 17 36057 bytes
+21:55:54.789 in Ack 17
+21:55:55.044 chunk 17 36097 bytes
+21:55:55.046 in Ack 17
+21:55:55.291 fetch POST /api/observability/v1/traces
+21:55:55.291 fetched POST /api/observability/v1/traces 204
+21:55:55.295 chunk 17 36109 bytes
+21:55:55.296 in Ack 17
+21:55:55.546 chunk 17 36139 bytes
+21:55:55.547 in Ack 17
+21:55:55.795 chunk 17 36167 bytes
+21:55:55.796 in Ack 17
+21:55:56.052 chunk 17 36179 bytes
+21:55:56.054 in Ack 17
+21:55:56.297 fetch POST /api/observability/v1/traces
+21:55:56.297 fetched POST /api/observability/v1/traces 204
+21:55:56.303 chunk 17 36835 bytes
+21:55:56.304 in Ack 17
+21:55:56.553 chunk 17 36867 bytes
+21:55:56.555 in Ack 17
+21:55:57.054 chunk 17 36905 bytes
+21:55:57.055 in Ack 17
+21:55:57.305 fetch POST /api/observability/v1/traces
+21:55:57.305 fetched POST /api/observability/v1/traces 204
+21:55:57.555 chunk 17 36927 bytes
+21:55:57.556 in Ack 17
+21:55:57.804 chunk 17 36975 bytes
+21:55:57.805 in Ack 17
+21:55:57.937 in Interrupt 28
+21:55:58.055 chunk 17 36995 bytes
+21:55:58.056 in Ack 17
+21:55:58.304 chunk 11 2884 bytes
+21:55:58.304 chunk 17 37007 bytes
+21:55:58.305 in Ack 11
+21:55:58.307 rpc 30 orchestration.dispatchCommand thread.visit
+21:55:58.307 exit 30 {"_tag":"Success","value":{"sequence":0}}
+21:55:58.349 in Ack 17
+21:55:58.555 chunk 17 37085 bytes
+21:55:58.556 in Ack 17
+21:55:58.579 fetch POST /api/observability/v1/traces
+21:55:58.579 fetched POST /api/observability/v1/traces 204
+21:55:58.800 in Ping 
+21:55:58.806 chunk 17 39088 bytes
+21:55:58.807 in Ack 17
+21:55:59.027 rpc 31 server.reportClientActivity
+21:55:59.056 chunk 17 39108 bytes
+21:55:59.057 in Ack 17
+21:55:59.305 chunk 17 39128 bytes
+21:55:59.306 in Ack 17
+21:55:59.555 chunk 17 39148 bytes
+21:55:59.556 in Ack 17
+21:55:59.805 chunk 17 39170 bytes
+21:55:59.807 in Ack 17
+21:55:59.826 fetch POST /api/observability/v1/traces
+21:55:59.826 fetched POST /api/observability/v1/traces 204
+21:56:00.056 chunk 17 39238 bytes
+21:56:00.057 in Ack 17
+21:56:00.306 chunk 17 39248 bytes
+21:56:00.307 in Ack 17
+21:56:00.556 chunk 17 39288 bytes
+21:56:00.557 in Ack 17
+21:56:00.806 chunk 17 39306 bytes
+21:56:00.807 in Ack 17
+21:56:01.055 chunk 11 2884 bytes
+21:56:01.055 in Ack 11
+21:56:01.060 chunk 17 39354 bytes
+21:56:01.061 fetch POST /api/observability/v1/traces
+21:56:01.061 fetched POST /api/observability/v1/traces 204
+21:56:01.062 in Ack 17
+21:56:01.311 chunk 17 40214 bytes
+21:56:01.312 in Ack 17
+21:56:01.560 chunk 17 40224 bytes
+21:56:01.562 in Ack 17
+21:56:01.810 chunk 17 40266 bytes
+21:56:01.812 in Ack 17
+21:56:02.061 chunk 17 40296 bytes
+21:56:02.062 in Ack 17
+21:56:02.072 fetch POST /api/observability/v1/traces
+21:56:02.072 fetched POST /api/observability/v1/traces 204
+21:56:02.312 chunk 17 40316 bytes
+21:56:02.313 in Ack 17
+21:56:02.562 chunk 17 40336 bytes
+21:56:02.563 in Ack 17
+21:56:02.817 chunk 17 40356 bytes
+21:56:02.818 in Ack 17
+21:56:03.068 chunk 17 40396 bytes
+21:56:03.072 in Ack 17
+21:56:03.315 fetch POST /api/observability/v1/traces
+21:56:03.315 fetched POST /api/observability/v1/traces 204
+21:56:03.317 chunk 17 40426 bytes
+21:56:03.318 in Ack 17
+21:56:03.389 exit 28 {"_tag":"Success","value":null}
+21:56:03.513 exit 31 {"_tag":"Success","value":null}
+21:56:03.568 chunk 17 42977 bytes
+21:56:03.569 in Ack 17
+21:56:03.800 in Ping 
+21:56:03.817 chunk 17 43007 bytes
+21:56:03.819 in Ack 17
+21:56:04.067 chunk 17 43553 bytes
+21:56:04.069 in Ack 17
+21:56:04.317 chunk 17 43598 bytes
+21:56:04.318 in Ack 17
+21:56:04.329 fetch POST /api/observability/v1/traces
+21:56:04.329 fetched POST /api/observability/v1/traces 204
+21:56:04.568 chunk 17 43631 bytes
+21:56:04.569 in Ack 17
+21:56:04.818 chunk 17 43649 bytes
+21:56:04.819 in Ack 17
+21:56:05.069 chunk 17 45148 bytes
+21:56:05.070 in Ack 17
+21:56:05.426 chunk 17 45970 bytes
+21:56:05.428 in Ack 17
+21:56:05.570 fetch POST /api/observability/v1/traces
+21:56:05.570 fetched POST /api/observability/v1/traces 204
+21:56:05.677 chunk 17 46015 bytes
+21:56:05.678 in Ack 17
+21:56:05.927 chunk 17 46045 bytes
+21:56:05.928 in Ack 17
+21:56:06.177 chunk 17 46090 bytes
+21:56:06.179 in Ack 17
+21:56:06.428 chunk 17 45939 bytes
+21:56:06.429 in Ack 17
+21:56:06.679 fetch POST /api/observability/v1/traces
+21:56:06.679 fetched POST /api/observability/v1/traces 204
+21:56:06.679 chunk 17 46895 bytes
+21:56:06.680 in Ack 17
+21:56:06.929 chunk 17 46955 bytes
+21:56:06.930 in Ack 17
+21:56:07.179 chunk 17 46985 bytes
+21:56:07.180 in Ack 17
+21:56:07.429 chunk 17 47015 bytes
+21:56:07.430 in Ack 17
+21:56:07.679 chunk 17 47060 bytes
+21:56:07.680 in Ack 17
+21:56:07.688 fetch POST /api/observability/v1/traces
+21:56:07.688 fetched POST /api/observability/v1/traces 204
+21:56:07.930 chunk 17 47075 bytes
+21:56:07.931 in Ack 17
+21:56:08.181 chunk 17 47105 bytes
+21:56:08.182 in Ack 17
+21:56:08.430 chunk 17 47150 bytes
+21:56:08.431 in Ack 17
+21:56:08.680 chunk 17 47180 bytes
+21:56:08.681 in Ack 17
+21:56:08.776 exit 26 {"_tag":"Success","value":{"relativeUrl":"blob:https://10.231.0.1:8443/f17fa0e6-09c2-492a-90db-2098804fea96","expiresAt":1794178568776}}
+21:56:08.801 in Ping 
+21:56:08.931 chunk 17 47210 bytes
+21:56:08.931 in Ack 17
+21:56:08.940 fetch POST /api/observability/v1/traces
+21:56:08.940 fetched POST /api/observability/v1/traces 204
+21:56:09.180 chunk 17 47225 bytes
+21:56:09.182 in Ack 17
+21:56:09.431 chunk 17 47255 bytes
+21:56:09.432 in Ack 17
+21:56:09.681 chunk 17 47315 bytes
+21:56:09.682 in Ack 17
+21:56:09.931 chunk 17 47330 bytes
+21:56:09.932 in Ack 17
+21:56:10.181 chunk 17 47375 bytes
+21:56:10.182 in Ack 17
+21:56:10.192 fetch POST /api/observability/v1/traces
+21:56:10.192 fetched POST /api/observability/v1/traces 204
+21:56:10.432 chunk 17 47390 bytes
+21:56:10.433 in Ack 17
+21:56:10.683 chunk 17 47435 bytes
+21:56:10.683 in Ack 17
+21:56:10.932 chunk 17 47450 bytes
+21:56:10.934 in Ack 17
+21:56:11.184 chunk 17 47495 bytes
+21:56:11.185 in Ack 17
+21:56:11.434 fetch POST /api/observability/v1/traces
+21:56:11.434 fetched POST /api/observability/v1/traces 204
+21:56:11.435 chunk 17 47555 bytes
+21:56:11.436 in Ack 17
+21:56:11.685 chunk 17 47600 bytes
+21:56:11.687 in Ack 17
+21:56:11.936 chunk 17 48650 bytes
+21:56:11.937 in Ack 17
+21:56:12.198 rpc 32 orchestration.dispatchCommand runtime-request.respond
+21:56:12.253 chunk 17 52155 bytes
+21:56:12.257 in Ack 17
+21:56:12.462 fetch POST /api/observability/v1/traces
+21:56:12.462 fetched POST /api/observability/v1/traces 204
+21:56:12.503 chunk 17 54238 bytes
+21:56:12.505 in Ack 17
+21:56:12.754 chunk 17 55663 bytes
+21:56:12.755 in Ack 17
+21:56:13.004 chunk 17 56687 bytes
+21:56:13.005 in Ack 17
+21:56:13.070 exit 32 {"_tag":"Success","value":{"sequence":96}}
+21:56:13.255 chunk 17 59224 bytes
+21:56:13.256 in Ack 17
+21:56:13.504 chunk 17 59176 bytes
+21:56:13.505 in Ack 17
+21:56:13.513 fetch POST /api/observability/v1/traces
+21:56:13.513 fetched POST /api/observability/v1/traces 204
+21:56:13.755 chunk 17 59188 bytes
+21:56:13.756 in Ack 17
+21:56:13.801 in Ping 
+21:56:14.013 chunk 17 59210 bytes
+21:56:14.014 in Ack 17
+21:56:14.265 chunk 17 59284 bytes
+21:56:14.266 in Ack 17
+21:56:14.515 chunk 17 59304 bytes
+21:56:14.516 in Ack 17
+21:56:14.757 fetch POST /api/observability/v1/traces
+21:56:14.757 fetched POST /api/observability/v1/traces 204
+21:56:14.765 chunk 17 59314 bytes
+21:56:14.766 in Ack 17
+21:56:15.014 chunk 11 2886 bytes
+21:56:15.014 in Ack 11
+21:56:15.015 rpc 33 orchestration.dispatchCommand thread.visit
+21:56:15.015 exit 33 {"_tag":"Success","value":{"sequence":0}}
+21:56:15.024 chunk 17 59344 bytes
+21:56:15.026 in Ack 17
+21:56:15.275 chunk 17 59364 bytes
+21:56:15.284 in Ack 17
+21:56:15.525 chunk 17 59404 bytes
+21:56:15.527 in Ack 17
+21:56:15.767 fetch POST /api/observability/v1/traces
+21:56:15.767 fetched POST /api/observability/v1/traces 204
+21:56:15.776 chunk 17 59472 bytes
+21:56:15.777 in Ack 17
+21:56:16.027 chunk 17 59492 bytes
+21:56:16.028 in Ack 17
+21:56:16.265 chunk 11 2886 bytes
+21:56:16.265 in Ack 11
+21:56:16.276 chunk 17 60490 bytes
+21:56:16.277 in Ack 17
+21:56:16.526 chunk 17 60520 bytes
+21:56:16.528 in Ack 17
+21:56:16.777 chunk 17 60560 bytes
+21:56:16.778 in Ack 17
+21:56:16.786 fetch POST /api/observability/v1/traces
+21:56:16.786 fetched POST /api/observability/v1/traces 204
+21:56:17.026 chunk 17 60638 bytes
+21:56:17.027 in Ack 17
+21:56:17.036 in Interrupt 27
+21:56:17.061 rpc 34 subscribeVcsStatus
+21:56:17.276 chunk 17 60658 bytes
+21:56:17.278 in Ack 17
+21:56:17.319 rpc 35 server.reportClientActivity
+21:56:17.526 chunk 17 60678 bytes
+21:56:17.527 in Ack 17
+21:56:17.776 chunk 17 60708 bytes
+21:56:17.777 in Ack 17
+21:56:18.029 chunk 34 472 bytes
+21:56:18.029 chunk 17 60762 bytes
+21:56:18.029 fetch POST /api/observability/v1/traces
+21:56:18.029 fetched POST /api/observability/v1/traces 204
+21:56:18.030 in Ack 34
+21:56:18.033 in Ack 17
+21:56:18.279 chunk 17 60792 bytes
+21:56:18.280 in Ack 17
+21:56:18.529 chunk 17 60802 bytes
+21:56:18.531 in Ack 17
+21:56:18.780 chunk 17 60822 bytes
+21:56:18.781 in Ack 17
+21:56:18.811 in Ping 
+21:56:19.030 chunk 17 60842 bytes
+21:56:19.031 in Ack 17
+21:56:19.039 fetch POST /api/observability/v1/traces
+21:56:19.040 fetched POST /api/observability/v1/traces 204
+21:56:19.280 chunk 17 60862 bytes
+21:56:19.282 in Ack 17
+21:56:19.531 chunk 17 60882 bytes
+21:56:19.532 in Ack 17
+21:56:19.782 chunk 17 60902 bytes
+21:56:19.783 in Ack 17
+21:56:20.033 chunk 17 60922 bytes
+21:56:20.034 in Ack 17
+21:56:20.282 fetch POST /api/observability/v1/traces
+21:56:20.282 fetched POST /api/observability/v1/traces 204
+21:56:20.283 chunk 17 60952 bytes
+21:56:20.284 in Ack 17
+21:56:20.405 exit 35 {"_tag":"Success","value":null}
+21:56:20.533 chunk 17 60972 bytes
+21:56:20.534 in Ack 17
+21:56:20.783 chunk 17 61002 bytes
+21:56:20.784 in Ack 17
+21:56:21.047 chunk 17 61032 bytes
+21:56:21.048 in Ack 17
+21:56:21.285 fetch POST /api/observability/v1/traces
+21:56:21.285 fetched POST /api/observability/v1/traces 204
+21:56:21.297 chunk 11 2886 bytes
+21:56:21.298 chunk 17 61048 bytes
+21:56:21.298 in Ack 11
+21:56:21.300 in Ack 17
+21:56:21.547 chunk 17 62040 bytes
+21:56:21.548 in Ack 17
+21:56:21.798 chunk 17 62085 bytes
+21:56:21.799 in Ack 17
+21:56:22.065 chunk 17 62130 bytes
+21:56:22.066 in Ack 17
+21:56:22.299 fetch POST /api/observability/v1/traces
+21:56:22.299 fetched POST /api/observability/v1/traces 204
+21:56:22.315 chunk 17 62175 bytes
+21:56:22.316 in Ack 17
+21:56:22.567 chunk 17 62226 bytes
+21:56:22.568 in Ack 17
+21:56:22.817 chunk 17 62307 bytes
+21:56:22.818 in Ack 17
+21:56:23.067 chunk 17 62352 bytes
+21:56:23.068 in Ack 17
+21:56:23.318 fetch POST /api/observability/v1/traces
+21:56:23.318 fetched POST /api/observability/v1/traces 204
+21:56:23.319 chunk 17 62397 bytes
+21:56:23.320 in Ack 17
+21:56:23.568 chunk 17 62433 bytes
+21:56:23.570 in Ack 17
+21:56:23.812 in Ping 
+21:56:23.818 chunk 17 62478 bytes
+21:56:23.820 in Ack 17
+21:56:24.033 rpc 36 server.reportClientActivity
+21:56:24.070 chunk 17 62508 bytes
+21:56:24.071 in Ack 17
+21:56:24.320 chunk 17 62538 bytes
+21:56:24.321 fetch POST /api/observability/v1/traces
+21:56:24.321 fetched POST /api/observability/v1/traces 204
+21:56:24.322 in Ack 17
+21:56:24.571 chunk 17 62592 bytes
+21:56:24.572 in Ack 17
+21:56:24.821 chunk 17 62622 bytes
+21:56:24.822 in Ack 17
+21:56:24.904 exit 36 {"_tag":"Success","value":null}
+21:56:25.026 rpc 37 orchestration.dispatchCommand thread.visit
+21:56:25.026 exit 37 {"_tag":"Success","value":{"sequence":0}}
+21:56:25.070 chunk 17 62676 bytes
+21:56:25.072 in Ack 17
+21:56:25.320 chunk 17 62709 bytes
+21:56:25.321 in Ack 17
+21:56:25.378 fetch POST /api/observability/v1/traces
+21:56:25.378 fetched POST /api/observability/v1/traces 204
+21:56:25.570 chunk 17 62763 bytes
+21:56:25.571 in Ack 17
+21:56:25.820 chunk 17 62793 bytes
+21:56:25.821 in Ack 17
+21:56:26.070 chunk 11 2886 bytes
+21:56:26.070 chunk 17 62808 bytes
+21:56:26.071 in Ack 11
+21:56:26.078 in Ack 17
+21:56:26.321 chunk 17 62844 bytes
+21:56:26.323 in Ack 17
+21:56:26.572 chunk 17 62874 bytes
+21:56:26.572 fetch POST /api/observability/v1/traces
+21:56:26.572 fetched POST /api/observability/v1/traces 204
+21:56:26.574 in Ack 17
+21:56:26.821 chunk 17 62913 bytes
+21:56:26.823 in Ack 17
+21:56:27.072 chunk 17 62961 bytes
+21:56:27.073 in Ack 17
+21:56:27.322 chunk 17 62991 bytes
+21:56:27.324 in Ack 17
+21:56:27.573 chunk 17 63074 bytes
+21:56:27.574 in Ack 17
+21:56:27.655 fetch POST /api/observability/v1/traces
+21:56:27.655 fetched POST /api/observability/v1/traces 204
+21:56:27.824 chunk 17 63206 bytes
+21:56:27.825 in Ack 17
+21:56:28.072 chunk 11 2822 bytes
+21:56:28.072 in Ack 11
+21:56:28.074 rpc 38 orchestration.dispatchCommand thread.visit
+21:56:28.074 exit 38 {"_tag":"Success","value":{"sequence":0}}
+21:56:28.078 chunk 17 63230 bytes
+21:56:28.080 in Ack 17
+21:56:28.346 chunk 17 63064 bytes
+21:56:28.347 in Ack 17
+21:56:28.354 in Interrupt 34
+21:56:28.356 rpc 39 subscribeVcsStatus
