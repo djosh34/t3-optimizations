@@ -3,6 +3,11 @@ use std::time::{Duration, Instant};
 use crate::{Config, SeededRng, TimeoutError};
 
 const JITTER_RANGE: f32 = 0.5;
+/// t3-optimizations patch: the longest wait before a flight goes out again.
+/// At 70% loss each way a handshake needs many tries; a peer that gets our
+/// flight again resends its own (RFC 6347 section 4.2.4), so this also
+/// paces the browser's flights, whose own timer backs off to a minute.
+const MAX_FLIGHT_RTO: Duration = Duration::from_secs(2);
 const IDLE_INTERVAL: Duration = Duration::from_secs(10 * 365 * 24 * 60 * 60);
 
 pub struct HandshakeTimers {
@@ -169,7 +174,9 @@ impl ExponentialBackoff {
 
         self.left = n;
         self.jitter = Self::jitter(rng);
-        self.rto = self.rto.saturating_mul(2);
+        // t3-optimizations patch: the timeout stops doubling at
+        // `MAX_FLIGHT_RTO`, so a flight is sent again at least that often.
+        self.rto = self.rto.saturating_mul(2).min(MAX_FLIGHT_RTO.max(self.start_rto));
     }
 
     pub fn can_retry(&self) -> bool {
@@ -475,9 +482,23 @@ mod test {
     }
 
     #[test]
+    fn the_timeout_stops_doubling_at_the_cap() {
+        // t3-optimizations patch: see `MAX_FLIGHT_RTO`.
+        let mut rng = SeededRng::new(Some(7));
+        let mut exp = ExponentialBackoff::new(Duration::from_secs(1), 20, &mut rng);
+        for _ in 0..20 {
+            exp.attempt(&mut rng);
+            assert!(exp.rto() <= MAX_FLIGHT_RTO.mul_f32(1.0 + JITTER_RANGE / 2.0));
+        }
+        assert!(exp.rto() >= MAX_FLIGHT_RTO.mul_f32(1.0 - JITTER_RANGE / 2.0));
+    }
+
+    #[test]
     fn attempts() {
         let mut rng = SeededRng::new(Some(42));
-        let mut exp = ExponentialBackoff::new(Duration::from_secs(1), 5, &mut rng);
+        // t3-optimizations patch: starts below `MAX_FLIGHT_RTO`, so five
+        // doublings stay under it (the test started at 1 s).
+        let mut exp = ExponentialBackoff::new(Duration::from_millis(10), 5, &mut rng);
 
         let n1 = dbg!(exp.rto().as_millis());
         assert_eq!(exp.rto().as_millis(), n1);

@@ -30,3 +30,13 @@ str0m's ICE agent, which `crates/Cargo.toml` also puts in place with `[patch.cra
 - `src/agent.rs`: an ice-lite agent sends each binding reply three times (issue #46). WebKit's ICE agent (libwebrtc's) stops sending anything after several of its checks go unanswered, until one is answered: in the lab on case 70 it showed "disconnected" and sent no packet for 4 to 6 s at a time. A check and a single reply both arrive 9% of the time at 70% loss each way; with three replies, 20%. The phone takes the first copy. The test `ice_lite_sends_each_binding_reply_three_times` shows it.
 
 Its tests run in `make check` and CI's `rust` job (`cargo test --manifest-path vendor/is/Cargo.toml`).
+
+## dimpl 0.9.0
+
+str0m's DTLS, which `crates/Cargo.toml` also puts in place with `[patch.crates-io]`. The first commit is the crate as published; the next one is the patch, marked `t3-optimizations patch` in the code (issue #46):
+
+- `src/timer.rs`: a flight's retransmit timeout stops doubling at 2 s (`MAX_FLIGHT_RTO`). A cold start (the page was closed) needs a full DTLS handshake, whose flights must arrive whole; at 70% loss each way that takes many tries. A peer that gets our flight again resends its own (RFC 6347 section 4.2.4), so the server sending its flight every 2 s also paces the browser's flights, whose own timer backs off to a minute.
+- `src/config.rs`: a handshake goes on for 15 minutes and 1,000 retries per flight (were 40 s and 4). In the lab, a cold start on case 70 got ICE up in 3 s and then never opened its data channel: the server's DTLS gave up after 40 s.
+- `src/timer.rs` and `src/config.rs` tests: `timing_defaults` checks the new defaults, `attempts` starts at 10 ms so its doublings stay under the cap, and `the_timeout_stops_doubling_at_the_cap` is new.
+
+The library's tests pass (370). Its integration tests in `tests/` need OpenSSL and wolfSSL built from source as dev-dependencies, which this VM cannot build, so neither `make check` nor CI runs them; `tests/timing.rs` likely checks the old limits. To run the library tests: copy the crate, drop its `openssl` and `wolfssl` dev-dependencies, and run `cargo test --lib`.

@@ -90,8 +90,10 @@ impl Config {
             require_client_certificate: true,
             use_server_cookie: true,
             flight_start_rto: Duration::from_secs(1),
-            flight_retries: 4,
-            handshake_timeout: Duration::from_secs(40),
+            // t3-optimizations patch: a handshake goes on through heavy loss
+            // for as long as the lab's runs (was 4 retries and 40 s).
+            flight_retries: 1_000,
+            handshake_timeout: Duration::from_secs(15 * 60),
             crypto_provider: None,
             rng_seed: None,
             aead_encryption_limit: 1 << 23,
@@ -729,9 +731,10 @@ mod tests {
     #[test]
     fn timing_defaults() {
         let config = Config::default();
-        assert_eq!(config.handshake_timeout(), Duration::from_secs(40));
+        // t3-optimizations patch: 15 minutes and 1,000 retries (were 40 s and 4).
+        assert_eq!(config.handshake_timeout(), Duration::from_secs(15 * 60));
         assert_eq!(config.flight_start_rto(), Duration::from_secs(1));
-        assert_eq!(config.flight_retries(), 4);
+        assert_eq!(config.flight_retries(), 1_000);
     }
 
     #[test]
