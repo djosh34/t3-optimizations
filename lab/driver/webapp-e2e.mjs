@@ -85,9 +85,12 @@ async function step(name, run, { takeover = false } = {}) {
   } catch (error) {
     results.push({ name, ok: false });
     emit("step", { name, text: `failed: ${String(error.message ?? error).split("\n")[0]}` });
-    // What the shim saw last, to tell a client that did not ask from a reply that did not come.
+    // What the shim saw, to tell a client that did not ask from a reply that did not come.
     const state = await page
-      .evaluate(() => ({ trace: window.t3opt?.trace?.slice(-40) ?? [], link: window.t3opt?.engine?.status().link ?? null }))
+      .evaluate(() => ({
+        trace: (window.t3opt?.trace ?? []).filter((l) => / (rpc|exit|fetch|fetched|failed|stream) /.test(l)).slice(-150),
+        link: window.t3opt?.engine?.status().link ?? null,
+      }))
       .catch((e) => ({ trace: [`no state: ${e.message}`], link: null }));
     for (const line of state.trace) log(`trace ${line}`);
     log(`link ${JSON.stringify(state.link)}`);
@@ -291,6 +294,7 @@ await step("thread-fills-newest-first", async () => {
   await ask("shape case50");
   // The end of the newest reply shows before the thread's first reply.
   const order = [];
+  const fillStarted = Date.now();
   const until = Date.now() + 300_000;
   let n = 0;
   while (Date.now() < until && order.length < 2) {
@@ -301,9 +305,12 @@ await step("thread-fills-newest-first", async () => {
       if (order.includes(label)) continue;
       if (await page.getByText(text, { exact: false }).first().isVisible().catch(() => false)) order.push(label);
     }
-    if (n < 4) await shot(`filling-${n++}`);
+    // Spread over the fill: the first ones show the splash while the config
+    // objects come (after the open thread's newest text and status).
+    if (n < 4 && (Date.now() - fillStarted) / 8_000 >= n) await shot(`filling-${n++}`);
     await sleep(1_500);
   }
+  await shot("filled");
   await ask("shape clean");
   // What the page asked for and got while it filled, for the run's log.
   const trace = await page
@@ -359,8 +366,15 @@ await step("history-and-images-without-http", async () => {
     await page.getByText("I received the image").first().scrollIntoViewIfNeeded({ timeout: 30_000 });
     const image = page.locator('img[src^="blob:"]').first();
     for (let i = 0; i < 10 && !(await image.isVisible().catch(() => false)); i++) {
-      await page.mouse.move(200, 400);
-      await page.mouse.wheel(0, -500);
+      // Mobile WebKit has no mouse wheel: scroll the timeline's own scroller.
+      await page.evaluate(() => {
+        const text = [...document.querySelectorAll("p, div")].find((e) => e.textContent?.trim() === "I received the image.");
+        let el = text?.parentElement ?? null;
+        while (el && !(el.scrollHeight > el.clientHeight + 10 && /auto|scroll/.test(getComputedStyle(el).overflowY))) {
+          el = el.parentElement;
+        }
+        el?.scrollBy(0, -500);
+      });
       await sleep(500);
     }
     await image.waitFor({ timeout: 60_000 });
