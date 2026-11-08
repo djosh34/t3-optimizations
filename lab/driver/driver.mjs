@@ -218,7 +218,10 @@ async function watchWebapp(page) {
   if (Date.now() - lastSummary >= 10_000) {
     lastSummary = Date.now();
     const summary = await page.evaluate(
-      (id) => ({ objects: window.t3opt?.summary?.(id), link: window.t3opt?.engine?.status().link }),
+      (id) => {
+        const status = window.t3opt?.engine?.status();
+        return { objects: window.t3opt?.summary?.(id), link: status?.link, stats: status?.stats };
+      },
       cfg.threadId,
     );
     emit("note", { text: `webapp ${JSON.stringify(summary)}` });
@@ -393,6 +396,9 @@ if (webappStart !== null) {
   const end = await webappBytes(page).catch(() => webappStart);
   stats.rxBytes = end.rx - webappStart.rx;
   stats.txBytes = end.tx - webappStart.tx;
+  // The shim's last calls and fetches, to see what shared the link with the prompt.
+  const trace = await page.evaluate(() => window.t3opt?.trace ?? []).catch(() => []);
+  emit("note", { text: `shim trace\n${trace.join("\n")}` });
 }
 emit("stats", stats);
 await browser.close();

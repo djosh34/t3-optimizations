@@ -52,6 +52,8 @@ const FAR_ABOVE_MARGIN_MS: f64 = 1_000.0;
 /// On RTT growth the rate goes to this fraction of the send capacity or of
 /// itself, whichever is lower, but never below half of what it was.
 const DRAIN: f64 = 0.75;
+/// Each decision in a silence lowers the rate to this fraction.
+const SILENCE_DRAIN: f64 = 0.5;
 /// Increase per decision while RTT stays flat, and the most the rate may be
 /// above the measured send capacity: half again at the start, then probing a
 /// quarter above.
@@ -60,13 +62,19 @@ const PROBE_INCREASE: f64 = 1.25;
 /// A sender that had nothing waiting for this long starts again from the
 /// initial rate: what it knew about the link may be stale.
 const IDLE_RESTART: Millis = 2_000;
-/// Sending with no packet from the other side for this many smoothed RTTs,
-/// and at least `SILENCE_MIN`, lowers the rate like RTT growth does. An idle
-/// side still sends a packet a second, so at 70% loss 15 s without one
-/// happens by chance in 0.5% of such spells; a link that carries nothing
-/// back is silent for minutes.
+/// Sending with no packet from the other side for as long as this many of
+/// its packets usually take to arrive, and at least this many smoothed RTTs
+/// and `SILENCE_MIN`, halves the rate at each decision. By chance such a
+/// silence comes in about one of 1,000 spells (e^-7). Right after a switch
+/// from a clean link it is found within a second, before the sender has
+/// filled a slow link's queue for long (issue #46: a queue full of the clean
+/// link's packets held the browser's SCTP acks back for 15 s or more, and
+/// the phone could send nothing).
+const SILENCE_PACKETS: f64 = 7.0;
 const SILENCE_RTTS: f64 = 4.0;
-const SILENCE_MIN: Millis = 15_000;
+const SILENCE_MIN: Millis = 500;
+/// The rate of packets from the other side is averaged over spans this long.
+const HEARD_SPAN: Millis = 1_000;
 /// Reports at least this far apart, and this many packets sent, give one
 /// sample of delivery rate and loss.
 const REPORT_SPAN: Millis = 1_000;
@@ -95,6 +103,11 @@ pub struct RateControl {
     last_rtt: Option<f64>,
     /// When the last packet from the other side came in.
     last_heard: Option<Millis>,
+    /// Packets from the other side per second, averaged over spans of
+    /// `HEARD_SPAN`, and the span being counted. It changes only when a
+    /// packet comes, so a silence does not lower it.
+    heard_rate: Option<f64>,
+    heard_span: (Millis, u32),
     /// The lowest RTT sample, and the number of samples, since the last
     /// decision.
     fresh_min: Option<f64>,
@@ -133,6 +146,8 @@ impl RateControl {
             jitter: 0.0,
             last_rtt: None,
             last_heard: None,
+            heard_rate: None,
+            heard_span: (now, 0),
             fresh_min: None,
             fresh_count: 0,
             changed_at: now,
@@ -251,6 +266,30 @@ impl RateControl {
     /// Notes a packet from the other side.
     pub fn on_heard(&mut self, now: Millis) {
         self.last_heard = Some(now);
+        let (start, count) = self.heard_span;
+        if now >= start + HEARD_SPAN {
+            // The span that ended, and the empty spans after it.
+            let spans = (now - start) / HEARD_SPAN;
+            let mut rate = self.heard_rate.unwrap_or(count as f64);
+            rate = (1.0 - REPORT_WEIGHT) * rate + REPORT_WEIGHT * count as f64;
+            for _ in 1..spans.min(20) {
+                rate *= 1.0 - REPORT_WEIGHT;
+            }
+            self.heard_rate = Some(rate);
+            self.heard_span = (start + spans * HEARD_SPAN, 0);
+        }
+        self.heard_span.1 += 1;
+    }
+
+    /// How long a silence of the other side has to be to lower the rate.
+    fn silence(&self) -> f64 {
+        let usual = self
+            .heard_rate
+            .filter(|&r| r > 0.0)
+            .map_or(f64::INFINITY, |r| SILENCE_PACKETS / r * 1000.0);
+        usual
+            .max(SILENCE_RTTS * self.srtt.unwrap_or(0.0))
+            .max(SILENCE_MIN as f64)
     }
 
     /// Takes an RTT sample of a packet sent at `sent_at`.
@@ -348,12 +387,16 @@ impl RateControl {
             _ => false,
         };
         if self.fresh_count < DECISION_SAMPLES && !far_above {
-            let silence = (SILENCE_RTTS * self.srtt.unwrap_or(0.0)).max(SILENCE_MIN as f64);
+            let silence = self.silence();
             let silent = self
                 .last_heard
                 .is_some_and(|t| now.saturating_sub(t) as f64 >= silence);
-            if silent && self.limited && self.rate > self.cfg.floor {
-                self.rate = (self.rate * DRAIN).max(self.cfg.floor);
+            // Not below the initial rate: a silent link is an unknown one,
+            // and a sender far below it hears too little to find the rate
+            // again (both sides fell to the floor and stayed there).
+            let low = self.cfg.initial.min(self.rate);
+            if silent && self.limited && self.rate > low {
+                self.rate = (self.rate * SILENCE_DRAIN).max(low);
                 self.slow_start = true;
                 self.drain_from = None;
                 self.changed_at = now;

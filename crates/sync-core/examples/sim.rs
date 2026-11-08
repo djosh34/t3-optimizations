@@ -4,7 +4,11 @@
 //! ```sh
 //! cargo run --release -p sync-core --example sim -- case70 1 10      # seeds 1 to 10
 //! cargo run --release -p sync-core --example sim -- case50 1 3 120   # 2 minutes each
+//! cargo run --release -p sync-core --example sim -- case70-webkit 1 30 180
 //! ```
+//!
+//! A `-webkit` case sends the phone's packets through the model of WebKit's
+//! SCTP sender (`src/sim/browser.rs`).
 
 use std::process::ExitCode;
 
@@ -21,14 +25,19 @@ fn main() -> ExitCode {
         "case seed | prompt confirmed | lag max/p95/median | reply done | synced | dup | acked resent | twice | largest | match | down sent/delivered B/s | loss | srtt"
     );
     for seed in from..=to {
-        let s = match case {
+        let (base, webkit) = match case.strip_suffix("-webkit") {
+            Some(base) => (base, true),
+            None => (case, false),
+        };
+        let s = match base {
             "case70" => Scenario::case70(seed),
             "case50" => Scenario::case50(seed),
             other => {
-                eprintln!("unknown case {other}; use case70 or case50");
+                eprintln!("unknown case {other}; use case70 or case50, with -webkit or without");
                 return ExitCode::FAILURE;
             }
         };
+        let s = if webkit { s.in_webkit() } else { s };
         let s = match secs {
             Some(n) => s.shortened(n * 1000),
             None => s,
