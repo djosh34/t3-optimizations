@@ -48,10 +48,16 @@ one() {
     rm -rf "${raw:?}/$name"
     if sudo ./bin/lab run --profile "$profile" --client websocket-nodeflate --server "$server" \
       --seed "$seed" --out "$raw" --name "$name" >"$raw/$name.log" 2>&1; then
-      mkdir -p "$dest/$name"
-      cp "$raw/$name"/{report.json,report.md,phone.jsonl,agent.jsonl} "$dest/$name/"
-      tail -n 1 "$raw/$name.log"
-      return 0
+      # xargs runs this without the script's set -e, so a failed copy is checked here.
+      if mkdir -p "$dest/$name" &&
+        cp "$raw/$name"/{report.json,report.md,phone.jsonl,agent.jsonl} "$dest/$name/"; then
+        tail -n 1 "$raw/$name.log"
+        return 0
+      fi
+      echo "copying the report of $name failed"
+      rm -rf "${dest:?}/$name"
+      echo "$name" >>"$raw/failed"
+      return 1
     fi
     echo "attempt $attempt of $name failed: $(tail -n 1 "$raw/$name.log")"
   done
