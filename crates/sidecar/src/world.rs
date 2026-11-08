@@ -112,8 +112,12 @@ struct ThreadState {
     text_kind: HashMap<String, String>,
     /// Ordinal and text key of each assistant message, for the tail.
     assistant: BTreeMap<u64, String>,
-    /// The turn item of each assistant message's text key.
-    assistant_items: HashMap<String, String>,
+    /// The ordinal of the newest user message: the current turn starts
+    /// there.
+    turn_start: u64,
+    /// The ordinal of the turn item behind each turn item body and text
+    /// object, by object id.
+    turn_ordinals: HashMap<u64, u64>,
 }
 
 #[derive(Debug, Default)]
@@ -183,12 +187,13 @@ impl World {
         Some(object_id(&["text", thread, key]))
     }
 
-    /// The body of the turn item of the thread's newest assistant message.
-    pub fn tail_item(&self, thread: &str) -> Option<u64> {
-        let state = self.threads.get(thread)?;
-        let key = state.assistant.values().next_back()?;
-        let item = state.assistant_items.get(key)?;
-        Some(object_id(&["body", thread, "turnItems", item]))
+    /// Whether an object is a turn item, or its text, of the thread's
+    /// current turn: from its newest user message on.
+    pub fn in_current_turn(&self, thread: &str, id: u64) -> bool {
+        self.threads
+            .get(thread)
+            .and_then(|s| Some(*s.turn_ordinals.get(&id)? >= s.turn_start))
+            .unwrap_or(false)
     }
 
     /// The listed threads.
@@ -615,8 +620,12 @@ impl World {
             state.text_kind.insert(key.clone(), text_kind(coll, entity));
             if coll == "turnItems" {
                 self.note_assistant(thread, entity, key);
+                self.note_turn(thread, entity, object_id(&["text", thread, key]));
             }
             self.put_text(thread, key);
+        }
+        if coll == "turnItems" {
+            self.note_turn(thread, entity, object_id(&["body", thread, coll, &id]));
         }
         if unchanged {
             return;
@@ -694,19 +703,27 @@ impl World {
         // t3's ordinal takes the place of a provisional one.
         state.assistant.retain(|_, k| k != key);
         state.assistant.insert(ordinal, key.to_owned());
-        if let Some(id) = item["id"].as_str() {
-            state.assistant_items.insert(key.to_owned(), id.to_owned());
-        }
         let new_tail = state.assistant.values().next_back().cloned();
         if old_tail != new_tail {
-            // Both change class, and so do their turn items.
+            // Both change class.
             for k in [old_tail, new_tail].into_iter().flatten() {
                 self.changed.insert(object_id(&["text", thread, &k]));
-                if let Some(id) = state.assistant_items.get(&k) {
-                    self.changed
-                        .insert(object_id(&["body", thread, "turnItems", id]));
-                }
             }
+        }
+    }
+
+    /// Notes the turn item behind an object, and a new turn when the item
+    /// is a newer user message: then the previous turn's objects change
+    /// class.
+    fn note_turn(&mut self, thread: &str, item: &Value, id: u64) {
+        let Some(ordinal) = item["ordinal"].as_u64() else {
+            return;
+        };
+        let state = self.threads.entry(thread.to_owned()).or_default();
+        state.turn_ordinals.insert(id, ordinal);
+        if item["type"].as_str() == Some("user_message") && ordinal > state.turn_start {
+            state.turn_start = ordinal;
+            self.changed.extend(state.turn_ordinals.keys().copied());
         }
     }
 
@@ -974,6 +991,35 @@ mod tests {
     }
 
     #[test]
+    fn the_current_turn_starts_at_the_newest_user_message() {
+        let mut w = World::default();
+        let user = |id: &str, ordinal: u64| {
+            json!({"id": id, "threadId": "t1", "type": "user_message", "messageId": format!("m-{id}"),
+                "ordinal": ordinal, "status": "completed", "text": "prompt", "streaming": false, "updatedAt": "1"})
+        };
+        let body = |id: &str| object_id(&["body", "t1", "turnItems", id]);
+        let text = |id: &str| object_id(&["text", "t1", &format!("m-{id}")]);
+        w.apply_event("t1", &event("turn-item.updated", user("u1", 1)));
+        w.apply_event(
+            "t1",
+            &event("turn-item.updated", item("a", 2, "first", false, "1")),
+        );
+        w.apply_event("t1", &event("turn-item.updated", user("u2", 3)));
+        w.apply_event(
+            "t1",
+            &event("turn-item.updated", item("b", 4, "second", true, "1")),
+        );
+        for id in ["u2", "b"] {
+            assert!(w.in_current_turn("t1", body(id)), "{id} body");
+            assert!(w.in_current_turn("t1", text(id)), "{id} text");
+        }
+        for id in ["u1", "a"] {
+            assert!(!w.in_current_turn("t1", body(id)), "{id} body");
+            assert!(!w.in_current_turn("t1", text(id)), "{id} text");
+        }
+    }
+
+    #[test]
     fn the_tail_moves_to_the_newest_assistant_message() {
         let mut w = World::default();
         w.apply_event(
@@ -985,10 +1031,6 @@ mod tests {
             &event("turn-item.updated", item("b", 7, "second", true, "1")),
         );
         assert_eq!(w.tail("t1"), Some(object_id(&["text", "t1", "m-b"])));
-        assert_eq!(
-            w.tail_item("t1"),
-            Some(object_id(&["body", "t1", "turnItems", "b"]))
-        );
     }
 
     #[test]

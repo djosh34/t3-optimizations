@@ -115,10 +115,12 @@ pub fn class_of(world: &World, id: u64, obj: &Obj, focus: Option<&str>) -> Class
     let thread = obj.thread.as_deref();
     if thread.and_then(|t| world.tail(t)) == Some(id) {
         Class::Tail
-    } else if obj.status || thread.and_then(|t| world.tail_item(t)) == Some(id) {
-        // The newest assistant message's turn item goes with status even
-        // once finished: until it is here, the client shows that message as
-        // still streaming and holds back its last paragraph (issue #46).
+    } else if obj.status || thread.is_some_and(|t| world.in_current_turn(t, id)) {
+        // The current turn's items and their texts go with status, also
+        // once finished. Without the owner's prompt as t3 placed it, the
+        // client shows the prompt it sent last and the reply above it, out
+        // of view; without a finished item, it shows that message as still
+        // streaming and holds back its last paragraph (issue #46).
         Class::Status
     } else {
         Class::History

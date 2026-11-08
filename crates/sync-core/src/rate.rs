@@ -396,7 +396,12 @@ impl RateControl {
             (Some(f), Some(b)) => f > FAR_ABOVE_FACTOR * b + FAR_ABOVE_MARGIN_MS,
             _ => false,
         };
-        if self.fresh_count < DECISION_SAMPLES && !far_above {
+        // In slow start one sample decides: it only grows the rate, never
+        // above twice what the link was seen to take, and the rate must
+        // climb back fast after a path change (issue #46: 30 s at a fifth of
+        // case 50's capacity).
+        let needed = if self.slow_start { 1 } else { DECISION_SAMPLES };
+        if self.fresh_count < needed && !far_above {
             let silence = self.silence();
             let silent = self
                 .last_heard
