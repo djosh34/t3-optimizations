@@ -30,6 +30,16 @@ impl EntryKind {
         }
     }
 
+    /// The order of an entry and of its reply in their class: commands before
+    /// calls (a prompt's result must not wait behind replies the client
+    /// asked for earlier), and among each, lower numbers first.
+    pub(crate) fn order(self, seq: u64) -> u64 {
+        match self {
+            EntryKind::Command => u64::MAX - seq,
+            EntryKind::Call | EntryKind::BackgroundCall => u64::MAX / 2 - seq.min(u64::MAX / 2),
+        }
+    }
+
     pub(crate) fn from_u8(v: u8) -> Option<EntryKind> {
         match v {
             0 => Some(EntryKind::Command),
@@ -153,10 +163,9 @@ impl Phone {
             put_varint(&mut meta, prev);
         }
         self.log.insert(seq, kind);
-        // Lower numbers first: the highest order goes first.
         self.ep
             .out
-            .set(Key::Entry(seq), class, u64::MAX - seq, meta, payload);
+            .set(Key::Entry(seq), class, kind.order(seq), meta, payload);
         seq
     }
 

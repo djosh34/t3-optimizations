@@ -151,7 +151,7 @@ impl Server {
         };
         self.ep
             .out
-            .set(Key::Reply(seq), class, u64::MAX - seq, Vec::new(), payload);
+            .set(Key::Reply(seq), class, kind.order(seq), Vec::new(), payload);
         Ok(())
     }
 

@@ -48,7 +48,7 @@ One queue. Each packet takes from the highest class that has data:
 | Class | What | Within the class |
 |---|---|---|
 | `Tail` | newest text of the last message | newest bytes first, then its start |
-| `Urgent` | replies to commands and to calls the owner made | lowest number first |
+| `Urgent` | replies to commands and to calls the owner made | commands' first (a prompt's result does not wait behind call replies, which are repeated at loss too), then calls'; lowest number first in each |
 | `Status` | approvals and thread status | highest order first |
 | `History` | older messages of the current thread | highest order (newest) first |
 | `ThreadList` | the thread list | |
