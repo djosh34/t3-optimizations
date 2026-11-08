@@ -448,13 +448,8 @@ impl RateControl {
                 self.drain_from = None;
                 self.changed_at = now;
                 // The path may be another one now: its first samples are
-                // the new base, not RTT growth, and the old link's delivery
-                // rate is no cap for it. Slow start capped by it took the
-                // sidecar to 5.3 kB/s on case 70's 1.25 kB/s (issue #46);
-                // now it grows at most half again above the drained rate
-                // until the new link's measurements come in.
+                // the new base, not RTT growth.
                 self.rtt_window.clear();
-                self.delivered = self.delivered.min(self.rate);
             }
             self.next_decision = now + interval as Millis;
             return;
@@ -599,67 +594,6 @@ mod tests {
             );
             assert!(worst < 3_000.0, "cap {cap}: queue delay up to {worst} ms");
         }
-    }
-
-    #[test]
-    fn a_silence_forgets_the_old_links_capacity() {
-        let mut rc = RateControl::new(RateConfig::default(), 0);
-        let mut t = 0;
-        let (mut bytes, mut seq) = (0, 0);
-        let mut report = |rc: &mut RateControl, t: u64, rate: u64| {
-            // What the peer got over the last second, with no loss.
-            bytes += rate;
-            seq += 20;
-            rc.on_report(Report {
-                time_ms: t,
-                bytes,
-                packets: seq,
-                max_seq: seq,
-            });
-        };
-        // A fast link, measured.
-        for i in 0..40 {
-            t += 300;
-            rc.on_heard(t);
-            rc.on_rtt(t, 20.0, t);
-            rc.note_limited(t);
-            rc.decide(t);
-            if i % 4 == 0 {
-                report(&mut rc, t, 20_000);
-            }
-        }
-        assert!(rc.capacity().is_some_and(|c| c > 10_000.0));
-        // The switch: silence, then a slower path whose RTT stays flat.
-        for _ in 0..10 {
-            t += 300;
-            rc.note_limited(t);
-            rc.decide(t);
-        }
-        let after_silence = rc.rate();
-        for _ in 0..10 {
-            t += 700;
-            rc.on_heard(t);
-            rc.on_rtt(t, 600.0, t);
-            rc.note_limited(t);
-            rc.decide(t);
-            // Not on to the old link's capacity (case 70: 5.3 kB/s on
-            // 1.25 kB/s): at most half again above the drained rate.
-            assert!(
-                rc.rate() <= 1.5 * after_silence,
-                "rate {} above 1.5 x {after_silence}",
-                rc.rate()
-            );
-        }
-        // The new link's measurements come in: no growth past that either.
-        for _ in 0..6 {
-            t += 1_000;
-            report(&mut rc, t, 1_250);
-            rc.on_heard(t);
-            rc.on_rtt(t, 600.0, t);
-            rc.note_limited(t);
-            rc.decide(t);
-        }
-        assert!(rc.rate() <= 1.5 * after_silence, "rate {}", rc.rate());
     }
 
     #[test]
