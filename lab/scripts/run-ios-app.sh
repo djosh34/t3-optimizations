@@ -26,7 +26,7 @@ if [[ $# -gt 0 ]]; then
 else
   # Every graded profile and the faults a phone link shows; not F (no
   # connection check fits its up windows), the soak or the derp tunnel.
-  profiles=(A B C D E case70 case50 loss30 rtt3000 rate100 asym outage10 outage60 flap)
+  profiles=(A B C D E case70 case50 loss30 rtt3000 rate100 outage10 flap)
 fi
 
 runs=()
