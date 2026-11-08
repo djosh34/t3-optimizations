@@ -1,11 +1,11 @@
-{"t":1794016816012,"ev":"ws-open"}
-{"t":1794016816773,"ev":"paired"}
-{"t":1794016816796,"ev":"ws-close"}
-{"t":1794016817261,"ev":"ws-open"}
-{"t":1794016817860,"ev":"thread-open"}
-{"t":1794016821593,"ev":"screenshot","name":"ready"}
-{"t":1794016821596,"ev":"ready"}
-{"t":1794016821740,"ev":"app-loading"}
-{"t":1794017721603,"ev":"note","text":"app did not load: stopped"}
-{"t":1794017721668,"ev":"screenshot","name":"end"}
-{"t":1794017721668,"ev":"stats"}
+{"t":1794140554805,"ev":"ws-open"}
+{"t":1794140555330,"ev":"paired"}
+{"t":1794140555425,"ev":"ws-close"}
+{"t":1794140555989,"ev":"ws-open"}
+{"t":1794140556453,"ev":"thread-open"}
+{"t":1794140562549,"ev":"screenshot","name":"ready"}
+{"t":1794140562552,"ev":"ready"}
+{"t":1794140562706,"ev":"app-loading"}
+{"t":1794141462558,"ev":"note","text":"app did not load: stopped"}
+{"t":1794141462626,"ev":"screenshot","name":"end"}
+{"t":1794141462626,"ev":"stats"}

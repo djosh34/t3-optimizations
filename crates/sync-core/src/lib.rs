@@ -27,7 +27,7 @@ pub mod wire;
 
 pub use endpoint::{Config, Stats};
 pub use inbox::{Delivered, InObject};
-pub use outbox::Class;
+pub use outbox::{Busy, Class};
 pub use phone::{EntryKind, EntryState, Phone, Received, Reply};
 pub use ranges::RangeSet;
 pub use rate::RateConfig;

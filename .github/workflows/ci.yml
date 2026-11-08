@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - main
+  # The slow jobs, t3code's tests and lab-smoke, run only when started by
+  # hand: for a change that needs their signal, and before the release.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -56,9 +59,9 @@ jobs:
       - run: go test ./...
         working-directory: lab
 
-  t3code:
+  t3code-check:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: t3code
@@ -74,6 +77,23 @@ jobs:
       - run: echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
       - run: vp check
       - run: vp run -r typecheck
+
+  t3code:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: t3code
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: t3code/package.json
+      - run: npm i -g vite-plus@1.4.0
+      - run: vp install
+      - run: ../scripts/unset-hooks-path.sh
+      - run: echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
       # The web and server tests drive headless Chromium.
       - run: node apps/web/node_modules/playwright/cli.js install --with-deps --only-shell chromium
       - run: vp run --filter @t3tools/web test
@@ -84,6 +104,7 @@ jobs:
   # netem namespaces, the forked t3 server, WebKit in docker. Then the
   # sidecar's tests that need node, Go and docker.
   lab-smoke:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:

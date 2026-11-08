@@ -14,7 +14,7 @@ pub struct RateConfig {
     /// Send rate at the start, in wire bytes per second.
     pub initial: f64,
     /// The rate never goes below this, so alive signals and acks always go
-    /// out.
+    /// out; only a long silence takes it lower, to `SILENCE_FLOOR`.
     pub floor: f64,
     pub ceiling: f64,
 }
@@ -52,6 +52,8 @@ const FAR_ABOVE_MARGIN_MS: f64 = 1_000.0;
 /// On RTT growth the rate goes to this fraction of the send capacity or of
 /// itself, whichever is lower, but never below half of what it was.
 const DRAIN: f64 = 0.75;
+/// Each decision in a silence lowers the rate to this fraction.
+const SILENCE_DRAIN: f64 = 0.5;
 /// Increase per decision while RTT stays flat, and the most the rate may be
 /// above the measured send capacity: half again at the start, then probing a
 /// quarter above.
@@ -60,13 +62,29 @@ const PROBE_INCREASE: f64 = 1.25;
 /// A sender that had nothing waiting for this long starts again from the
 /// initial rate: what it knew about the link may be stale.
 const IDLE_RESTART: Millis = 2_000;
-/// Sending with no packet from the other side for this many smoothed RTTs,
-/// and at least `SILENCE_MIN`, lowers the rate like RTT growth does. An idle
-/// side still sends a packet a second, so at 70% loss 15 s without one
-/// happens by chance in 0.5% of such spells; a link that carries nothing
-/// back is silent for minutes.
+/// Sending with no packet from the other side for as long as this many of
+/// its packets usually take to arrive, and at least this many smoothed RTTs
+/// and `SILENCE_MIN`, halves the rate at each decision. By chance such a
+/// silence comes in about one of 1,000 spells (e^-7). The minimum allows
+/// for a browser, which acks only once it has stored what came. Right after
+/// a switch from a clean link the silence is found within a second or two,
+/// before the sender has filled a slow link's queue for long (issue #46: a
+/// queue full of the clean link's packets held back the SCTP acks of
+/// WebKit's sender for 15 s or more, and the phone could send nothing).
+const SILENCE_PACKETS: f64 = 7.0;
 const SILENCE_RTTS: f64 = 4.0;
-const SILENCE_MIN: Millis = 15_000;
+const SILENCE_MIN: Millis = 1_000;
+/// A silence this many times as long goes on below the initial rate, down to
+/// the floor: on a link slower than the initial rate a sender that keeps it
+/// keeps the link's queue full, and the peer's acks and ICE replies coming
+/// the other way find no room (profile E, 125 B/s: 14 minutes without a
+/// packet from the phone; issue #46).
+const SILENCE_DEEP: f64 = 3.0;
+/// Where a long silence ends, below `RateConfig::floor`: a quarter-full
+/// 1 kbit/s link (profile E), with room for what comes the other way.
+const SILENCE_FLOOR: f64 = 50.0;
+/// The rate of packets from the other side is averaged over spans this long.
+const HEARD_SPAN: Millis = 1_000;
 /// Reports at least this far apart, and this many packets sent, give one
 /// sample of delivery rate and loss.
 const REPORT_SPAN: Millis = 1_000;
@@ -84,7 +102,8 @@ pub struct RateControl {
     /// Whether the sender had data waiting on the rate since the last
     /// decision. Only then is a higher rate worth probing.
     limited: bool,
-    last_limited: Option<Millis>,
+    /// Since when the sender has had nothing to send.
+    idle_since: Option<Millis>,
     next_decision: Millis,
     srtt: Option<f64>,
     rttvar: f64,
@@ -95,6 +114,14 @@ pub struct RateControl {
     last_rtt: Option<f64>,
     /// When the last packet from the other side came in.
     last_heard: Option<Millis>,
+    /// The rate when a long silence took it below the initial rate; the
+    /// peer heard again brings it back.
+    deep_from: Option<f64>,
+    /// Packets from the other side per second, averaged over spans of
+    /// `HEARD_SPAN`, and the span being counted. It changes only when a
+    /// packet comes, so a silence does not lower it.
+    heard_rate: Option<f64>,
+    heard_span: (Millis, u32),
     /// The lowest RTT sample, and the number of samples, since the last
     /// decision.
     fresh_min: Option<f64>,
@@ -125,7 +152,7 @@ impl RateControl {
             last_refill: now,
             slow_start: true,
             limited: false,
-            last_limited: None,
+            idle_since: None,
             next_decision: now,
             srtt: None,
             rttvar: 0.0,
@@ -133,6 +160,9 @@ impl RateControl {
             jitter: 0.0,
             last_rtt: None,
             last_heard: None,
+            deep_from: None,
+            heard_rate: None,
+            heard_span: (now, 0),
             fresh_min: None,
             fresh_count: 0,
             changed_at: now,
@@ -212,10 +242,18 @@ impl RateControl {
         self.tokens >= 0.0
     }
 
+    /// Notes that the sender has nothing to send.
+    pub fn note_idle(&mut self, now: Millis) {
+        self.idle_since.get_or_insert(now);
+    }
+
     /// Notes that data waited on the rate. After an idle spell the rate
-    /// starts again from the initial one, in slow start.
+    /// starts again from the initial one, in slow start. A sender that had
+    /// data but was not asked for packets (the browser's SCTP held them
+    /// back) was not idle: its measurements stay (issue #46: they were
+    /// reset every few seconds and the phone never measured the loss).
     pub fn note_limited(&mut self, now: Millis) {
-        if self.last_limited.is_some_and(|t| now >= t + IDLE_RESTART) {
+        if self.idle_since.is_some_and(|t| now >= t + IDLE_RESTART) {
             self.rate = self.rate.min(self.cfg.initial.max(self.cfg.floor));
             self.slow_start = true;
             self.changed_at = now;
@@ -225,7 +263,7 @@ impl RateControl {
             self.delivered = 0.0;
             self.report_base = None;
         }
-        self.last_limited = Some(now);
+        self.idle_since = None;
         self.limited = true;
     }
 
@@ -251,6 +289,39 @@ impl RateControl {
     /// Notes a packet from the other side.
     pub fn on_heard(&mut self, now: Millis) {
         self.last_heard = Some(now);
+        // The link is back after a long silence: the rate it had then, not a
+        // climb from `SILENCE_FLOOR` (17 s to 2 kB/s, on both sides), but no
+        // more than the initial rate: the link may be another one now.
+        if let Some(rate) = self.deep_from.take().map(|r| r.min(self.cfg.initial))
+            && rate > self.rate
+        {
+            self.rate = rate;
+            self.changed_at = now;
+        }
+        let (start, count) = self.heard_span;
+        if now >= start + HEARD_SPAN {
+            // The span that ended, and the empty spans after it.
+            let spans = (now - start) / HEARD_SPAN;
+            let mut rate = self.heard_rate.unwrap_or(count as f64);
+            rate = (1.0 - REPORT_WEIGHT) * rate + REPORT_WEIGHT * count as f64;
+            for _ in 1..spans.min(20) {
+                rate *= 1.0 - REPORT_WEIGHT;
+            }
+            self.heard_rate = Some(rate);
+            self.heard_span = (start + spans * HEARD_SPAN, 0);
+        }
+        self.heard_span.1 += 1;
+    }
+
+    /// How long a silence of the other side has to be to lower the rate.
+    fn silence(&self) -> f64 {
+        let usual = self
+            .heard_rate
+            .filter(|&r| r > 0.0)
+            .map_or(f64::INFINITY, |r| SILENCE_PACKETS / r * 1000.0);
+        usual
+            .max(SILENCE_RTTS * self.srtt.unwrap_or(0.0))
+            .max(SILENCE_MIN as f64)
     }
 
     /// Takes an RTT sample of a packet sent at `sent_at`.
@@ -347,13 +418,32 @@ impl RateControl {
             (Some(f), Some(b)) => f > FAR_ABOVE_FACTOR * b + FAR_ABOVE_MARGIN_MS,
             _ => false,
         };
-        if self.fresh_count < DECISION_SAMPLES && !far_above {
-            let silence = (SILENCE_RTTS * self.srtt.unwrap_or(0.0)).max(SILENCE_MIN as f64);
-            let silent = self
+        // In slow start one sample decides: it only grows the rate, never
+        // above twice what the link was seen to take, and the rate must
+        // climb back fast after a path change (issue #46: 30 s at a fifth of
+        // case 50's capacity).
+        let needed = if self.slow_start { 1 } else { DECISION_SAMPLES };
+        if self.fresh_count < needed && !far_above {
+            let silence = self.silence();
+            let silent_for = self
                 .last_heard
-                .is_some_and(|t| now.saturating_sub(t) as f64 >= silence);
-            if silent && self.limited && self.rate > self.cfg.floor {
-                self.rate = (self.rate * DRAIN).max(self.cfg.floor);
+                .map_or(0.0, |t| now.saturating_sub(t) as f64);
+            let silent = self.last_heard.is_some() && silent_for >= silence;
+            // At first not below the initial rate: a silent link is an
+            // unknown one, and a sender far below it hears too little to find
+            // the rate again (both sides fell to the floor and stayed there).
+            // A long silence goes on, to below the floor.
+            let deep = silent_for >= SILENCE_DEEP * silence;
+            let low = if deep {
+                SILENCE_FLOOR.min(self.cfg.floor)
+            } else {
+                self.cfg.initial.min(self.rate)
+            };
+            if deep && self.limited && self.rate > low {
+                self.deep_from.get_or_insert(self.rate);
+            }
+            if silent && self.limited && self.rate > low {
+                self.rate = (self.rate * SILENCE_DRAIN).max(low);
                 self.slow_start = true;
                 self.drain_from = None;
                 self.changed_at = now;
@@ -412,7 +502,10 @@ impl RateControl {
                 Some(c) => DRAIN * c.min(self.rate),
                 None => DRAIN * self.rate,
             };
-            self.rate = target.max(self.rate / 2.0).max(self.cfg.floor);
+            // Never up: after a long silence the rate can be below the floor.
+            self.rate = target
+                .max(self.rate / 2.0)
+                .max(self.cfg.floor.min(self.rate));
             self.changed_at = now;
             self.slow_start = false;
             self.next_decision = now + interval as Millis;
@@ -541,15 +634,25 @@ mod tests {
         }
         let fast = rc.rate();
         assert!(fast > 10_000.0, "rate {fast} did not grow on a clean link");
-        // Nothing comes back for 25 s while data waits.
-        for _ in 0..83 {
+        // Nothing comes back while data waits: for 2 s the rate stops at
+        // the initial rate, an unknown link's.
+        for _ in 0..7 {
+            t += 300;
+            rc.note_limited(t);
+            rc.decide(t);
+        }
+        let initial = RateConfig::default().initial;
+        assert!(rc.rate() >= initial, "rate {} below {initial}", rc.rate());
+        // 25 s: on a link slower than the initial rate the sender must not
+        // keep its queue full (profile E, 125 B/s: no ICE reply got through).
+        for _ in 0..76 {
             t += 300;
             rc.note_limited(t);
             rc.decide(t);
         }
         let slow = rc.rate();
         assert!(slow < fast / 10.0, "rate {slow} stayed near {fast}");
-        assert!(slow >= RateConfig::default().floor);
+        assert_eq!(slow, SILENCE_FLOOR);
         // Feedback again: slow start.
         for _ in 0..10 {
             t += 700;
@@ -563,6 +666,31 @@ mod tests {
             "rate {} did not grow from {slow}",
             rc.rate()
         );
+    }
+
+    #[test]
+    fn the_peer_heard_after_a_long_silence_brings_the_rate_back() {
+        let mut rc = RateControl::new(RateConfig::default(), 0);
+        let mut t = 0;
+        for _ in 0..40 {
+            t += 300;
+            rc.on_heard(t);
+            rc.on_rtt(t, 20.0, t);
+            rc.note_limited(t);
+            rc.decide(t);
+        }
+        // An outage long enough to go below the initial rate.
+        for _ in 0..50 {
+            t += 300;
+            rc.note_limited(t);
+            rc.decide(t);
+        }
+        assert!(rc.rate() < RateConfig::default().floor);
+        // The link is back: at once the initial rate, not a climb from 50 B/s
+        // (17 s to 2 kB/s), and not the fast link's rate either.
+        t += 300;
+        rc.on_heard(t);
+        assert_eq!(rc.rate(), RateConfig::default().initial);
     }
 
     #[test]

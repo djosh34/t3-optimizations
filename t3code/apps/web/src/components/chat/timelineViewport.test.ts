@@ -86,12 +86,12 @@ describe("navigationReleasesFollow", () => {
     expect(navigationReleasesFollow(down, viewport(true, false))).toBe(false);
     expect(navigationReleasesFollow(down, viewport(false, true))).toBe(true);
     expect(navigationReleasesFollow({ source: "touch" }, viewport(true, false))).toBe(false);
-    expect(
-      navigationReleasesFollow({ source: "pointer", onScrollbar: false }, viewport(true, false)),
-    ).toBe(false);
-    expect(
-      navigationReleasesFollow({ source: "pointer", onScrollbar: true }, viewport(true, false)),
-    ).toBe(true);
+    const pointer = (onScrollbar: boolean, onControl: boolean) =>
+      ({ source: "pointer", onScrollbar, onControl }) as const;
+    expect(navigationReleasesFollow(pointer(false, false), viewport(true, false))).toBe(false);
+    expect(navigationReleasesFollow(pointer(true, false), viewport(true, false))).toBe(true);
+    expect(navigationReleasesFollow(pointer(false, false), viewport(true, true))).toBe(true);
+    expect(navigationReleasesFollow(pointer(false, true), viewport(true, true))).toBe(false);
   });
 
   it("lets commands decide for themselves", () => {

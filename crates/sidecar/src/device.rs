@@ -55,6 +55,16 @@ impl Device {
         for id in ids {
             let Some(obj) = world.get(id) else { continue };
             let class = class_of(world, id, obj, self.focus.as_deref());
+            if class == Class::Tail && !self.server.has(id) {
+                // A new message's newest text goes out before any backfill
+                // not sent yet: the lab's acceptance report reads this line
+                // (issue #46).
+                log(format!(
+                    "device {}: new newest text, backfill unsent {} B",
+                    self.record.id,
+                    self.server.stats().unsent_backfill_bytes
+                ));
+            }
             // The world checks ids and meta sizes; an error here is a bug
             // there, and the object is left out.
             match self
@@ -112,9 +122,15 @@ pub fn class_of(world: &World, id: u64, obj: &Obj, focus: Option<&str>) -> Class
     if !current {
         return Class::Background;
     }
-    if obj.thread.as_deref().and_then(|t| world.tail(t)) == Some(id) {
+    let thread = obj.thread.as_deref();
+    if thread.and_then(|t| world.tail(t)) == Some(id) {
         Class::Tail
-    } else if obj.status {
+    } else if obj.status || thread.is_some_and(|t| world.in_current_turn(t, id)) {
+        // The current turn's messages and their texts go with status, also
+        // once finished. Without the owner's prompt as t3 placed it, the
+        // client shows the prompt it sent last and the reply above it, out
+        // of view; without a finished item, it shows that message as still
+        // streaming and holds back its last paragraph (issue #46).
         Class::Status
     } else {
         Class::History

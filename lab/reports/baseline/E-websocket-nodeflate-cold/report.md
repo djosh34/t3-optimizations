@@ -1,6 +1,6 @@
 # E, websocket-nodeflate, cold start, seed 1
 
-Profile E (graded): owner extreme: 1 kbit/s, 75% bursty loss. Commit cc6b9676f812.
+Profile E (graded): owner extreme: 1 kbit/s, 75% bursty loss. Commit e14300ea99fc.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
@@ -17,7 +17,7 @@ Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in ta
 | Newest-text lag: max / median / p95 | no text produced / no text produced / no text produced |
 | Longest silence | n/a, no prompt sent |
 | Approval shown after it was asked | never |
-| Bytes on the wire down / up | 7167 / 27189 |
+| Bytes on the wire down / up | 2574 / 767 |
 | Bytes the app received / sent | 0 / 0 |
 | Reply text received / of it duplicates | 0 / 0 |
 | WebSockets opened after the switch | 0 |

@@ -5,27 +5,27 @@
   "client": "websocket-nodeflate",
   "kind": "warm",
   "seed": 1,
-  "commit": "cc6b9676f812",
+  "commit": "e14300ea99fc",
   "path": "Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.",
   "status": "not done by deadline",
   "deadline": "15m0s",
-  "runS": 900,
-  "promptConfirmationS": null,
+  "runS": 900.001,
+  "promptConfirmationS": 9.155,
   "timeToFirstTextS": null,
   "completeS": null,
-  "agentGotPromptS": 14.399,
-  "maxLagS": 884.5,
-  "medianLagS": 434.5,
-  "p95LagS": 839.5,
-  "longestSilenceS": 899.38,
+  "agentGotPromptS": 4.872,
+  "maxLagS": 894.028,
+  "medianLagS": 444.028,
+  "p95LagS": 849.028,
+  "longestSilenceS": 899.415,
   "shownChars": 0,
   "producedChars": 1077,
   "replyChars": 1596,
   "approvalShownAfterS": null,
-  "wireDownBytes": 11167,
-  "wireUpBytes": 21773,
-  "appReceivedBytes": 2187,
-  "appSentBytes": 2745,
+  "wireDownBytes": 5276,
+  "wireUpBytes": 3360,
+  "appReceivedBytes": 80,
+  "appSentBytes": 1394,
   "replyBytesReceived": 0,
   "duplicateReplyBytes": 0,
   "webSocketsOpenedAfterSwitch": 0,
@@ -62,5371 +62,5371 @@
     },
     {
       "atS": 5,
-      "lagS": 0,
+      "lagS": 0.028,
       "shown": 0,
-      "produced": 0
+      "produced": 4
     },
     {
       "atS": 6,
-      "lagS": 0,
+      "lagS": 1.028,
       "shown": 0,
-      "produced": 0
+      "produced": 46
     },
     {
       "atS": 7,
-      "lagS": 0,
+      "lagS": 2.028,
       "shown": 0,
-      "produced": 0
+      "produced": 85
     },
     {
       "atS": 8,
-      "lagS": 0,
+      "lagS": 3.028,
       "shown": 0,
-      "produced": 0
+      "produced": 126
     },
     {
       "atS": 9,
-      "lagS": 0,
+      "lagS": 4.028,
       "shown": 0,
-      "produced": 0
+      "produced": 165
     },
     {
       "atS": 10,
-      "lagS": 0,
+      "lagS": 5.028,
       "shown": 0,
-      "produced": 0
+      "produced": 207
     },
     {
       "atS": 11,
-      "lagS": 0,
+      "lagS": 6.028,
       "shown": 0,
-      "produced": 0
+      "produced": 247
     },
     {
       "atS": 12,
-      "lagS": 0,
+      "lagS": 7.028,
       "shown": 0,
-      "produced": 0
+      "produced": 287
     },
     {
       "atS": 13,
-      "lagS": 0,
+      "lagS": 8.028,
       "shown": 0,
-      "produced": 0
+      "produced": 325
     },
     {
       "atS": 14,
-      "lagS": 0,
+      "lagS": 9.028,
       "shown": 0,
-      "produced": 0
+      "produced": 365
     },
     {
       "atS": 15,
-      "lagS": 0.5,
+      "lagS": 10.028,
       "shown": 0,
-      "produced": 25
+      "produced": 401
     },
     {
       "atS": 16,
-      "lagS": 1.5,
+      "lagS": 11.028,
       "shown": 0,
-      "produced": 65
+      "produced": 444
     },
     {
       "atS": 17,
-      "lagS": 2.5,
+      "lagS": 12.028,
       "shown": 0,
-      "produced": 105
+      "produced": 486
     },
     {
       "atS": 18,
-      "lagS": 3.5,
+      "lagS": 13.028,
       "shown": 0,
-      "produced": 145
+      "produced": 526
     },
     {
       "atS": 19,
-      "lagS": 4.5,
+      "lagS": 14.028,
       "shown": 0,
-      "produced": 186
+      "produced": 566
     },
     {
       "atS": 20,
-      "lagS": 5.5,
+      "lagS": 15.028,
       "shown": 0,
-      "produced": 226
+      "produced": 604
     },
     {
       "atS": 21,
-      "lagS": 6.5,
+      "lagS": 16.028,
       "shown": 0,
-      "produced": 266
+      "produced": 643
     },
     {
       "atS": 22,
-      "lagS": 7.5,
+      "lagS": 17.028,
       "shown": 0,
-      "produced": 307
+      "produced": 685
     },
     {
       "atS": 23,
-      "lagS": 8.5,
+      "lagS": 18.028,
       "shown": 0,
-      "produced": 344
+      "produced": 727
     },
     {
       "atS": 24,
-      "lagS": 9.5,
+      "lagS": 19.028,
       "shown": 0,
-      "produced": 385
+      "produced": 766
     },
     {
       "atS": 25,
-      "lagS": 10.5,
+      "lagS": 20.028,
       "shown": 0,
-      "produced": 424
+      "produced": 807
     },
     {
       "atS": 26,
-      "lagS": 11.5,
+      "lagS": 21.028,
       "shown": 0,
-      "produced": 460
+      "produced": 848
     },
     {
       "atS": 27,
-      "lagS": 12.5,
+      "lagS": 22.028,
       "shown": 0,
-      "produced": 502
+      "produced": 889
     },
     {
       "atS": 28,
-      "lagS": 13.5,
+      "lagS": 23.028,
       "shown": 0,
-      "produced": 547
+      "produced": 929
     },
     {
       "atS": 29,
-      "lagS": 14.5,
+      "lagS": 24.028,
       "shown": 0,
-      "produced": 585
+      "produced": 969
     },
     {
       "atS": 30,
-      "lagS": 15.5,
+      "lagS": 25.028,
       "shown": 0,
-      "produced": 625
+      "produced": 1009
     },
     {
       "atS": 31,
-      "lagS": 16.5,
+      "lagS": 26.028,
       "shown": 0,
-      "produced": 663
+      "produced": 1049
     },
     {
       "atS": 32,
-      "lagS": 17.5,
+      "lagS": 27.028,
       "shown": 0,
-      "produced": 701
+      "produced": 1077
     },
     {
       "atS": 33,
-      "lagS": 18.5,
+      "lagS": 28.028,
       "shown": 0,
-      "produced": 746
+      "produced": 1077
     },
     {
       "atS": 34,
-      "lagS": 19.5,
+      "lagS": 29.028,
       "shown": 0,
-      "produced": 783
+      "produced": 1077
     },
     {
       "atS": 35,
-      "lagS": 20.5,
+      "lagS": 30.028,
       "shown": 0,
-      "produced": 829
+      "produced": 1077
     },
     {
       "atS": 36,
-      "lagS": 21.5,
+      "lagS": 31.028,
       "shown": 0,
-      "produced": 870
+      "produced": 1077
     },
     {
       "atS": 37,
-      "lagS": 22.5,
+      "lagS": 32.028,
       "shown": 0,
-      "produced": 909
+      "produced": 1077
     },
     {
       "atS": 38,
-      "lagS": 23.5,
+      "lagS": 33.028,
       "shown": 0,
-      "produced": 950
+      "produced": 1077
     },
     {
       "atS": 39,
-      "lagS": 24.5,
+      "lagS": 34.028,
       "shown": 0,
-      "produced": 988
+      "produced": 1077
     },
     {
       "atS": 40,
-      "lagS": 25.5,
+      "lagS": 35.028,
       "shown": 0,
-      "produced": 1028
+      "produced": 1077
     },
     {
       "atS": 41,
-      "lagS": 26.5,
+      "lagS": 36.028,
       "shown": 0,
-      "produced": 1069
+      "produced": 1077
     },
     {
       "atS": 42,
-      "lagS": 27.5,
+      "lagS": 37.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 43,
-      "lagS": 28.5,
+      "lagS": 38.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 44,
-      "lagS": 29.5,
+      "lagS": 39.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 45,
-      "lagS": 30.5,
+      "lagS": 40.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 46,
-      "lagS": 31.5,
+      "lagS": 41.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 47,
-      "lagS": 32.5,
+      "lagS": 42.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 48,
-      "lagS": 33.5,
+      "lagS": 43.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 49,
-      "lagS": 34.5,
+      "lagS": 44.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 50,
-      "lagS": 35.5,
+      "lagS": 45.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 51,
-      "lagS": 36.5,
+      "lagS": 46.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 52,
-      "lagS": 37.5,
+      "lagS": 47.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 53,
-      "lagS": 38.5,
+      "lagS": 48.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 54,
-      "lagS": 39.5,
+      "lagS": 49.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 55,
-      "lagS": 40.5,
+      "lagS": 50.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 56,
-      "lagS": 41.5,
+      "lagS": 51.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 57,
-      "lagS": 42.5,
+      "lagS": 52.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 58,
-      "lagS": 43.5,
+      "lagS": 53.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 59,
-      "lagS": 44.5,
+      "lagS": 54.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 60,
-      "lagS": 45.5,
+      "lagS": 55.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 61,
-      "lagS": 46.5,
+      "lagS": 56.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 62,
-      "lagS": 47.5,
+      "lagS": 57.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 63,
-      "lagS": 48.5,
+      "lagS": 58.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 64,
-      "lagS": 49.5,
+      "lagS": 59.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 65,
-      "lagS": 50.5,
+      "lagS": 60.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 66,
-      "lagS": 51.5,
+      "lagS": 61.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 67,
-      "lagS": 52.5,
+      "lagS": 62.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 68,
-      "lagS": 53.5,
+      "lagS": 63.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 69,
-      "lagS": 54.5,
+      "lagS": 64.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 70,
-      "lagS": 55.5,
+      "lagS": 65.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 71,
-      "lagS": 56.5,
+      "lagS": 66.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 72,
-      "lagS": 57.5,
+      "lagS": 67.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 73,
-      "lagS": 58.5,
+      "lagS": 68.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 74,
-      "lagS": 59.5,
+      "lagS": 69.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 75,
-      "lagS": 60.5,
+      "lagS": 70.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 76,
-      "lagS": 61.5,
+      "lagS": 71.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 77,
-      "lagS": 62.5,
+      "lagS": 72.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 78,
-      "lagS": 63.5,
+      "lagS": 73.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 79,
-      "lagS": 64.5,
+      "lagS": 74.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 80,
-      "lagS": 65.5,
+      "lagS": 75.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 81,
-      "lagS": 66.5,
+      "lagS": 76.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 82,
-      "lagS": 67.5,
+      "lagS": 77.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 83,
-      "lagS": 68.5,
+      "lagS": 78.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 84,
-      "lagS": 69.5,
+      "lagS": 79.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 85,
-      "lagS": 70.5,
+      "lagS": 80.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 86,
-      "lagS": 71.5,
+      "lagS": 81.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 87,
-      "lagS": 72.5,
+      "lagS": 82.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 88,
-      "lagS": 73.5,
+      "lagS": 83.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 89,
-      "lagS": 74.5,
+      "lagS": 84.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 90,
-      "lagS": 75.5,
+      "lagS": 85.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 91,
-      "lagS": 76.5,
+      "lagS": 86.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 92,
-      "lagS": 77.5,
+      "lagS": 87.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 93,
-      "lagS": 78.5,
+      "lagS": 88.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 94,
-      "lagS": 79.5,
+      "lagS": 89.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 95,
-      "lagS": 80.5,
+      "lagS": 90.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 96,
-      "lagS": 81.5,
+      "lagS": 91.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 97,
-      "lagS": 82.5,
+      "lagS": 92.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 98,
-      "lagS": 83.5,
+      "lagS": 93.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 99,
-      "lagS": 84.5,
+      "lagS": 94.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 100,
-      "lagS": 85.5,
+      "lagS": 95.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 101,
-      "lagS": 86.5,
+      "lagS": 96.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 102,
-      "lagS": 87.5,
+      "lagS": 97.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 103,
-      "lagS": 88.5,
+      "lagS": 98.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 104,
-      "lagS": 89.5,
+      "lagS": 99.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 105,
-      "lagS": 90.5,
+      "lagS": 100.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 106,
-      "lagS": 91.5,
+      "lagS": 101.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 107,
-      "lagS": 92.5,
+      "lagS": 102.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 108,
-      "lagS": 93.5,
+      "lagS": 103.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 109,
-      "lagS": 94.5,
+      "lagS": 104.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 110,
-      "lagS": 95.5,
+      "lagS": 105.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 111,
-      "lagS": 96.5,
+      "lagS": 106.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 112,
-      "lagS": 97.5,
+      "lagS": 107.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 113,
-      "lagS": 98.5,
+      "lagS": 108.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 114,
-      "lagS": 99.5,
+      "lagS": 109.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 115,
-      "lagS": 100.5,
+      "lagS": 110.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 116,
-      "lagS": 101.5,
+      "lagS": 111.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 117,
-      "lagS": 102.5,
+      "lagS": 112.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 118,
-      "lagS": 103.5,
+      "lagS": 113.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 119,
-      "lagS": 104.5,
+      "lagS": 114.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 120,
-      "lagS": 105.5,
+      "lagS": 115.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 121,
-      "lagS": 106.5,
+      "lagS": 116.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 122,
-      "lagS": 107.5,
+      "lagS": 117.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 123,
-      "lagS": 108.5,
+      "lagS": 118.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 124,
-      "lagS": 109.5,
+      "lagS": 119.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 125,
-      "lagS": 110.5,
+      "lagS": 120.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 126,
-      "lagS": 111.5,
+      "lagS": 121.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 127,
-      "lagS": 112.5,
+      "lagS": 122.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 128,
-      "lagS": 113.5,
+      "lagS": 123.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 129,
-      "lagS": 114.5,
+      "lagS": 124.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 130,
-      "lagS": 115.5,
+      "lagS": 125.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 131,
-      "lagS": 116.5,
+      "lagS": 126.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 132,
-      "lagS": 117.5,
+      "lagS": 127.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 133,
-      "lagS": 118.5,
+      "lagS": 128.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 134,
-      "lagS": 119.5,
+      "lagS": 129.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 135,
-      "lagS": 120.5,
+      "lagS": 130.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 136,
-      "lagS": 121.5,
+      "lagS": 131.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 137,
-      "lagS": 122.5,
+      "lagS": 132.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 138,
-      "lagS": 123.5,
+      "lagS": 133.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 139,
-      "lagS": 124.5,
+      "lagS": 134.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 140,
-      "lagS": 125.5,
+      "lagS": 135.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 141,
-      "lagS": 126.5,
+      "lagS": 136.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 142,
-      "lagS": 127.5,
+      "lagS": 137.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 143,
-      "lagS": 128.5,
+      "lagS": 138.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 144,
-      "lagS": 129.5,
+      "lagS": 139.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 145,
-      "lagS": 130.5,
+      "lagS": 140.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 146,
-      "lagS": 131.5,
+      "lagS": 141.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 147,
-      "lagS": 132.5,
+      "lagS": 142.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 148,
-      "lagS": 133.5,
+      "lagS": 143.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 149,
-      "lagS": 134.5,
+      "lagS": 144.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 150,
-      "lagS": 135.5,
+      "lagS": 145.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 151,
-      "lagS": 136.5,
+      "lagS": 146.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 152,
-      "lagS": 137.5,
+      "lagS": 147.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 153,
-      "lagS": 138.5,
+      "lagS": 148.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 154,
-      "lagS": 139.5,
+      "lagS": 149.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 155,
-      "lagS": 140.5,
+      "lagS": 150.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 156,
-      "lagS": 141.5,
+      "lagS": 151.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 157,
-      "lagS": 142.5,
+      "lagS": 152.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 158,
-      "lagS": 143.5,
+      "lagS": 153.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 159,
-      "lagS": 144.5,
+      "lagS": 154.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 160,
-      "lagS": 145.5,
+      "lagS": 155.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 161,
-      "lagS": 146.5,
+      "lagS": 156.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 162,
-      "lagS": 147.5,
+      "lagS": 157.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 163,
-      "lagS": 148.5,
+      "lagS": 158.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 164,
-      "lagS": 149.5,
+      "lagS": 159.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 165,
-      "lagS": 150.5,
+      "lagS": 160.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 166,
-      "lagS": 151.5,
+      "lagS": 161.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 167,
-      "lagS": 152.5,
+      "lagS": 162.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 168,
-      "lagS": 153.5,
+      "lagS": 163.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 169,
-      "lagS": 154.5,
+      "lagS": 164.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 170,
-      "lagS": 155.5,
+      "lagS": 165.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 171,
-      "lagS": 156.5,
+      "lagS": 166.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 172,
-      "lagS": 157.5,
+      "lagS": 167.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 173,
-      "lagS": 158.5,
+      "lagS": 168.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 174,
-      "lagS": 159.5,
+      "lagS": 169.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 175,
-      "lagS": 160.5,
+      "lagS": 170.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 176,
-      "lagS": 161.5,
+      "lagS": 171.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 177,
-      "lagS": 162.5,
+      "lagS": 172.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 178,
-      "lagS": 163.5,
+      "lagS": 173.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 179,
-      "lagS": 164.5,
+      "lagS": 174.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 180,
-      "lagS": 165.5,
+      "lagS": 175.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 181,
-      "lagS": 166.5,
+      "lagS": 176.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 182,
-      "lagS": 167.5,
+      "lagS": 177.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 183,
-      "lagS": 168.5,
+      "lagS": 178.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 184,
-      "lagS": 169.5,
+      "lagS": 179.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 185,
-      "lagS": 170.5,
+      "lagS": 180.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 186,
-      "lagS": 171.5,
+      "lagS": 181.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 187,
-      "lagS": 172.5,
+      "lagS": 182.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 188,
-      "lagS": 173.5,
+      "lagS": 183.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 189,
-      "lagS": 174.5,
+      "lagS": 184.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 190,
-      "lagS": 175.5,
+      "lagS": 185.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 191,
-      "lagS": 176.5,
+      "lagS": 186.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 192,
-      "lagS": 177.5,
+      "lagS": 187.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 193,
-      "lagS": 178.5,
+      "lagS": 188.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 194,
-      "lagS": 179.5,
+      "lagS": 189.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 195,
-      "lagS": 180.5,
+      "lagS": 190.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 196,
-      "lagS": 181.5,
+      "lagS": 191.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 197,
-      "lagS": 182.5,
+      "lagS": 192.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 198,
-      "lagS": 183.5,
+      "lagS": 193.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 199,
-      "lagS": 184.5,
+      "lagS": 194.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 200,
-      "lagS": 185.5,
+      "lagS": 195.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 201,
-      "lagS": 186.5,
+      "lagS": 196.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 202,
-      "lagS": 187.5,
+      "lagS": 197.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 203,
-      "lagS": 188.5,
+      "lagS": 198.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 204,
-      "lagS": 189.5,
+      "lagS": 199.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 205,
-      "lagS": 190.5,
+      "lagS": 200.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 206,
-      "lagS": 191.5,
+      "lagS": 201.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 207,
-      "lagS": 192.5,
+      "lagS": 202.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 208,
-      "lagS": 193.5,
+      "lagS": 203.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 209,
-      "lagS": 194.5,
+      "lagS": 204.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 210,
-      "lagS": 195.5,
+      "lagS": 205.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 211,
-      "lagS": 196.5,
+      "lagS": 206.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 212,
-      "lagS": 197.5,
+      "lagS": 207.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 213,
-      "lagS": 198.5,
+      "lagS": 208.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 214,
-      "lagS": 199.5,
+      "lagS": 209.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 215,
-      "lagS": 200.5,
+      "lagS": 210.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 216,
-      "lagS": 201.5,
+      "lagS": 211.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 217,
-      "lagS": 202.5,
+      "lagS": 212.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 218,
-      "lagS": 203.5,
+      "lagS": 213.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 219,
-      "lagS": 204.5,
+      "lagS": 214.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 220,
-      "lagS": 205.5,
+      "lagS": 215.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 221,
-      "lagS": 206.5,
+      "lagS": 216.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 222,
-      "lagS": 207.5,
+      "lagS": 217.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 223,
-      "lagS": 208.5,
+      "lagS": 218.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 224,
-      "lagS": 209.5,
+      "lagS": 219.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 225,
-      "lagS": 210.5,
+      "lagS": 220.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 226,
-      "lagS": 211.5,
+      "lagS": 221.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 227,
-      "lagS": 212.5,
+      "lagS": 222.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 228,
-      "lagS": 213.5,
+      "lagS": 223.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 229,
-      "lagS": 214.5,
+      "lagS": 224.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 230,
-      "lagS": 215.5,
+      "lagS": 225.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 231,
-      "lagS": 216.5,
+      "lagS": 226.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 232,
-      "lagS": 217.5,
+      "lagS": 227.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 233,
-      "lagS": 218.5,
+      "lagS": 228.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 234,
-      "lagS": 219.5,
+      "lagS": 229.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 235,
-      "lagS": 220.5,
+      "lagS": 230.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 236,
-      "lagS": 221.5,
+      "lagS": 231.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 237,
-      "lagS": 222.5,
+      "lagS": 232.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 238,
-      "lagS": 223.5,
+      "lagS": 233.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 239,
-      "lagS": 224.5,
+      "lagS": 234.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 240,
-      "lagS": 225.5,
+      "lagS": 235.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 241,
-      "lagS": 226.5,
+      "lagS": 236.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 242,
-      "lagS": 227.5,
+      "lagS": 237.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 243,
-      "lagS": 228.5,
+      "lagS": 238.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 244,
-      "lagS": 229.5,
+      "lagS": 239.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 245,
-      "lagS": 230.5,
+      "lagS": 240.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 246,
-      "lagS": 231.5,
+      "lagS": 241.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 247,
-      "lagS": 232.5,
+      "lagS": 242.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 248,
-      "lagS": 233.5,
+      "lagS": 243.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 249,
-      "lagS": 234.5,
+      "lagS": 244.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 250,
-      "lagS": 235.5,
+      "lagS": 245.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 251,
-      "lagS": 236.5,
+      "lagS": 246.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 252,
-      "lagS": 237.5,
+      "lagS": 247.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 253,
-      "lagS": 238.5,
+      "lagS": 248.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 254,
-      "lagS": 239.5,
+      "lagS": 249.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 255,
-      "lagS": 240.5,
+      "lagS": 250.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 256,
-      "lagS": 241.5,
+      "lagS": 251.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 257,
-      "lagS": 242.5,
+      "lagS": 252.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 258,
-      "lagS": 243.5,
+      "lagS": 253.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 259,
-      "lagS": 244.5,
+      "lagS": 254.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 260,
-      "lagS": 245.5,
+      "lagS": 255.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 261,
-      "lagS": 246.5,
+      "lagS": 256.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 262,
-      "lagS": 247.5,
+      "lagS": 257.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 263,
-      "lagS": 248.5,
+      "lagS": 258.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 264,
-      "lagS": 249.5,
+      "lagS": 259.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 265,
-      "lagS": 250.5,
+      "lagS": 260.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 266,
-      "lagS": 251.5,
+      "lagS": 261.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 267,
-      "lagS": 252.5,
+      "lagS": 262.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 268,
-      "lagS": 253.5,
+      "lagS": 263.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 269,
-      "lagS": 254.5,
+      "lagS": 264.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 270,
-      "lagS": 255.5,
+      "lagS": 265.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 271,
-      "lagS": 256.5,
+      "lagS": 266.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 272,
-      "lagS": 257.5,
+      "lagS": 267.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 273,
-      "lagS": 258.5,
+      "lagS": 268.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 274,
-      "lagS": 259.5,
+      "lagS": 269.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 275,
-      "lagS": 260.5,
+      "lagS": 270.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 276,
-      "lagS": 261.5,
+      "lagS": 271.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 277,
-      "lagS": 262.5,
+      "lagS": 272.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 278,
-      "lagS": 263.5,
+      "lagS": 273.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 279,
-      "lagS": 264.5,
+      "lagS": 274.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 280,
-      "lagS": 265.5,
+      "lagS": 275.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 281,
-      "lagS": 266.5,
+      "lagS": 276.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 282,
-      "lagS": 267.5,
+      "lagS": 277.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 283,
-      "lagS": 268.5,
+      "lagS": 278.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 284,
-      "lagS": 269.5,
+      "lagS": 279.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 285,
-      "lagS": 270.5,
+      "lagS": 280.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 286,
-      "lagS": 271.5,
+      "lagS": 281.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 287,
-      "lagS": 272.5,
+      "lagS": 282.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 288,
-      "lagS": 273.5,
+      "lagS": 283.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 289,
-      "lagS": 274.5,
+      "lagS": 284.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 290,
-      "lagS": 275.5,
+      "lagS": 285.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 291,
-      "lagS": 276.5,
+      "lagS": 286.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 292,
-      "lagS": 277.5,
+      "lagS": 287.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 293,
-      "lagS": 278.5,
+      "lagS": 288.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 294,
-      "lagS": 279.5,
+      "lagS": 289.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 295,
-      "lagS": 280.5,
+      "lagS": 290.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 296,
-      "lagS": 281.5,
+      "lagS": 291.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 297,
-      "lagS": 282.5,
+      "lagS": 292.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 298,
-      "lagS": 283.5,
+      "lagS": 293.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 299,
-      "lagS": 284.5,
+      "lagS": 294.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 300,
-      "lagS": 285.5,
+      "lagS": 295.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 301,
-      "lagS": 286.5,
+      "lagS": 296.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 302,
-      "lagS": 287.5,
+      "lagS": 297.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 303,
-      "lagS": 288.5,
+      "lagS": 298.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 304,
-      "lagS": 289.5,
+      "lagS": 299.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 305,
-      "lagS": 290.5,
+      "lagS": 300.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 306,
-      "lagS": 291.5,
+      "lagS": 301.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 307,
-      "lagS": 292.5,
+      "lagS": 302.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 308,
-      "lagS": 293.5,
+      "lagS": 303.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 309,
-      "lagS": 294.5,
+      "lagS": 304.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 310,
-      "lagS": 295.5,
+      "lagS": 305.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 311,
-      "lagS": 296.5,
+      "lagS": 306.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 312,
-      "lagS": 297.5,
+      "lagS": 307.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 313,
-      "lagS": 298.5,
+      "lagS": 308.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 314,
-      "lagS": 299.5,
+      "lagS": 309.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 315,
-      "lagS": 300.5,
+      "lagS": 310.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 316,
-      "lagS": 301.5,
+      "lagS": 311.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 317,
-      "lagS": 302.5,
+      "lagS": 312.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 318,
-      "lagS": 303.5,
+      "lagS": 313.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 319,
-      "lagS": 304.5,
+      "lagS": 314.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 320,
-      "lagS": 305.5,
+      "lagS": 315.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 321,
-      "lagS": 306.5,
+      "lagS": 316.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 322,
-      "lagS": 307.5,
+      "lagS": 317.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 323,
-      "lagS": 308.5,
+      "lagS": 318.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 324,
-      "lagS": 309.5,
+      "lagS": 319.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 325,
-      "lagS": 310.5,
+      "lagS": 320.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 326,
-      "lagS": 311.5,
+      "lagS": 321.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 327,
-      "lagS": 312.5,
+      "lagS": 322.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 328,
-      "lagS": 313.5,
+      "lagS": 323.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 329,
-      "lagS": 314.5,
+      "lagS": 324.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 330,
-      "lagS": 315.5,
+      "lagS": 325.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 331,
-      "lagS": 316.5,
+      "lagS": 326.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 332,
-      "lagS": 317.5,
+      "lagS": 327.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 333,
-      "lagS": 318.5,
+      "lagS": 328.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 334,
-      "lagS": 319.5,
+      "lagS": 329.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 335,
-      "lagS": 320.5,
+      "lagS": 330.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 336,
-      "lagS": 321.5,
+      "lagS": 331.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 337,
-      "lagS": 322.5,
+      "lagS": 332.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 338,
-      "lagS": 323.5,
+      "lagS": 333.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 339,
-      "lagS": 324.5,
+      "lagS": 334.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 340,
-      "lagS": 325.5,
+      "lagS": 335.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 341,
-      "lagS": 326.5,
+      "lagS": 336.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 342,
-      "lagS": 327.5,
+      "lagS": 337.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 343,
-      "lagS": 328.5,
+      "lagS": 338.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 344,
-      "lagS": 329.5,
+      "lagS": 339.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 345,
-      "lagS": 330.5,
+      "lagS": 340.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 346,
-      "lagS": 331.5,
+      "lagS": 341.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 347,
-      "lagS": 332.5,
+      "lagS": 342.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 348,
-      "lagS": 333.5,
+      "lagS": 343.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 349,
-      "lagS": 334.5,
+      "lagS": 344.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 350,
-      "lagS": 335.5,
+      "lagS": 345.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 351,
-      "lagS": 336.5,
+      "lagS": 346.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 352,
-      "lagS": 337.5,
+      "lagS": 347.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 353,
-      "lagS": 338.5,
+      "lagS": 348.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 354,
-      "lagS": 339.5,
+      "lagS": 349.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 355,
-      "lagS": 340.5,
+      "lagS": 350.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 356,
-      "lagS": 341.5,
+      "lagS": 351.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 357,
-      "lagS": 342.5,
+      "lagS": 352.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 358,
-      "lagS": 343.5,
+      "lagS": 353.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 359,
-      "lagS": 344.5,
+      "lagS": 354.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 360,
-      "lagS": 345.5,
+      "lagS": 355.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 361,
-      "lagS": 346.5,
+      "lagS": 356.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 362,
-      "lagS": 347.5,
+      "lagS": 357.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 363,
-      "lagS": 348.5,
+      "lagS": 358.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 364,
-      "lagS": 349.5,
+      "lagS": 359.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 365,
-      "lagS": 350.5,
+      "lagS": 360.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 366,
-      "lagS": 351.5,
+      "lagS": 361.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 367,
-      "lagS": 352.5,
+      "lagS": 362.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 368,
-      "lagS": 353.5,
+      "lagS": 363.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 369,
-      "lagS": 354.5,
+      "lagS": 364.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 370,
-      "lagS": 355.5,
+      "lagS": 365.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 371,
-      "lagS": 356.5,
+      "lagS": 366.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 372,
-      "lagS": 357.5,
+      "lagS": 367.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 373,
-      "lagS": 358.5,
+      "lagS": 368.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 374,
-      "lagS": 359.5,
+      "lagS": 369.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 375,
-      "lagS": 360.5,
+      "lagS": 370.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 376,
-      "lagS": 361.5,
+      "lagS": 371.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 377,
-      "lagS": 362.5,
+      "lagS": 372.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 378,
-      "lagS": 363.5,
+      "lagS": 373.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 379,
-      "lagS": 364.5,
+      "lagS": 374.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 380,
-      "lagS": 365.5,
+      "lagS": 375.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 381,
-      "lagS": 366.5,
+      "lagS": 376.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 382,
-      "lagS": 367.5,
+      "lagS": 377.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 383,
-      "lagS": 368.5,
+      "lagS": 378.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 384,
-      "lagS": 369.5,
+      "lagS": 379.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 385,
-      "lagS": 370.5,
+      "lagS": 380.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 386,
-      "lagS": 371.5,
+      "lagS": 381.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 387,
-      "lagS": 372.5,
+      "lagS": 382.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 388,
-      "lagS": 373.5,
+      "lagS": 383.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 389,
-      "lagS": 374.5,
+      "lagS": 384.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 390,
-      "lagS": 375.5,
+      "lagS": 385.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 391,
-      "lagS": 376.5,
+      "lagS": 386.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 392,
-      "lagS": 377.5,
+      "lagS": 387.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 393,
-      "lagS": 378.5,
+      "lagS": 388.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 394,
-      "lagS": 379.5,
+      "lagS": 389.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 395,
-      "lagS": 380.5,
+      "lagS": 390.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 396,
-      "lagS": 381.5,
+      "lagS": 391.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 397,
-      "lagS": 382.5,
+      "lagS": 392.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 398,
-      "lagS": 383.5,
+      "lagS": 393.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 399,
-      "lagS": 384.5,
+      "lagS": 394.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 400,
-      "lagS": 385.5,
+      "lagS": 395.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 401,
-      "lagS": 386.5,
+      "lagS": 396.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 402,
-      "lagS": 387.5,
+      "lagS": 397.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 403,
-      "lagS": 388.5,
+      "lagS": 398.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 404,
-      "lagS": 389.5,
+      "lagS": 399.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 405,
-      "lagS": 390.5,
+      "lagS": 400.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 406,
-      "lagS": 391.5,
+      "lagS": 401.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 407,
-      "lagS": 392.5,
+      "lagS": 402.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 408,
-      "lagS": 393.5,
+      "lagS": 403.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 409,
-      "lagS": 394.5,
+      "lagS": 404.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 410,
-      "lagS": 395.5,
+      "lagS": 405.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 411,
-      "lagS": 396.5,
+      "lagS": 406.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 412,
-      "lagS": 397.5,
+      "lagS": 407.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 413,
-      "lagS": 398.5,
+      "lagS": 408.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 414,
-      "lagS": 399.5,
+      "lagS": 409.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 415,
-      "lagS": 400.5,
+      "lagS": 410.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 416,
-      "lagS": 401.5,
+      "lagS": 411.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 417,
-      "lagS": 402.5,
+      "lagS": 412.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 418,
-      "lagS": 403.5,
+      "lagS": 413.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 419,
-      "lagS": 404.5,
+      "lagS": 414.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 420,
-      "lagS": 405.5,
+      "lagS": 415.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 421,
-      "lagS": 406.5,
+      "lagS": 416.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 422,
-      "lagS": 407.5,
+      "lagS": 417.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 423,
-      "lagS": 408.5,
+      "lagS": 418.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 424,
-      "lagS": 409.5,
+      "lagS": 419.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 425,
-      "lagS": 410.5,
+      "lagS": 420.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 426,
-      "lagS": 411.5,
+      "lagS": 421.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 427,
-      "lagS": 412.5,
+      "lagS": 422.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 428,
-      "lagS": 413.5,
+      "lagS": 423.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 429,
-      "lagS": 414.5,
+      "lagS": 424.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 430,
-      "lagS": 415.5,
+      "lagS": 425.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 431,
-      "lagS": 416.5,
+      "lagS": 426.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 432,
-      "lagS": 417.5,
+      "lagS": 427.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 433,
-      "lagS": 418.5,
+      "lagS": 428.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 434,
-      "lagS": 419.5,
+      "lagS": 429.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 435,
-      "lagS": 420.5,
+      "lagS": 430.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 436,
-      "lagS": 421.5,
+      "lagS": 431.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 437,
-      "lagS": 422.5,
+      "lagS": 432.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 438,
-      "lagS": 423.5,
+      "lagS": 433.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 439,
-      "lagS": 424.5,
+      "lagS": 434.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 440,
-      "lagS": 425.5,
+      "lagS": 435.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 441,
-      "lagS": 426.5,
+      "lagS": 436.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 442,
-      "lagS": 427.5,
+      "lagS": 437.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 443,
-      "lagS": 428.5,
+      "lagS": 438.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 444,
-      "lagS": 429.5,
+      "lagS": 439.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 445,
-      "lagS": 430.5,
+      "lagS": 440.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 446,
-      "lagS": 431.5,
+      "lagS": 441.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 447,
-      "lagS": 432.5,
+      "lagS": 442.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 448,
-      "lagS": 433.5,
+      "lagS": 443.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 449,
-      "lagS": 434.5,
+      "lagS": 444.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 450,
-      "lagS": 435.5,
+      "lagS": 445.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 451,
-      "lagS": 436.5,
+      "lagS": 446.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 452,
-      "lagS": 437.5,
+      "lagS": 447.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 453,
-      "lagS": 438.5,
+      "lagS": 448.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 454,
-      "lagS": 439.5,
+      "lagS": 449.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 455,
-      "lagS": 440.5,
+      "lagS": 450.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 456,
-      "lagS": 441.5,
+      "lagS": 451.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 457,
-      "lagS": 442.5,
+      "lagS": 452.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 458,
-      "lagS": 443.5,
+      "lagS": 453.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 459,
-      "lagS": 444.5,
+      "lagS": 454.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 460,
-      "lagS": 445.5,
+      "lagS": 455.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 461,
-      "lagS": 446.5,
+      "lagS": 456.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 462,
-      "lagS": 447.5,
+      "lagS": 457.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 463,
-      "lagS": 448.5,
+      "lagS": 458.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 464,
-      "lagS": 449.5,
+      "lagS": 459.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 465,
-      "lagS": 450.5,
+      "lagS": 460.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 466,
-      "lagS": 451.5,
+      "lagS": 461.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 467,
-      "lagS": 452.5,
+      "lagS": 462.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 468,
-      "lagS": 453.5,
+      "lagS": 463.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 469,
-      "lagS": 454.5,
+      "lagS": 464.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 470,
-      "lagS": 455.5,
+      "lagS": 465.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 471,
-      "lagS": 456.5,
+      "lagS": 466.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 472,
-      "lagS": 457.5,
+      "lagS": 467.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 473,
-      "lagS": 458.5,
+      "lagS": 468.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 474,
-      "lagS": 459.5,
+      "lagS": 469.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 475,
-      "lagS": 460.5,
+      "lagS": 470.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 476,
-      "lagS": 461.5,
+      "lagS": 471.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 477,
-      "lagS": 462.5,
+      "lagS": 472.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 478,
-      "lagS": 463.5,
+      "lagS": 473.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 479,
-      "lagS": 464.5,
+      "lagS": 474.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 480,
-      "lagS": 465.5,
+      "lagS": 475.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 481,
-      "lagS": 466.5,
+      "lagS": 476.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 482,
-      "lagS": 467.5,
+      "lagS": 477.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 483,
-      "lagS": 468.5,
+      "lagS": 478.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 484,
-      "lagS": 469.5,
+      "lagS": 479.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 485,
-      "lagS": 470.5,
+      "lagS": 480.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 486,
-      "lagS": 471.5,
+      "lagS": 481.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 487,
-      "lagS": 472.5,
+      "lagS": 482.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 488,
-      "lagS": 473.5,
+      "lagS": 483.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 489,
-      "lagS": 474.5,
+      "lagS": 484.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 490,
-      "lagS": 475.5,
+      "lagS": 485.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 491,
-      "lagS": 476.5,
+      "lagS": 486.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 492,
-      "lagS": 477.5,
+      "lagS": 487.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 493,
-      "lagS": 478.5,
+      "lagS": 488.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 494,
-      "lagS": 479.5,
+      "lagS": 489.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 495,
-      "lagS": 480.5,
+      "lagS": 490.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 496,
-      "lagS": 481.5,
+      "lagS": 491.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 497,
-      "lagS": 482.5,
+      "lagS": 492.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 498,
-      "lagS": 483.5,
+      "lagS": 493.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 499,
-      "lagS": 484.5,
+      "lagS": 494.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 500,
-      "lagS": 485.5,
+      "lagS": 495.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 501,
-      "lagS": 486.5,
+      "lagS": 496.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 502,
-      "lagS": 487.5,
+      "lagS": 497.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 503,
-      "lagS": 488.5,
+      "lagS": 498.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 504,
-      "lagS": 489.5,
+      "lagS": 499.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 505,
-      "lagS": 490.5,
+      "lagS": 500.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 506,
-      "lagS": 491.5,
+      "lagS": 501.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 507,
-      "lagS": 492.5,
+      "lagS": 502.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 508,
-      "lagS": 493.5,
+      "lagS": 503.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 509,
-      "lagS": 494.5,
+      "lagS": 504.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 510,
-      "lagS": 495.5,
+      "lagS": 505.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 511,
-      "lagS": 496.5,
+      "lagS": 506.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 512,
-      "lagS": 497.5,
+      "lagS": 507.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 513,
-      "lagS": 498.5,
+      "lagS": 508.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 514,
-      "lagS": 499.5,
+      "lagS": 509.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 515,
-      "lagS": 500.5,
+      "lagS": 510.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 516,
-      "lagS": 501.5,
+      "lagS": 511.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 517,
-      "lagS": 502.5,
+      "lagS": 512.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 518,
-      "lagS": 503.5,
+      "lagS": 513.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 519,
-      "lagS": 504.5,
+      "lagS": 514.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 520,
-      "lagS": 505.5,
+      "lagS": 515.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 521,
-      "lagS": 506.5,
+      "lagS": 516.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 522,
-      "lagS": 507.5,
+      "lagS": 517.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 523,
-      "lagS": 508.5,
+      "lagS": 518.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 524,
-      "lagS": 509.5,
+      "lagS": 519.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 525,
-      "lagS": 510.5,
+      "lagS": 520.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 526,
-      "lagS": 511.5,
+      "lagS": 521.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 527,
-      "lagS": 512.5,
+      "lagS": 522.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 528,
-      "lagS": 513.5,
+      "lagS": 523.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 529,
-      "lagS": 514.5,
+      "lagS": 524.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 530,
-      "lagS": 515.5,
+      "lagS": 525.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 531,
-      "lagS": 516.5,
+      "lagS": 526.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 532,
-      "lagS": 517.5,
+      "lagS": 527.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 533,
-      "lagS": 518.5,
+      "lagS": 528.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 534,
-      "lagS": 519.5,
+      "lagS": 529.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 535,
-      "lagS": 520.5,
+      "lagS": 530.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 536,
-      "lagS": 521.5,
+      "lagS": 531.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 537,
-      "lagS": 522.5,
+      "lagS": 532.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 538,
-      "lagS": 523.5,
+      "lagS": 533.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 539,
-      "lagS": 524.5,
+      "lagS": 534.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 540,
-      "lagS": 525.5,
+      "lagS": 535.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 541,
-      "lagS": 526.5,
+      "lagS": 536.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 542,
-      "lagS": 527.5,
+      "lagS": 537.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 543,
-      "lagS": 528.5,
+      "lagS": 538.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 544,
-      "lagS": 529.5,
+      "lagS": 539.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 545,
-      "lagS": 530.5,
+      "lagS": 540.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 546,
-      "lagS": 531.5,
+      "lagS": 541.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 547,
-      "lagS": 532.5,
+      "lagS": 542.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 548,
-      "lagS": 533.5,
+      "lagS": 543.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 549,
-      "lagS": 534.5,
+      "lagS": 544.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 550,
-      "lagS": 535.5,
+      "lagS": 545.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 551,
-      "lagS": 536.5,
+      "lagS": 546.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 552,
-      "lagS": 537.5,
+      "lagS": 547.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 553,
-      "lagS": 538.5,
+      "lagS": 548.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 554,
-      "lagS": 539.5,
+      "lagS": 549.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 555,
-      "lagS": 540.5,
+      "lagS": 550.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 556,
-      "lagS": 541.5,
+      "lagS": 551.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 557,
-      "lagS": 542.5,
+      "lagS": 552.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 558,
-      "lagS": 543.5,
+      "lagS": 553.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 559,
-      "lagS": 544.5,
+      "lagS": 554.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 560,
-      "lagS": 545.5,
+      "lagS": 555.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 561,
-      "lagS": 546.5,
+      "lagS": 556.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 562,
-      "lagS": 547.5,
+      "lagS": 557.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 563,
-      "lagS": 548.5,
+      "lagS": 558.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 564,
-      "lagS": 549.5,
+      "lagS": 559.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 565,
-      "lagS": 550.5,
+      "lagS": 560.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 566,
-      "lagS": 551.5,
+      "lagS": 561.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 567,
-      "lagS": 552.5,
+      "lagS": 562.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 568,
-      "lagS": 553.5,
+      "lagS": 563.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 569,
-      "lagS": 554.5,
+      "lagS": 564.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 570,
-      "lagS": 555.5,
+      "lagS": 565.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 571,
-      "lagS": 556.5,
+      "lagS": 566.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 572,
-      "lagS": 557.5,
+      "lagS": 567.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 573,
-      "lagS": 558.5,
+      "lagS": 568.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 574,
-      "lagS": 559.5,
+      "lagS": 569.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 575,
-      "lagS": 560.5,
+      "lagS": 570.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 576,
-      "lagS": 561.5,
+      "lagS": 571.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 577,
-      "lagS": 562.5,
+      "lagS": 572.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 578,
-      "lagS": 563.5,
+      "lagS": 573.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 579,
-      "lagS": 564.5,
+      "lagS": 574.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 580,
-      "lagS": 565.5,
+      "lagS": 575.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 581,
-      "lagS": 566.5,
+      "lagS": 576.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 582,
-      "lagS": 567.5,
+      "lagS": 577.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 583,
-      "lagS": 568.5,
+      "lagS": 578.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 584,
-      "lagS": 569.5,
+      "lagS": 579.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 585,
-      "lagS": 570.5,
+      "lagS": 580.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 586,
-      "lagS": 571.5,
+      "lagS": 581.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 587,
-      "lagS": 572.5,
+      "lagS": 582.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 588,
-      "lagS": 573.5,
+      "lagS": 583.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 589,
-      "lagS": 574.5,
+      "lagS": 584.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 590,
-      "lagS": 575.5,
+      "lagS": 585.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 591,
-      "lagS": 576.5,
+      "lagS": 586.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 592,
-      "lagS": 577.5,
+      "lagS": 587.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 593,
-      "lagS": 578.5,
+      "lagS": 588.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 594,
-      "lagS": 579.5,
+      "lagS": 589.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 595,
-      "lagS": 580.5,
+      "lagS": 590.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 596,
-      "lagS": 581.5,
+      "lagS": 591.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 597,
-      "lagS": 582.5,
+      "lagS": 592.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 598,
-      "lagS": 583.5,
+      "lagS": 593.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 599,
-      "lagS": 584.5,
+      "lagS": 594.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 600,
-      "lagS": 585.5,
+      "lagS": 595.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 601,
-      "lagS": 586.5,
+      "lagS": 596.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 602,
-      "lagS": 587.5,
+      "lagS": 597.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 603,
-      "lagS": 588.5,
+      "lagS": 598.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 604,
-      "lagS": 589.5,
+      "lagS": 599.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 605,
-      "lagS": 590.5,
+      "lagS": 600.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 606,
-      "lagS": 591.5,
+      "lagS": 601.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 607,
-      "lagS": 592.5,
+      "lagS": 602.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 608,
-      "lagS": 593.5,
+      "lagS": 603.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 609,
-      "lagS": 594.5,
+      "lagS": 604.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 610,
-      "lagS": 595.5,
+      "lagS": 605.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 611,
-      "lagS": 596.5,
+      "lagS": 606.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 612,
-      "lagS": 597.5,
+      "lagS": 607.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 613,
-      "lagS": 598.5,
+      "lagS": 608.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 614,
-      "lagS": 599.5,
+      "lagS": 609.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 615,
-      "lagS": 600.5,
+      "lagS": 610.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 616,
-      "lagS": 601.5,
+      "lagS": 611.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 617,
-      "lagS": 602.5,
+      "lagS": 612.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 618,
-      "lagS": 603.5,
+      "lagS": 613.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 619,
-      "lagS": 604.5,
+      "lagS": 614.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 620,
-      "lagS": 605.5,
+      "lagS": 615.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 621,
-      "lagS": 606.5,
+      "lagS": 616.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 622,
-      "lagS": 607.5,
+      "lagS": 617.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 623,
-      "lagS": 608.5,
+      "lagS": 618.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 624,
-      "lagS": 609.5,
+      "lagS": 619.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 625,
-      "lagS": 610.5,
+      "lagS": 620.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 626,
-      "lagS": 611.5,
+      "lagS": 621.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 627,
-      "lagS": 612.5,
+      "lagS": 622.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 628,
-      "lagS": 613.5,
+      "lagS": 623.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 629,
-      "lagS": 614.5,
+      "lagS": 624.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 630,
-      "lagS": 615.5,
+      "lagS": 625.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 631,
-      "lagS": 616.5,
+      "lagS": 626.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 632,
-      "lagS": 617.5,
+      "lagS": 627.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 633,
-      "lagS": 618.5,
+      "lagS": 628.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 634,
-      "lagS": 619.5,
+      "lagS": 629.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 635,
-      "lagS": 620.5,
+      "lagS": 630.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 636,
-      "lagS": 621.5,
+      "lagS": 631.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 637,
-      "lagS": 622.5,
+      "lagS": 632.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 638,
-      "lagS": 623.5,
+      "lagS": 633.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 639,
-      "lagS": 624.5,
+      "lagS": 634.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 640,
-      "lagS": 625.5,
+      "lagS": 635.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 641,
-      "lagS": 626.5,
+      "lagS": 636.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 642,
-      "lagS": 627.5,
+      "lagS": 637.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 643,
-      "lagS": 628.5,
+      "lagS": 638.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 644,
-      "lagS": 629.5,
+      "lagS": 639.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 645,
-      "lagS": 630.5,
+      "lagS": 640.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 646,
-      "lagS": 631.5,
+      "lagS": 641.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 647,
-      "lagS": 632.5,
+      "lagS": 642.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 648,
-      "lagS": 633.5,
+      "lagS": 643.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 649,
-      "lagS": 634.5,
+      "lagS": 644.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 650,
-      "lagS": 635.5,
+      "lagS": 645.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 651,
-      "lagS": 636.5,
+      "lagS": 646.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 652,
-      "lagS": 637.5,
+      "lagS": 647.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 653,
-      "lagS": 638.5,
+      "lagS": 648.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 654,
-      "lagS": 639.5,
+      "lagS": 649.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 655,
-      "lagS": 640.5,
+      "lagS": 650.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 656,
-      "lagS": 641.5,
+      "lagS": 651.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 657,
-      "lagS": 642.5,
+      "lagS": 652.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 658,
-      "lagS": 643.5,
+      "lagS": 653.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 659,
-      "lagS": 644.5,
+      "lagS": 654.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 660,
-      "lagS": 645.5,
+      "lagS": 655.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 661,
-      "lagS": 646.5,
+      "lagS": 656.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 662,
-      "lagS": 647.5,
+      "lagS": 657.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 663,
-      "lagS": 648.5,
+      "lagS": 658.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 664,
-      "lagS": 649.5,
+      "lagS": 659.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 665,
-      "lagS": 650.5,
+      "lagS": 660.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 666,
-      "lagS": 651.5,
+      "lagS": 661.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 667,
-      "lagS": 652.5,
+      "lagS": 662.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 668,
-      "lagS": 653.5,
+      "lagS": 663.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 669,
-      "lagS": 654.5,
+      "lagS": 664.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 670,
-      "lagS": 655.5,
+      "lagS": 665.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 671,
-      "lagS": 656.5,
+      "lagS": 666.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 672,
-      "lagS": 657.5,
+      "lagS": 667.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 673,
-      "lagS": 658.5,
+      "lagS": 668.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 674,
-      "lagS": 659.5,
+      "lagS": 669.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 675,
-      "lagS": 660.5,
+      "lagS": 670.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 676,
-      "lagS": 661.5,
+      "lagS": 671.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 677,
-      "lagS": 662.5,
+      "lagS": 672.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 678,
-      "lagS": 663.5,
+      "lagS": 673.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 679,
-      "lagS": 664.5,
+      "lagS": 674.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 680,
-      "lagS": 665.5,
+      "lagS": 675.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 681,
-      "lagS": 666.5,
+      "lagS": 676.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 682,
-      "lagS": 667.5,
+      "lagS": 677.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 683,
-      "lagS": 668.5,
+      "lagS": 678.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 684,
-      "lagS": 669.5,
+      "lagS": 679.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 685,
-      "lagS": 670.5,
+      "lagS": 680.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 686,
-      "lagS": 671.5,
+      "lagS": 681.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 687,
-      "lagS": 672.5,
+      "lagS": 682.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 688,
-      "lagS": 673.5,
+      "lagS": 683.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 689,
-      "lagS": 674.5,
+      "lagS": 684.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 690,
-      "lagS": 675.5,
+      "lagS": 685.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 691,
-      "lagS": 676.5,
+      "lagS": 686.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 692,
-      "lagS": 677.5,
+      "lagS": 687.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 693,
-      "lagS": 678.5,
+      "lagS": 688.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 694,
-      "lagS": 679.5,
+      "lagS": 689.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 695,
-      "lagS": 680.5,
+      "lagS": 690.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 696,
-      "lagS": 681.5,
+      "lagS": 691.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 697,
-      "lagS": 682.5,
+      "lagS": 692.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 698,
-      "lagS": 683.5,
+      "lagS": 693.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 699,
-      "lagS": 684.5,
+      "lagS": 694.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 700,
-      "lagS": 685.5,
+      "lagS": 695.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 701,
-      "lagS": 686.5,
+      "lagS": 696.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 702,
-      "lagS": 687.5,
+      "lagS": 697.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 703,
-      "lagS": 688.5,
+      "lagS": 698.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 704,
-      "lagS": 689.5,
+      "lagS": 699.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 705,
-      "lagS": 690.5,
+      "lagS": 700.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 706,
-      "lagS": 691.5,
+      "lagS": 701.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 707,
-      "lagS": 692.5,
+      "lagS": 702.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 708,
-      "lagS": 693.5,
+      "lagS": 703.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 709,
-      "lagS": 694.5,
+      "lagS": 704.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 710,
-      "lagS": 695.5,
+      "lagS": 705.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 711,
-      "lagS": 696.5,
+      "lagS": 706.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 712,
-      "lagS": 697.5,
+      "lagS": 707.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 713,
-      "lagS": 698.5,
+      "lagS": 708.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 714,
-      "lagS": 699.5,
+      "lagS": 709.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 715,
-      "lagS": 700.5,
+      "lagS": 710.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 716,
-      "lagS": 701.5,
+      "lagS": 711.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 717,
-      "lagS": 702.5,
+      "lagS": 712.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 718,
-      "lagS": 703.5,
+      "lagS": 713.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 719,
-      "lagS": 704.5,
+      "lagS": 714.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 720,
-      "lagS": 705.5,
+      "lagS": 715.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 721,
-      "lagS": 706.5,
+      "lagS": 716.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 722,
-      "lagS": 707.5,
+      "lagS": 717.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 723,
-      "lagS": 708.5,
+      "lagS": 718.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 724,
-      "lagS": 709.5,
+      "lagS": 719.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 725,
-      "lagS": 710.5,
+      "lagS": 720.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 726,
-      "lagS": 711.5,
+      "lagS": 721.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 727,
-      "lagS": 712.5,
+      "lagS": 722.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 728,
-      "lagS": 713.5,
+      "lagS": 723.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 729,
-      "lagS": 714.5,
+      "lagS": 724.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 730,
-      "lagS": 715.5,
+      "lagS": 725.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 731,
-      "lagS": 716.5,
+      "lagS": 726.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 732,
-      "lagS": 717.5,
+      "lagS": 727.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 733,
-      "lagS": 718.5,
+      "lagS": 728.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 734,
-      "lagS": 719.5,
+      "lagS": 729.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 735,
-      "lagS": 720.5,
+      "lagS": 730.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 736,
-      "lagS": 721.5,
+      "lagS": 731.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 737,
-      "lagS": 722.5,
+      "lagS": 732.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 738,
-      "lagS": 723.5,
+      "lagS": 733.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 739,
-      "lagS": 724.5,
+      "lagS": 734.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 740,
-      "lagS": 725.5,
+      "lagS": 735.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 741,
-      "lagS": 726.5,
+      "lagS": 736.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 742,
-      "lagS": 727.5,
+      "lagS": 737.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 743,
-      "lagS": 728.5,
+      "lagS": 738.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 744,
-      "lagS": 729.5,
+      "lagS": 739.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 745,
-      "lagS": 730.5,
+      "lagS": 740.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 746,
-      "lagS": 731.5,
+      "lagS": 741.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 747,
-      "lagS": 732.5,
+      "lagS": 742.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 748,
-      "lagS": 733.5,
+      "lagS": 743.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 749,
-      "lagS": 734.5,
+      "lagS": 744.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 750,
-      "lagS": 735.5,
+      "lagS": 745.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 751,
-      "lagS": 736.5,
+      "lagS": 746.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 752,
-      "lagS": 737.5,
+      "lagS": 747.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 753,
-      "lagS": 738.5,
+      "lagS": 748.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 754,
-      "lagS": 739.5,
+      "lagS": 749.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 755,
-      "lagS": 740.5,
+      "lagS": 750.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 756,
-      "lagS": 741.5,
+      "lagS": 751.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 757,
-      "lagS": 742.5,
+      "lagS": 752.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 758,
-      "lagS": 743.5,
+      "lagS": 753.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 759,
-      "lagS": 744.5,
+      "lagS": 754.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 760,
-      "lagS": 745.5,
+      "lagS": 755.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 761,
-      "lagS": 746.5,
+      "lagS": 756.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 762,
-      "lagS": 747.5,
+      "lagS": 757.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 763,
-      "lagS": 748.5,
+      "lagS": 758.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 764,
-      "lagS": 749.5,
+      "lagS": 759.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 765,
-      "lagS": 750.5,
+      "lagS": 760.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 766,
-      "lagS": 751.5,
+      "lagS": 761.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 767,
-      "lagS": 752.5,
+      "lagS": 762.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 768,
-      "lagS": 753.5,
+      "lagS": 763.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 769,
-      "lagS": 754.5,
+      "lagS": 764.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 770,
-      "lagS": 755.5,
+      "lagS": 765.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 771,
-      "lagS": 756.5,
+      "lagS": 766.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 772,
-      "lagS": 757.5,
+      "lagS": 767.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 773,
-      "lagS": 758.5,
+      "lagS": 768.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 774,
-      "lagS": 759.5,
+      "lagS": 769.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 775,
-      "lagS": 760.5,
+      "lagS": 770.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 776,
-      "lagS": 761.5,
+      "lagS": 771.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 777,
-      "lagS": 762.5,
+      "lagS": 772.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 778,
-      "lagS": 763.5,
+      "lagS": 773.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 779,
-      "lagS": 764.5,
+      "lagS": 774.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 780,
-      "lagS": 765.5,
+      "lagS": 775.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 781,
-      "lagS": 766.5,
+      "lagS": 776.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 782,
-      "lagS": 767.5,
+      "lagS": 777.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 783,
-      "lagS": 768.5,
+      "lagS": 778.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 784,
-      "lagS": 769.5,
+      "lagS": 779.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 785,
-      "lagS": 770.5,
+      "lagS": 780.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 786,
-      "lagS": 771.5,
+      "lagS": 781.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 787,
-      "lagS": 772.5,
+      "lagS": 782.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 788,
-      "lagS": 773.5,
+      "lagS": 783.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 789,
-      "lagS": 774.5,
+      "lagS": 784.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 790,
-      "lagS": 775.5,
+      "lagS": 785.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 791,
-      "lagS": 776.5,
+      "lagS": 786.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 792,
-      "lagS": 777.5,
+      "lagS": 787.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 793,
-      "lagS": 778.5,
+      "lagS": 788.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 794,
-      "lagS": 779.5,
+      "lagS": 789.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 795,
-      "lagS": 780.5,
+      "lagS": 790.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 796,
-      "lagS": 781.5,
+      "lagS": 791.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 797,
-      "lagS": 782.5,
+      "lagS": 792.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 798,
-      "lagS": 783.5,
+      "lagS": 793.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 799,
-      "lagS": 784.5,
+      "lagS": 794.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 800,
-      "lagS": 785.5,
+      "lagS": 795.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 801,
-      "lagS": 786.5,
+      "lagS": 796.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 802,
-      "lagS": 787.5,
+      "lagS": 797.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 803,
-      "lagS": 788.5,
+      "lagS": 798.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 804,
-      "lagS": 789.5,
+      "lagS": 799.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 805,
-      "lagS": 790.5,
+      "lagS": 800.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 806,
-      "lagS": 791.5,
+      "lagS": 801.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 807,
-      "lagS": 792.5,
+      "lagS": 802.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 808,
-      "lagS": 793.5,
+      "lagS": 803.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 809,
-      "lagS": 794.5,
+      "lagS": 804.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 810,
-      "lagS": 795.5,
+      "lagS": 805.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 811,
-      "lagS": 796.5,
+      "lagS": 806.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 812,
-      "lagS": 797.5,
+      "lagS": 807.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 813,
-      "lagS": 798.5,
+      "lagS": 808.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 814,
-      "lagS": 799.5,
+      "lagS": 809.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 815,
-      "lagS": 800.5,
+      "lagS": 810.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 816,
-      "lagS": 801.5,
+      "lagS": 811.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 817,
-      "lagS": 802.5,
+      "lagS": 812.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 818,
-      "lagS": 803.5,
+      "lagS": 813.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 819,
-      "lagS": 804.5,
+      "lagS": 814.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 820,
-      "lagS": 805.5,
+      "lagS": 815.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 821,
-      "lagS": 806.5,
+      "lagS": 816.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 822,
-      "lagS": 807.5,
+      "lagS": 817.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 823,
-      "lagS": 808.5,
+      "lagS": 818.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 824,
-      "lagS": 809.5,
+      "lagS": 819.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 825,
-      "lagS": 810.5,
+      "lagS": 820.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 826,
-      "lagS": 811.5,
+      "lagS": 821.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 827,
-      "lagS": 812.5,
+      "lagS": 822.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 828,
-      "lagS": 813.5,
+      "lagS": 823.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 829,
-      "lagS": 814.5,
+      "lagS": 824.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 830,
-      "lagS": 815.5,
+      "lagS": 825.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 831,
-      "lagS": 816.5,
+      "lagS": 826.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 832,
-      "lagS": 817.5,
+      "lagS": 827.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 833,
-      "lagS": 818.5,
+      "lagS": 828.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 834,
-      "lagS": 819.5,
+      "lagS": 829.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 835,
-      "lagS": 820.5,
+      "lagS": 830.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 836,
-      "lagS": 821.5,
+      "lagS": 831.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 837,
-      "lagS": 822.5,
+      "lagS": 832.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 838,
-      "lagS": 823.5,
+      "lagS": 833.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 839,
-      "lagS": 824.5,
+      "lagS": 834.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 840,
-      "lagS": 825.5,
+      "lagS": 835.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 841,
-      "lagS": 826.5,
+      "lagS": 836.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 842,
-      "lagS": 827.5,
+      "lagS": 837.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 843,
-      "lagS": 828.5,
+      "lagS": 838.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 844,
-      "lagS": 829.5,
+      "lagS": 839.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 845,
-      "lagS": 830.5,
+      "lagS": 840.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 846,
-      "lagS": 831.5,
+      "lagS": 841.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 847,
-      "lagS": 832.5,
+      "lagS": 842.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 848,
-      "lagS": 833.5,
+      "lagS": 843.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 849,
-      "lagS": 834.5,
+      "lagS": 844.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 850,
-      "lagS": 835.5,
+      "lagS": 845.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 851,
-      "lagS": 836.5,
+      "lagS": 846.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 852,
-      "lagS": 837.5,
+      "lagS": 847.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 853,
-      "lagS": 838.5,
+      "lagS": 848.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 854,
-      "lagS": 839.5,
+      "lagS": 849.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 855,
-      "lagS": 840.5,
+      "lagS": 850.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 856,
-      "lagS": 841.5,
+      "lagS": 851.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 857,
-      "lagS": 842.5,
+      "lagS": 852.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 858,
-      "lagS": 843.5,
+      "lagS": 853.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 859,
-      "lagS": 844.5,
+      "lagS": 854.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 860,
-      "lagS": 845.5,
+      "lagS": 855.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 861,
-      "lagS": 846.5,
+      "lagS": 856.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 862,
-      "lagS": 847.5,
+      "lagS": 857.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 863,
-      "lagS": 848.5,
+      "lagS": 858.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 864,
-      "lagS": 849.5,
+      "lagS": 859.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 865,
-      "lagS": 850.5,
+      "lagS": 860.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 866,
-      "lagS": 851.5,
+      "lagS": 861.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 867,
-      "lagS": 852.5,
+      "lagS": 862.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 868,
-      "lagS": 853.5,
+      "lagS": 863.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 869,
-      "lagS": 854.5,
+      "lagS": 864.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 870,
-      "lagS": 855.5,
+      "lagS": 865.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 871,
-      "lagS": 856.5,
+      "lagS": 866.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 872,
-      "lagS": 857.5,
+      "lagS": 867.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 873,
-      "lagS": 858.5,
+      "lagS": 868.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 874,
-      "lagS": 859.5,
+      "lagS": 869.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 875,
-      "lagS": 860.5,
+      "lagS": 870.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 876,
-      "lagS": 861.5,
+      "lagS": 871.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 877,
-      "lagS": 862.5,
+      "lagS": 872.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 878,
-      "lagS": 863.5,
+      "lagS": 873.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 879,
-      "lagS": 864.5,
+      "lagS": 874.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 880,
-      "lagS": 865.5,
+      "lagS": 875.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 881,
-      "lagS": 866.5,
+      "lagS": 876.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 882,
-      "lagS": 867.5,
+      "lagS": 877.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 883,
-      "lagS": 868.5,
+      "lagS": 878.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 884,
-      "lagS": 869.5,
+      "lagS": 879.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 885,
-      "lagS": 870.5,
+      "lagS": 880.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 886,
-      "lagS": 871.5,
+      "lagS": 881.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 887,
-      "lagS": 872.5,
+      "lagS": 882.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 888,
-      "lagS": 873.5,
+      "lagS": 883.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 889,
-      "lagS": 874.5,
+      "lagS": 884.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 890,
-      "lagS": 875.5,
+      "lagS": 885.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 891,
-      "lagS": 876.5,
+      "lagS": 886.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 892,
-      "lagS": 877.5,
+      "lagS": 887.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 893,
-      "lagS": 878.5,
+      "lagS": 888.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 894,
-      "lagS": 879.5,
+      "lagS": 889.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 895,
-      "lagS": 880.5,
+      "lagS": 890.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 896,
-      "lagS": 881.5,
+      "lagS": 891.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 897,
-      "lagS": 882.5,
+      "lagS": 892.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 898,
-      "lagS": 883.5,
+      "lagS": 893.028,
       "shown": 0,
       "produced": 1077
     },
     {
       "atS": 899,
-      "lagS": 884.5,
+      "lagS": 894.028,
       "shown": 0,
       "produced": 1077
     }

@@ -17,6 +17,10 @@ use crate::ranges::RangeSet;
 use crate::wire::{Key, Packet};
 use crate::{Class, Config, Millis, Phone, Server, Stats, WIRE_OVERHEAD};
 
+mod browser;
+
+use browser::{BrowserSctp, PACKET_HEADER, SACK_CHUNK, SctpPacket};
+
 /// splitmix64: small, fast, and the same on every platform.
 #[derive(Debug, Clone)]
 pub struct Rng(u64);
@@ -64,12 +68,13 @@ pub struct LinkSpec {
 }
 
 impl LinkSpec {
-    /// The link before the profile applies: fast and clean.
+    /// The link before the profile applies: fast and clean, a veth pair as
+    /// in the lab.
     pub fn clean() -> Self {
         LinkSpec {
             rate_bps: 10_000_000,
             loss: 0.0,
-            delay_ms: 20,
+            delay_ms: 1,
             jitter_ms: 0,
             queue: 1000,
             duplicate: 0.0,
@@ -91,26 +96,30 @@ impl LinkSpec {
     }
 }
 
+/// One direction of the simulated link, carrying packets of type `T`.
 #[derive(Debug)]
-struct Link {
+struct Link<T> {
     spec: LinkSpec,
     /// Microseconds, when the rate limiter is free again.
     busy_until: u64,
     /// When each queued packet leaves the rate limiter, microseconds.
     queue: VecDeque<u64>,
-    flight: BinaryHeap<Reverse<(Millis, u64, Vec<u8>)>>,
+    /// Arrival times, with a number that keeps equal times in order.
+    flight: BinaryHeap<Reverse<(Millis, u64)>>,
+    packets: HashMap<u64, T>,
     order: u64,
     /// Outages are relative to this time.
     start: Millis,
 }
 
-impl Link {
+impl<T: Clone> Link<T> {
     fn new(spec: LinkSpec) -> Self {
         Link {
             spec,
             busy_until: 0,
             queue: VecDeque::new(),
             flight: BinaryHeap::new(),
+            packets: HashMap::new(),
             order: 0,
             start: 0,
         }
@@ -121,7 +130,8 @@ impl Link {
         at >= self.start && self.spec.outages.iter().any(|o| o.contains(&t))
     }
 
-    fn send(&mut self, now: Millis, bytes: Vec<u8>, rng: &mut Rng) {
+    /// Sends a packet of `wire` bytes on the wire.
+    fn send(&mut self, now: Millis, wire: usize, packet: T, rng: &mut Rng) {
         if self.down(now) || rng.f64() < self.spec.loss {
             return;
         }
@@ -138,8 +148,8 @@ impl Link {
             if self.queue.len() >= self.spec.queue {
                 return;
             }
-            let wire = (bytes.len() + WIRE_OVERHEAD) as u64;
-            let depart = self.busy_until.max(now_us) + wire * 8 * 1_000_000 / self.spec.rate_bps;
+            let depart =
+                self.busy_until.max(now_us) + wire as u64 * 8 * 1_000_000 / self.spec.rate_bps;
             self.busy_until = depart;
             self.queue.push_back(depart);
             let jitter = rng.normal() * self.spec.jitter_ms as f64;
@@ -147,25 +157,34 @@ impl Link {
                 .max(depart as f64 / 1000.0)
                 .ceil() as Millis;
             self.order += 1;
-            self.flight
-                .push(Reverse((arrive, self.order, bytes.clone())));
+            self.flight.push(Reverse((arrive, self.order)));
+            self.packets.insert(self.order, packet.clone());
         }
     }
 
     fn next_arrival(&self) -> Option<Millis> {
-        self.flight.peek().map(|Reverse((t, _, _))| *t)
+        self.flight.peek().map(|Reverse((t, _))| *t)
     }
 
-    fn take(&mut self, now: Millis) -> Vec<Vec<u8>> {
+    fn take(&mut self, now: Millis) -> Vec<T> {
         let mut out = Vec::new();
         while self.next_arrival().is_some_and(|t| t <= now) {
-            if let Some(Reverse((t, _, bytes))) = self.flight.pop()
+            let Some(Reverse((t, n))) = self.flight.pop() else {
+                break;
+            };
+            if let Some(p) = self.packets.remove(&n)
                 && !self.down(t)
             {
-                out.push(bytes);
+                out.push(p);
             }
         }
         out
+    }
+
+    /// Drops what is on the way: the page that would get it is gone.
+    fn clear(&mut self) {
+        self.flight.clear();
+        self.packets.clear();
     }
 
     /// Switches to a new profile. Packets already queued keep their times.
@@ -173,6 +192,24 @@ impl Link {
         self.spec = spec;
         self.start = now;
     }
+}
+
+/// What goes from the server to the phone.
+#[derive(Debug, Clone)]
+enum Down {
+    /// A sync packet, with the SACK for the phone's SCTP that rides in it.
+    Sync(Vec<u8>, Option<u64>),
+    /// The server's SCTP acks the phone's DATA up to this TSN; it acks past
+    /// lost chunks.
+    Sack(u64),
+}
+
+/// What goes from the phone to the server.
+#[derive(Debug, Clone)]
+enum Up {
+    Sync(Vec<u8>),
+    /// A packet of the browser's SCTP.
+    Sctp(SctpPacket),
 }
 
 /// One simulated run.
@@ -194,12 +231,20 @@ pub struct Scenario {
     /// Content of other threads that changes when the profile applies, so
     /// backfill competes with the reply.
     pub backfill_bytes: usize,
+    /// The backfill appears this long before the profile applies, so the
+    /// server is sending at the clean link's rate when the link turns bad,
+    /// as in the lab, where the web app is still syncing at the switch.
+    pub backfill_lead_ms: Millis,
     /// Kill the page at these times after the profile applies: what was
     /// received but not stored is gone, and the phone reloads from storage
     /// on a new connection.
     pub kills_at: Vec<Millis>,
     /// Time from receiving a packet to its content being stored.
     pub commit_delay_ms: Millis,
+    /// The phone's packets go through a model of WebKit's SCTP sender
+    /// ([`browser`]) instead of straight onto the link, and its SACKs share
+    /// the server's direction.
+    pub webkit: bool,
 }
 
 impl Scenario {
@@ -217,8 +262,10 @@ impl Scenario {
             reply_chars_per_sec: 50,
             reply_len: 30_000,
             backfill_bytes: 200_000,
+            backfill_lead_ms: 3_000,
             kills_at: Vec::new(),
             commit_delay_ms: 10,
+            webkit: false,
         }
     }
 
@@ -230,6 +277,14 @@ impl Scenario {
             down: LinkSpec::lab(100_000, 0.5, 50),
             up: LinkSpec::lab(100_000, 0.5, 50),
             ..Scenario::case70(seed)
+        }
+    }
+
+    /// The same run with WebKit's SCTP on the phone's side.
+    pub fn in_webkit(self) -> Self {
+        Scenario {
+            webkit: true,
+            ..self
         }
     }
 
@@ -275,6 +330,8 @@ pub struct Outcome {
     pub trace: Vec<(Millis, Stats, Stats)>,
 }
 
+/// The web app's `SEND_BUFFER` (`t3code/apps/web/src/t3opt/link.ts`).
+const WEBKIT_SEND_BUFFER: usize = 1_200;
 const TOKEN: [u8; 16] = *b"sim-token-000001";
 const THREAD_LIST: u64 = 1;
 const STATUS: u64 = 2;
@@ -355,8 +412,11 @@ impl Host {
 /// a reply it refuses, or saved phone state that does not load.
 pub fn run(s: &Scenario) -> Result<Outcome, String> {
     let mut rng = Rng::new(s.seed);
-    let mut down = Link::new(LinkSpec::clean());
-    let mut up = Link::new(LinkSpec::clean());
+    let mut down: Link<Down> = Link::new(LinkSpec::clean());
+    let mut up: Link<Up> = Link::new(LinkSpec::clean());
+    let mut sctp = BrowserSctp::default();
+    // The newest TSN of the phone's SCTP the server has, for its SACKs.
+    let mut sctp_cumulative: Option<u64> = None;
     let mut host = Host {
         server: Server::new(TOKEN, Config::server(), 0),
         objects: BTreeMap::new(),
@@ -415,6 +475,7 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
     out.prompt_confirmed_ms = vec![None; prompts.len()];
     let mut kills: VecDeque<Millis> = s.kills_at.iter().map(|&t| t0 + t).collect();
     let mut profile_applied = false;
+    let mut backfill_set = false;
     let mut next_tick = t0;
     let mut next_sample = t0;
     let mut next_trace = t0;
@@ -431,6 +492,9 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
             profile_applied = true;
             down.apply(s.down.clone(), now);
             up.apply(s.up.clone(), now);
+        }
+        if !backfill_set && now + s.backfill_lead_ms >= t0 {
+            backfill_set = true;
             // Other threads change: new backfill.
             let n = s.backfill_bytes.div_ceil(20_000);
             for i in 0..n as u64 {
@@ -459,8 +523,11 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
             dev.commits.clear();
             dev.phone.connected();
             host.server.connected();
-            down.flight.clear();
-            up.flight.clear();
+            down.clear();
+            up.clear();
+            // A new page has a new SCTP association.
+            sctp = BrowserSctp::default();
+            sctp_cumulative = None;
             sent_chunks.clear();
         }
 
@@ -523,7 +590,22 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
             }
         }
 
-        for bytes in down.take(now) {
+        for packet in down.take(now) {
+            let bytes = match packet {
+                Down::Sync(bytes, sack) => {
+                    if let Some(cumulative) = sack {
+                        sctp.on_sack(now, cumulative);
+                    }
+                    bytes
+                }
+                Down::Sack(cumulative) => {
+                    sctp.on_sack(now, cumulative);
+                    continue;
+                }
+            };
+            if s.webkit {
+                sctp.on_server_data(now);
+            }
             if let Ok(r) = dev.phone.receive(now, &bytes) {
                 dev.commits.push_back(Commit {
                     at: now + s.commit_delay_ms,
@@ -532,7 +614,29 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
                 });
             }
         }
-        for bytes in up.take(now) {
+        let mut from_phone = Vec::new();
+        for packet in up.take(now) {
+            match packet {
+                Up::Sync(bytes) => from_phone.push(bytes),
+                Up::Sctp(p) if p.messages.is_empty() => {}
+                Up::Sctp(p) => {
+                    // The server's SCTP acks every DATA packet at once.
+                    for (tsn, m) in p.messages {
+                        sctp_cumulative = sctp_cumulative.max(Some(tsn));
+                        from_phone.push(m);
+                    }
+                    if let Some(cumulative) = sctp_cumulative {
+                        down.send(
+                            now,
+                            PACKET_HEADER + SACK_CHUNK,
+                            Down::Sack(cumulative),
+                            &mut rng,
+                        );
+                    }
+                }
+            }
+        }
+        for bytes in from_phone {
             if let Ok(p) = Packet::decode(&bytes)
                 && let Some(a) = &p.ack
             {
@@ -592,11 +696,26 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
                 }
                 sent_chunks.insert(p.seq, chunks);
             }
-            down.send(now, bytes, &mut rng);
+            let sack = sctp_cumulative.filter(|_| s.webkit);
+            let wire = bytes.len() + WIRE_OVERHEAD + if sack.is_some() { SACK_CHUNK } else { 0 };
+            down.send(now, wire, Down::Sync(bytes, sack), &mut rng);
         }
-        while let Some(bytes) = dev.phone.poll(now) {
-            out.largest_packet = out.largest_packet.max(bytes.len());
-            up.send(now, bytes, &mut rng);
+        if s.webkit {
+            // The web app hands packets over while less than 1200 bytes wait.
+            while sctp.buffered() < WEBKIT_SEND_BUFFER
+                && let Some(bytes) = dev.phone.poll(now)
+            {
+                out.largest_packet = out.largest_packet.max(bytes.len());
+                sctp.send(bytes);
+            }
+            while let Some(p) = sctp.poll(now) {
+                up.send(now, p.wire_len(), Up::Sctp(p), &mut rng);
+            }
+        } else {
+            while let Some(bytes) = dev.phone.poll(now) {
+                out.largest_packet = out.largest_packet.max(bytes.len());
+                up.send(now, bytes.len() + WIRE_OVERHEAD, Up::Sync(bytes), &mut rng);
+            }
         }
 
         if now >= next_sample && now >= t0 {
@@ -643,7 +762,13 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
         if attached {
             next = next.min(host.server.next_wakeup(now));
         }
-        next = next.min(dev.phone.next_wakeup(now));
+        // A full send buffer empties only on the SCTP sender's own events.
+        if !s.webkit || sctp.buffered() < WEBKIT_SEND_BUFFER {
+            next = next.min(dev.phone.next_wakeup(now));
+        }
+        if let Some(t) = sctp.next_wakeup() {
+            next = next.min(t);
+        }
         for t in [
             down.next_arrival(),
             up.next_arrival(),
@@ -656,6 +781,9 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
         }
         if !profile_applied {
             next = next.min(t0);
+        }
+        if !backfill_set {
+            next = next.min(t0.saturating_sub(s.backfill_lead_ms));
         }
         if host.replying {
             next = next.min(next_tick);

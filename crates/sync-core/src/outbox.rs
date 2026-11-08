@@ -79,6 +79,9 @@ pub(crate) struct OutObject {
     sent: Vec<Sent>,
     /// When a chunk of `rev` last went out.
     rev_sent_at: Option<Millis>,
+    /// Bytes of `rev` that ever went out to the peer, in any pass and on any
+    /// connection; forgotten with the revision or the peer's cache.
+    ever_sent: RangeSet,
 }
 
 #[derive(Debug, Clone)]
@@ -113,6 +116,7 @@ impl OutObject {
             keep,
             sent: Vec::new(),
             rev_sent_at: None,
+            ever_sent: RangeSet::new(),
         }
     }
 
@@ -209,7 +213,9 @@ impl OutObject {
         self.acked.insert(range);
     }
 
-    /// Forgets what is in flight; the bytes become eligible at once.
+    /// Forgets what is in flight; the bytes become eligible at once. What
+    /// went out stays in `ever_sent`: the peer keeps what it stored across
+    /// connections.
     fn forget_sent(&mut self) {
         self.sent.clear();
         self.rev_sent_at = None;
@@ -218,6 +224,7 @@ impl OutObject {
     /// Forgets everything the peer stored.
     fn forget_peer(&mut self) {
         self.forget_sent();
+        self.ever_sent = RangeSet::new();
         self.acked = RangeSet::new();
         self.rev_acked = false;
         self.keep = 0;
@@ -300,6 +307,25 @@ pub(crate) struct Outbox {
     /// Send order: class, then highest order first.
     index: BTreeSet<(Class, Reverse<u64>, Key)>,
     inflight: BTreeMap<u64, SentPacket>,
+    /// Since the last `take_busiest`: content bytes put in packets and new
+    /// revisions, per object.
+    busy: BTreeMap<Key, (u64, u32)>,
+}
+
+/// An object that took a share of the packets: see `Outbox::take_busiest`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Busy {
+    pub key: Key,
+    pub class: Class,
+    pub order: u64,
+    pub meta: Vec<u8>,
+    pub len: u64,
+    pub acked: u64,
+    /// Content bytes put in packets, in every pass: first sends, resends
+    /// and extra copies.
+    pub sent: u64,
+    /// New revisions, each sent from its first changed byte again.
+    pub revs: u32,
 }
 
 impl Outbox {
@@ -331,6 +357,7 @@ impl Outbox {
                     keep: 0,
                     sent: Vec::new(),
                     rev_sent_at: None,
+                    ever_sent: RangeSet::new(),
                 },
             );
             return;
@@ -352,6 +379,7 @@ impl Outbox {
             .take_while(|(a, b)| a == b)
             .count() as u64;
         o.rev += 1;
+        self.busy.entry(key).or_default().1 += 1;
         o.keep = if o.rev_acked {
             prefix
         } else {
@@ -360,6 +388,7 @@ impl Outbox {
         o.rev_acked = false;
         o.acked.truncate(prefix);
         o.forget_sent();
+        o.ever_sent = RangeSet::new();
         o.meta = meta;
         o.content = content;
     }
@@ -389,6 +418,31 @@ impl Outbox {
         }
     }
 
+    /// The `n` objects that took the most packet bytes since the last call,
+    /// most first, and starts counting again. For the logs: which objects
+    /// fill the packets while others wait.
+    pub fn take_busiest(&mut self, n: usize) -> Vec<Busy> {
+        let mut busy: Vec<Busy> = std::mem::take(&mut self.busy)
+            .into_iter()
+            .filter_map(|(key, (sent, revs))| {
+                let o = self.objects.get(&key)?;
+                Some(Busy {
+                    key,
+                    class: o.class,
+                    order: o.order,
+                    meta: o.meta.clone(),
+                    len: o.len(),
+                    acked: o.acked.len().min(o.len()),
+                    sent,
+                    revs,
+                })
+            })
+            .collect();
+        busy.sort_by_key(|b| (Reverse(b.sent), Reverse(b.revs), b.key));
+        busy.truncate(n);
+        busy
+    }
+
     pub fn is_synced(&self) -> bool {
         self.objects.values().all(OutObject::done)
     }
@@ -397,6 +451,24 @@ impl Outbox {
         self.objects
             .values()
             .map(|o| o.len() - o.acked.len().min(o.len()))
+            .sum()
+    }
+
+    /// Bytes of the classes below `Status` (older messages, the thread
+    /// list, other threads and images) that never went out to the peer, so
+    /// it cannot have them. A sidecar restored from its saved state knows
+    /// only what the peer acked before.
+    pub fn unsent_backfill_bytes(&self) -> u64 {
+        self.objects
+            .values()
+            .filter(|o| o.class > Class::Status)
+            .map(|o| {
+                let sent = o.ever_sent.ranges().iter().cloned();
+                gaps_of(o.acked.ranges(), sent, 0..o.len())
+                    .iter()
+                    .map(|r| r.end - r.start)
+                    .sum::<u64>()
+            })
             .sum()
     }
 
@@ -545,6 +617,16 @@ impl Outbox {
                 }
                 for r in ranges {
                     let mut r = r;
+                    // A command, a call or a reply is of use only whole: it
+                    // goes in one packet when it fits one, not in pieces that
+                    // must all arrive (at 70% loss a 750-byte command in
+                    // 200-byte packets took four lucky packets; issue #46).
+                    if class == Class::Urgent && may_grow(pass, out) {
+                        let need = (r.end - r.start) as usize + o.meta.len() + CHUNK_HEAD_MAX;
+                        let grow = need.saturating_sub(left).min(extra);
+                        left += grow;
+                        extra -= grow;
+                    }
                     while !r.is_empty() {
                         let mut no_extra = 0;
                         let grow = if may_grow(pass, out) {
@@ -586,6 +668,12 @@ impl Outbox {
             }
         }
 
+        for (key, _, range) in &record {
+            if let Some(o) = self.objects.get_mut(key) {
+                o.ever_sent.insert(range.clone());
+            }
+            self.busy.entry(*key).or_default().0 += range.end - range.start;
+        }
         for (key, range) in timed {
             if let Some(o) = self.objects.get_mut(&key) {
                 let rto = f.rto_of(o.class);
@@ -627,23 +715,29 @@ fn fit(
     if let Some(c) = make_chunk(key, o, range.clone(), from_end, *left) {
         return Some(c);
     }
-    // Without meta a chunk header is under 48 bytes, and `space` is far
+    // Without meta a chunk header is under `CHUNK_HEAD_MAX` bytes, and `space` is far
     // more; only meta can keep a chunk out of an empty packet.
     let needs = if o.rev_acked { 0 } else { o.meta.len() };
-    if *extra == 0 || needs + 48 + MIN_CHUNK_SPACE <= space {
+    if *extra == 0 || needs + CHUNK_HEAD_MAX + MIN_CHUNK_SPACE <= space {
         return None;
     }
     // By what the meta costs, so the chunk still gets a packet's worth of
     // bytes. Growing by all of `extra` filled the rest of the packet too, so
     // with the sidecar's 200-byte metas nearly every packet on a slow link
     // was full size (issue #44).
-    let grow = (needs + 48).min(*extra);
+    let grow = (needs + CHUNK_HEAD_MAX).min(*extra);
     let c = make_chunk(key, o, range, from_end, *left + grow)?;
     *left += grow;
     // Once per packet, as before.
     *extra = 0;
     Some(c)
 }
+
+/// Bytes a chunk takes beyond its data and meta (`wire::chunk_len`): two
+/// tag bytes and up to eight varints (key, revision, total length, offset,
+/// keep, the meta's length and the body's two lengths). With values under
+/// 2^35, five bytes each, that is at most 42.
+const CHUNK_HEAD_MAX: usize = 48;
 
 /// A chunk needs at least this much space to be worth starting.
 const MIN_CHUNK_SPACE: usize = 24;
@@ -799,5 +893,93 @@ mod tests {
         ob.set(k, Class::Tail, 0, b"m".to_vec(), b"hello there".to_vec());
         let o = ob.get(k).expect("object");
         assert_eq!((o.rev, o.keep), (2, 0));
+    }
+
+    #[test]
+    fn unsent_backfill_counts_bytes_that_never_went_out() {
+        let mut ob = Outbox::default();
+        let tail = Key::Object(1);
+        let backfill = Key::Object(2);
+        ob.set(tail, Class::Tail, 0, Vec::new(), vec![b'a'; 100]);
+        ob.set(
+            backfill,
+            Class::Background,
+            0,
+            Vec::new(),
+            vec![b'b'; 3_000],
+        );
+        assert_eq!(ob.unsent_backfill_bytes(), 3_000);
+        let fill = Fill {
+            now: 0,
+            rto: 1_000,
+            fast_rto: 500,
+            copies: 1,
+        };
+        let mut out = Vec::new();
+        ob.fill(0, 600, 600, &fill, &mut out);
+        let sent: u64 = out
+            .iter()
+            .filter(|c| c.key == backfill)
+            .map(|c| c.body.raw_len())
+            .sum();
+        assert!(sent > 0, "some backfill fits after the tail");
+        assert_eq!(ob.unsent_backfill_bytes(), 3_000 - sent);
+        // A new connection: what went out may be on the peer already.
+        ob.forget_sent();
+        assert_eq!(ob.unsent_backfill_bytes(), 3_000 - sent);
+        // The peer lost its cache: nothing of it is there.
+        ob.forget_peer();
+        assert_eq!(ob.unsent_backfill_bytes(), 3_000);
+    }
+
+    #[test]
+    fn busiest_counts_packet_bytes_and_revisions_since_the_last_call() {
+        let mut ob = Outbox::default();
+        let status = Key::Object(1);
+        let backfill = Key::Object(2);
+        ob.set(status, Class::Status, 0, Vec::new(), vec![b'a'; 100]);
+        ob.set(
+            backfill,
+            Class::Background,
+            0,
+            Vec::new(),
+            vec![b'b'; 3_000],
+        );
+        let fill = Fill {
+            now: 0,
+            rto: 1_000,
+            fast_rto: 500,
+            copies: 1,
+        };
+        let mut out = Vec::new();
+        ob.fill(0, 600, 600, &fill, &mut out);
+        let sent_of = |k| -> u64 {
+            out.iter()
+                .filter(|c| c.key == k)
+                .map(|c| c.body.raw_len())
+                .sum()
+        };
+        let (status_sent, backfill_sent) = (sent_of(status), sent_of(backfill));
+        assert!(status_sent > 0 && backfill_sent > 0);
+        // A new revision counts; its bytes count once they go out.
+        ob.set(status, Class::Status, 0, Vec::new(), vec![b'c'; 100]);
+        let busy = ob.take_busiest(5);
+        let of = |k| busy.iter().find(|b| b.key == k).unwrap();
+        assert_eq!((of(status).sent, of(status).revs), (status_sent, 1));
+        assert_eq!((of(backfill).sent, of(backfill).revs), (backfill_sent, 0));
+        assert!(
+            busy.windows(2).all(|w| w[0].sent >= w[1].sent),
+            "most first"
+        );
+        ob.set(status, Class::Status, 0, Vec::new(), vec![b'd'; 100]);
+        ob.set(
+            backfill,
+            Class::Background,
+            0,
+            Vec::new(),
+            vec![b'e'; 3_000],
+        );
+        assert_eq!(ob.take_busiest(1).len(), 1, "only the top one");
+        assert!(ob.take_busiest(5).is_empty(), "counting starts again");
     }
 }

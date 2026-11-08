@@ -124,7 +124,13 @@ describe("Link", () => {
     const { link, peer } = await openLink();
     await vi.advanceTimersByTimeAsync(5_000);
     peer.ice("disconnected");
-    await vi.advanceTimersByTimeAsync(300_000);
+    // Restarts back off, so one can finish on a slow link: 8, 8, 16, then
+    // every 30 s (every 8 s was 38 in this outage).
+    await vi.advanceTimersByTimeAsync(200_000);
+    const at200 = link.info().iceRestarts;
+    await vi.advanceTimersByTimeAsync(90_000);
+    expect(link.info().iceRestarts - at200).toBe(3);
+    await vi.advanceTimersByTimeAsync(10_000);
     expect(link.info().transport).toBe("webrtc");
     // The outage ends: an ICE restart brings the data back, the probe goes.
     peer.ice("connected");
@@ -132,5 +138,10 @@ describe("Link", () => {
     expect(FakeSocket.all.every((s) => s.readyState === 3 || s.readyState === 0)).toBe(true);
     expect(link.info().transport).toBe("webrtc");
     expect(link.info().newConnections).toBe(0);
+    // Data came: the next silence restarts after 8 s again.
+    const before = link.info().iceRestarts;
+    peer.ice("disconnected");
+    await vi.advanceTimersByTimeAsync(9_000);
+    expect(link.info().iceRestarts).toBe(before + 1);
   });
 });

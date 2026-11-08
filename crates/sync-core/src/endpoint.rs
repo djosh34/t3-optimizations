@@ -77,6 +77,8 @@ pub struct Stats {
     pub last_heard: Option<Millis>,
     /// Bytes the other side has not stored yet.
     pub unsynced_bytes: u64,
+    /// Bytes of the classes below `Status` (backfill) that never went out.
+    pub unsent_backfill_bytes: u64,
     pub inflight_packets: usize,
 }
 
@@ -186,6 +188,9 @@ impl Endpoint {
         self.rate.decide(now);
         self.out.prune(now);
         let unsynced = !self.out.is_synced();
+        if !unsynced {
+            self.rate.note_idle(now);
+        }
         if !self.rate.can_send(now) {
             if unsynced {
                 self.rate.note_limited(now);
@@ -266,6 +271,7 @@ impl Endpoint {
             srtt_ms: self.rate.srtt(),
             min_rtt_ms: self.rate.min_rtt(),
             unsynced_bytes: self.out.unsynced_bytes(),
+            unsent_backfill_bytes: self.out.unsent_backfill_bytes(),
             inflight_packets: self.out.inflight_packets(),
             ..self.stats.clone()
         }

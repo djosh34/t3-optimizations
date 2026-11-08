@@ -62,6 +62,9 @@ use thiserror::Error;
 /// t3-optimizations patch: the congestion window to start with, see
 /// `Association::new`.
 const INITIAL_CWND: u32 = 1 << 20;
+/// t3-optimizations patch: a SACK with more gap blocks than this does not
+/// ride in DATA packets; it would take too much of each.
+const BUNDLED_SACK_MAX_GAPS: usize = 16;
 
 pub(crate) mod state;
 pub(crate) mod stats;
@@ -2445,6 +2448,10 @@ impl Association {
         self.stats.inc_datas();
 
         let can_push = self.payload_queue.can_push(d, self.peer_last_tsn);
+        // t3-optimizations patch: see the skip after `stream_handle_data`.
+        let never_retransmitted = self.streams.get(&d.stream_identifier).is_some_and(|s| {
+            s.reliability_type == ReliabilityType::Rexmit && s.reliability_value == 0
+        });
         let mut stream_handle_data = false;
         let mut defer_stream_data = false;
         if can_push && self.data_is_above_pending_reset(d) {
@@ -2514,6 +2521,28 @@ impl Association {
             // DATA first so a complete message reusing the skipped SSN remains
             // readable, while a genuinely abandoned SSN can still be advanced.
             self.apply_deferred_forward_tsns(d.stream_identifier);
+
+            // t3-optimizations patch: the phone's data channel is unordered
+            // and never retransmits (`maxRetransmits: 0`, which the channel's
+            // open message set on this stream), so a TSN still missing when a
+            // later one of that stream arrives is lost for good. Ack past it
+            // now, as if the peer's FORWARD-TSN had come. At 70% loss that
+            // FORWARD-TSN takes several tries; until then the cumulative ack
+            // stays put, the browser's retransmit timer is never restarted,
+            // and each time it fires the browser's window drops to one packet
+            // (issue #46). A late copy of a skipped TSN is then a duplicate.
+            // This assumes the peer sends only on such streams once one is
+            // open, as the web app does.
+            if self.use_forward_tsn
+                && d.unordered
+                && never_retransmitted
+                && sna32gt(d.tsn, self.peer_last_tsn.wrapping_add(1))
+            {
+                let skip_to = d.tsn.wrapping_sub(1);
+                self.payload_queue.pop_up_to(skip_to);
+                self.peer_last_tsn = skip_to;
+                self.apply_unordered_forward_tsn_to_current_streams(skip_to);
+            }
         }
 
         self.handle_peer_last_tsn_and_acknowledgement(immediate_sack)
@@ -4084,8 +4113,19 @@ impl Association {
     /// DATA chunks into a packet so long as the resulting packet size does not exceed
     /// the path MTU.
     fn bundle_data_chunks_into_packets(&self, chunks: Vec<ChunkPayloadData>) -> Vec<Packet> {
+        // t3-optimizations patch: a DATA packet starts with the current SACK
+        // where it fits. The phone's SCTP (the browser's) cuts its window to
+        // one packet and backs its retransmit timer off whenever no SACK comes
+        // in time; at 70% loss each way a lone SACK rarely arrives, and the
+        // phone's data stalled for seconds (issues #45, #46). Since the
+        // server acks past lost chunks of the phone's channel (`handle_data`),
+        // these SACKs carry no gap reports the browser could count as misses.
+        let sack = self.bundled_sack();
+        let sack_len = sack
+            .as_ref()
+            .map_or(0, |s| crate::chunk::chunk_header::CHUNK_HEADER_SIZE as u32 + s.value_length() as u32);
         let mut packets = vec![];
-        let mut chunks_to_send = vec![];
+        let mut chunks_to_send: Vec<Box<dyn Chunk + Send + Sync>> = vec![];
         let mut bytes_in_packet = COMMON_HEADER_SIZE;
 
         for c in chunks {
@@ -4094,13 +4134,19 @@ impl Association {
             //   single packet.  Furthermore, DATA chunks being retransmitted MAY be
             //   bundled with new DATA chunks, as long as the resulting packet size
             //   does not exceed the path MTU.
-            if bytes_in_packet + c.user_data.len() as u32 > self.mtu {
-                packets.push(self.create_packet(chunks_to_send));
-                chunks_to_send = vec![];
+            if !chunks_to_send.is_empty() && bytes_in_packet + c.user_data.len() as u32 > self.mtu {
+                packets.push(self.create_packet(std::mem::take(&mut chunks_to_send)));
                 bytes_in_packet = COMMON_HEADER_SIZE;
             }
-
-            bytes_in_packet += DATA_CHUNK_HEADER_SIZE + c.user_data.len() as u32;
+            let len = DATA_CHUNK_HEADER_SIZE + c.user_data.len() as u32;
+            if chunks_to_send.is_empty()
+                && let Some(s) = &sack
+                && bytes_in_packet + sack_len + len <= self.mtu
+            {
+                chunks_to_send.push(Box::new(s.clone()));
+                bytes_in_packet += sack_len;
+            }
+            bytes_in_packet += len;
             chunks_to_send.push(Box::new(c));
         }
 
@@ -4109,6 +4155,19 @@ impl Association {
         }
 
         packets
+    }
+
+    /// t3-optimizations patch: the SACK that rides in DATA packets, without
+    /// the duplicate TSNs a lone SACK reports once. None when its gap blocks
+    /// would take too much of the packet.
+    fn bundled_sack(&self) -> Option<ChunkSelectiveAck> {
+        let sack = ChunkSelectiveAck {
+            cumulative_tsn_ack: self.peer_last_tsn,
+            advertised_receiver_window_credit: self.get_my_receiver_window_credit(),
+            gap_ack_blocks: self.payload_queue.get_gap_ack_blocks(self.peer_last_tsn),
+            duplicate_tsn: vec![],
+        };
+        (sack.gap_ack_blocks.len() <= BUNDLED_SACK_MAX_GAPS).then_some(sack)
     }
 
     /// generate_next_rsn returns the my_next_rsn and increases it. The caller should hold the lock.

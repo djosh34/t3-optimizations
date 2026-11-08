@@ -1,0 +1,149 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794150618316 connected to t3
+sidecar: 1794150619477 device xdnmxrnd paired
+sidecar: 1794150620138 device xdnmxrnd: generation 1 signaled
+sidecar: 1794150620141 data channel 1: ICE Checking
+sidecar: 1794150620193 data channel 1: ICE Completed
+sidecar: 1794150620195 data channel 1: DTLS up
+sidecar: 1794150620197 data channel 1 open
+sidecar: 1794150620199 device xdnmxrnd: now on Rtc(PeerId(1))
+sidecar: 1794150620199 device xdnmxrnd: lost its cache, syncing everything
+sidecar: 1794150625075 data channel 1 closed
+sidecar: 1794150625712 device xdnmxrnd: generation 2 connects without signaling
+sidecar: 1794150625712 data channel 2: ICE Checking
+sidecar: 1794150625806 data channel 2: ICE Completed
+sidecar: 1794150625807 data channel 2: DTLS up
+sidecar: 1794150625809 data channel 2 open
+sidecar: 1794150625854 device xdnmxrnd: now on Rtc(PeerId(2))
+sidecar: 1794150626216 device xdnmxrnd: command 20 (thread.visit) replied, backfill unsent 13149 B
+sidecar: 1794150626856 device xdnmxrnd stats: send 9207 B/s, delivered 6138 B/s, loss 0%, srtt 13 ms, unsynced 17051 B, backfill unsent 16506 B, in flight 0 packets, sent 77 received 37 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150632686 device xdnmxrnd: command 37 (message.dispatch) replied, backfill unsent 0 B
+sidecar: 1794150632956 device xdnmxrnd: new newest text, backfill unsent 10531 B
+sidecar: 1794150633026 device xdnmxrnd: command 39 (thread.visit) replied, backfill unsent 10531 B
+sidecar: 1794150633796 device xdnmxrnd: command 40 (thread.visit) replied, backfill unsent 15155 B
+sidecar: 1794150636876 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 9 ms, unsynced 6541 B, backfill unsent 3058 B, in flight 27 packets, sent 225 received 127 packets, SCTP queue 2680 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150646877 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 93 packets, sent 296 received 128 packets, SCTP queue 1101 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150655949 device xdnmxrnd: ICE restart 1 on generation 2
+sidecar: 1794150656886 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 164 packets, sent 367 received 128 packets, SCTP queue 928 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150663762 device xdnmxrnd: ICE restart 2 on generation 2
+sidecar: 1794150666897 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 236 packets, sent 439 received 128 packets, SCTP queue 922 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150676756 device xdnmxrnd: ICE restart 3 on generation 2
+sidecar: 1794150676906 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 307 packets, sent 510 received 128 packets, SCTP queue 759 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150684188 device xdnmxrnd: ICE restart 4 on generation 2
+sidecar: 1794150686926 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 379 packets, sent 582 received 128 packets, SCTP queue 928 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150695502 device xdnmxrnd: ICE restart 5 on generation 2
+sidecar: 1794150696734 device xdnmxrnd: ICE restart 6 on generation 2
+sidecar: 1794150696946 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 428 packets, sent 653 received 128 packets, SCTP queue 739 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150705735 device xdnmxrnd: ICE restart 7 on generation 2
+sidecar: 1794150706956 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 725 received 128 packets, SCTP queue 749 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150716966 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 430 packets, sent 797 received 128 packets, SCTP queue 747 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150717424 device xdnmxrnd: ICE restart 8 on generation 2
+sidecar: 1794150726986 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 868 received 128 packets, SCTP queue 562 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150731631 device xdnmxrnd: ICE restart 9 on generation 2
+sidecar: 1794150736996 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 940 received 128 packets, SCTP queue 733 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150744596 device xdnmxrnd: ICE restart 11 on generation 2
+sidecar: 1794150747006 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 1011 received 128 packets, SCTP queue 565 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150757006 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 1083 received 128 packets, SCTP queue 572 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150759484 device xdnmxrnd: ICE restart 12 on generation 2
+sidecar: 1794150760748 device xdnmxrnd: ICE restart 13 on generation 2
+sidecar: 1794150767027 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 430 packets, sent 1155 received 128 packets, SCTP queue 579 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150768625 device xdnmxrnd: ICE restart 14 on generation 2
+sidecar: 1794150777036 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 1226 received 128 packets, SCTP queue 557 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150778976 device xdnmxrnd: ICE restart 15 on generation 2
+sidecar: 1794150787048 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 1298 received 128 packets, SCTP queue 371 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150787084 device xdnmxrnd: ICE restart 16 on generation 2
+sidecar: 1794150797076 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 1369 received 128 packets, SCTP queue 382 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150798947 device xdnmxrnd: generation 3 connects without signaling
+sidecar: 1794150798947 data channel 3: ICE Checking
+sidecar: 1794150807086 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 1441 received 128 packets, SCTP queue 379 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150817096 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 430 packets, sent 1513 received 128 packets, SCTP queue 379 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150819216 data channel 3: ICE Disconnected
+sidecar: 1794150827096 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 1584 received 128 packets, SCTP queue 178 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150837097 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 1656 received 128 packets, SCTP queue 188 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150847106 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 1727 received 128 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150857117 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 1799 received 128 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150867136 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 1870 received 128 packets, SCTP queue 2618 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150877146 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 1942 received 128 packets, SCTP queue 2641 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150879550 device xdnmxrnd: generation 4 connects without signaling
+sidecar: 1794150879550 data channel 4: ICE Checking
+sidecar: 1794150887158 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 2014 received 128 packets, SCTP queue 2631 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150897177 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 2085 received 128 packets, SCTP queue 2430 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150904946 data channel 4: ICE Disconnected
+sidecar: 1794150907187 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 2157 received 128 packets, SCTP queue 2601 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150917206 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 2228 received 128 packets, SCTP queue 2440 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150927206 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 2300 received 128 packets, SCTP queue 2437 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150937217 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 430 packets, sent 2372 received 128 packets, SCTP queue 2426 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150938938 device xdnmxrnd: generation 5 connects without signaling
+sidecar: 1794150938938 data channel 5: ICE Checking
+sidecar: 1794150947236 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 2443 received 128 packets, SCTP queue 2227 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150957246 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 2515 received 128 packets, SCTP queue 2235 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150961167 data channel 5: ICE Disconnected
+sidecar: 1794150967256 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 2586 received 128 packets, SCTP queue 2255 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150977266 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 2658 received 128 packets, SCTP queue 2236 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150987298 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 430 packets, sent 2730 received 128 packets, SCTP queue 2233 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150997316 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 2801 received 128 packets, SCTP queue 2043 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150998063 device xdnmxrnd: generation 6 connects without signaling
+sidecar: 1794150998063 data channel 6: ICE Checking
+sidecar: 1794151007316 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 2873 received 128 packets, SCTP queue 2256 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151017336 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 2944 received 128 packets, SCTP queue 2055 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151027347 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 3016 received 128 packets, SCTP queue 2047 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151027397 data channel 6: ICE Disconnected
+sidecar: 1794151037366 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 3088 received 128 packets, SCTP queue 2037 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151047366 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 3159 received 128 packets, SCTP queue 2060 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151057377 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 3231 received 128 packets, SCTP queue 2076 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151057988 device xdnmxrnd: generation 7 connects without signaling
+sidecar: 1794151057988 data channel 7: ICE Checking
+sidecar: 1794151067387 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 3302 received 128 packets, SCTP queue 1879 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151077406 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 3374 received 128 packets, SCTP queue 2031 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151085119 data channel 7: ICE Disconnected
+sidecar: 1794151087427 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 3446 received 128 packets, SCTP queue 2044 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151097446 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 3517 received 128 packets, SCTP queue 1885 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151107457 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 3589 received 128 packets, SCTP queue 1872 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151117467 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 430 packets, sent 3661 received 128 packets, SCTP queue 1866 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151117757 device xdnmxrnd: generation 8 connects without signaling
+sidecar: 1794151117758 data channel 8: ICE Checking
+sidecar: 1794151127486 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 3732 received 128 packets, SCTP queue 1865 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151137507 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 3804 received 128 packets, SCTP queue 1875 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151141216 data channel 8: ICE Disconnected
+sidecar: 1794151147527 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 3875 received 128 packets, SCTP queue 1694 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151157537 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 3947 received 128 packets, SCTP queue 1680 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151167547 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 430 packets, sent 4019 received 128 packets, SCTP queue 1663 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151177576 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 4090 received 128 packets, SCTP queue 1485 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151178736 device xdnmxrnd: generation 9 connects without signaling
+sidecar: 1794151178737 data channel 9: ICE Checking
+sidecar: 1794151187586 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 4162 received 128 packets, SCTP queue 1691 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151190557 data channel 9: ICE Completed
+sidecar: 1794151197606 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 4233 received 128 packets, SCTP queue 1507 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151207627 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 4305 received 128 packets, SCTP queue 1478 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151217647 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 4377 received 128 packets, SCTP queue 1488 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151227647 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 4448 received 128 packets, SCTP queue 1497 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151237677 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 4520 received 128 packets, SCTP queue 1503 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151247687 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 430 packets, sent 4592 received 128 packets, SCTP queue 1491 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151257717 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 4663 received 128 packets, SCTP queue 1300 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151267727 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 4735 received 128 packets, SCTP queue 1315 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151277748 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 430 packets, sent 4807 received 128 packets, SCTP queue 1331 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151287777 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 4878 received 128 packets, SCTP queue 1316 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151297787 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 4950 received 128 packets, SCTP queue 1296 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151307797 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 5021 received 128 packets, SCTP queue 1124 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151317797 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 5093 received 128 packets, SCTP queue 1129 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151327818 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 430 packets, sent 5165 received 128 packets, SCTP queue 1138 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151337827 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 5236 received 128 packets, SCTP queue 1103 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151347847 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 5308 received 128 packets, SCTP queue 1106 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151357857 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 5379 received 128 packets, SCTP queue 922 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151367867 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 5451 received 128 packets, SCTP queue 936 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151377878 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 430 packets, sent 5523 received 128 packets, SCTP queue 1119 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151387897 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 5594 received 128 packets, SCTP queue 925 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151397917 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 5666 received 128 packets, SCTP queue 939 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151407917 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 5737 received 128 packets, SCTP queue 747 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151417927 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 5809 received 128 packets, SCTP queue 955 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151427927 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 5880 received 128 packets, SCTP queue 733 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151437947 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 5952 received 128 packets, SCTP queue 742 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151447958 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 6024 received 128 packets, SCTP queue 750 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151457977 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 6095 received 128 packets, SCTP queue 579 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151467998 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 6167 received 128 packets, SCTP queue 553 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151478008 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 430 packets, sent 6239 received 128 packets, SCTP queue 549 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151488017 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 6310 received 128 packets, SCTP queue 561 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151498027 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 428 packets, sent 6381 received 128 packets, SCTP queue 385 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151508037 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 6453 received 128 packets, SCTP queue 385 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151518038 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 6525 received 128 packets, SCTP queue 558 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151528047 device xdnmxrnd stats: send 2000 B/s, delivered 9100 B/s, loss 0%, srtt 274 ms, unsynced 4381 B, backfill unsent 1380 B, in flight 429 packets, sent 6596 received 128 packets, SCTP queue 367 B, 0 dropped by a full SCTP buffer

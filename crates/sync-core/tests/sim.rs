@@ -31,12 +31,16 @@ fn simulate(name: &str, s: &Scenario) -> Outcome {
 #[test]
 fn case70_prompt_confirmed_within_10_s() {
     for seed in 1..=3 {
-        let o = simulate("case70", &Scenario::case70(seed).shortened(180 * SECS));
-        let confirmed = o.prompt_confirmed_ms[0];
-        assert!(
-            confirmed.is_some_and(|t| t <= 10 * SECS),
-            "seed {seed}: {confirmed:?}"
-        );
+        let s = Scenario::case70(seed).shortened(180 * SECS);
+        // Also through the model of WebKit's SCTP sender.
+        for (name, s) in [("case70", s.clone()), ("case70-webkit", s.in_webkit())] {
+            let o = simulate(name, &s);
+            let confirmed = o.prompt_confirmed_ms[0];
+            assert!(
+                confirmed.is_some_and(|t| t <= 10 * SECS),
+                "{name} seed {seed}: {confirmed:?}"
+            );
+        }
     }
 }
 

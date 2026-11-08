@@ -1,0 +1,35 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794150457316 connected to t3
+sidecar: 1794150459578 device z37dxbkd paired
+sidecar: 1794150460430 device z37dxbkd: generation 1 signaled
+sidecar: 1794150460432 data channel 1: ICE Checking
+sidecar: 1794150460528 data channel 1: ICE Completed
+sidecar: 1794150460529 data channel 1: DTLS up
+sidecar: 1794150460531 data channel 1 open
+sidecar: 1794150460531 device z37dxbkd: now on Rtc(PeerId(1))
+sidecar: 1794150460531 device z37dxbkd: lost its cache, syncing everything
+sidecar: 1794150465266 device z37dxbkd stats: send 9714 B/s, delivered 6476 B/s, loss 0%, srtt 3 ms, unsynced 16668 B, backfill unsent 13725 B, in flight 6 packets, sent 65 received 29 packets, SCTP queue 550 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150465330 data channel 1 closed
+sidecar: 1794150465653 device z37dxbkd: generation 2 connects without signaling
+sidecar: 1794150465653 data channel 2: ICE Checking
+sidecar: 1794150465698 data channel 2: ICE Completed
+sidecar: 1794150465699 data channel 2: DTLS up
+sidecar: 1794150465700 data channel 2 open
+sidecar: 1794150465821 device z37dxbkd: now on Rtc(PeerId(2))
+sidecar: 1794150466386 device z37dxbkd: command 20 (thread.visit) replied, backfill unsent 12867 B
+sidecar: 1794150472256 device z37dxbkd: command 37 (message.dispatch) replied, backfill unsent 0 B
+sidecar: 1794150472616 device z37dxbkd: new newest text, backfill unsent 10531 B
+sidecar: 1794150473647 device z37dxbkd: command 39 (thread.visit) replied, backfill unsent 15199 B
+sidecar: 1794150475276 device z37dxbkd stats: send 5062 B/s, delivered 5906 B/s, loss 0%, srtt 46 ms, unsynced 13926 B, backfill unsent 10828 B, in flight 11 packets, sent 191 received 122 packets, SCTP queue 2487 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150477176 device z37dxbkd: command 42 (message.dispatch) replied, backfill unsent 6202 B
+sidecar: 1794150477485 device z37dxbkd: new newest text, backfill unsent 8996 B
+sidecar: 1794150484286 device z37dxbkd: command 43 (thread.visit) replied, backfill unsent 8017 B
+sidecar: 1794150485286 device z37dxbkd stats: send 5083 B/s, delivered 3373 B/s, loss 0%, srtt 1121 ms, unsynced 10326 B, backfill unsent 8017 B, in flight 15 packets, sent 273 received 198 packets, SCTP queue 3192 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150494125 device z37dxbkd: command 45 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794150495286 device z37dxbkd stats: send 9795 B/s, delivered 6623 B/s, loss 4%, srtt 1189 ms, unsynced 1839 B, backfill unsent 0 B, in flight 29 packets, sent 490 received 261 packets, SCTP queue 10385 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150505287 device z37dxbkd stats: send 19957 B/s, delivered 9279 B/s, loss 34%, srtt 1296 ms, unsynced 9679 B, backfill unsent 0 B, in flight 210 packets, sent 1095 received 304 packets, SCTP queue 2465 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150506346 device z37dxbkd: command 46 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794150507923 device z37dxbkd: command 47 (runtime-request.respond) replied, backfill unsent 0 B
+sidecar: 1794150507947 device z37dxbkd: new newest text, backfill unsent 4854 B
+sidecar: 1794150515291 device z37dxbkd stats: send 19645 B/s, delivered 12125 B/s, loss 25%, srtt 1314 ms, unsynced 80 B, backfill unsent 0 B, in flight 381 packets, sent 1482 received 359 packets, SCTP queue 865 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150516325 device z37dxbkd: command 50 (thread.visit) replied, backfill unsent 0 B

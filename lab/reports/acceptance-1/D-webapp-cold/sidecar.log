@@ -1,0 +1,61 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794150617416 connected to t3
+sidecar: 1794150618635 device agdhmjbu paired
+sidecar: 1794150619278 device agdhmjbu: generation 1 signaled
+sidecar: 1794150619284 data channel 1: ICE Checking
+sidecar: 1794150619380 data channel 1: ICE Completed
+sidecar: 1794150619381 data channel 1: DTLS up
+sidecar: 1794150619382 data channel 1 open
+sidecar: 1794150619383 device agdhmjbu: now on Rtc(PeerId(1))
+sidecar: 1794150619383 device agdhmjbu: lost its cache, syncing everything
+sidecar: 1794150624386 data channel 1 closed
+sidecar: 1794150624608 device agdhmjbu: generation 2 connects without signaling
+sidecar: 1794150624608 data channel 2: ICE Checking
+sidecar: 1794150624702 data channel 2: ICE Completed
+sidecar: 1794150624703 data channel 2: DTLS up
+sidecar: 1794150624714 data channel 2 open
+sidecar: 1794150624774 device agdhmjbu: now on Rtc(PeerId(2))
+sidecar: 1794150625257 device agdhmjbu: command 21 (thread.visit) replied, backfill unsent 9206 B
+sidecar: 1794150626237 device agdhmjbu stats: send 10953 B/s, delivered 7302 B/s, loss 0%, srtt 12 ms, unsynced 10743 B, backfill unsent 9014 B, in flight 3 packets, sent 87 received 42 packets, SCTP queue 633 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150630986 device agdhmjbu: command 34 (message.dispatch) replied, backfill unsent 0 B
+sidecar: 1794150631296 device agdhmjbu: new newest text, backfill unsent 10531 B
+sidecar: 1794150632345 device agdhmjbu: command 36 (thread.visit) replied, backfill unsent 14677 B
+sidecar: 1794150633355 data channel 2 closed
+sidecar: 1794150637297 device agdhmjbu: generation 3 connects without signaling
+sidecar: 1794150637297 data channel 3: ICE Checking
+sidecar: 1794150655835 data channel 3: ICE Completed
+sidecar: 1794150675219 data channel 3: DTLS up
+sidecar: 1794150792438 data channel 3 open
+sidecar: 1794150793196 device agdhmjbu: now on Rtc(PeerId(3))
+sidecar: 1794150793236 device agdhmjbu: command 46 (thread.visit) replied, backfill unsent 9439 B
+sidecar: 1794150793856 data channel 3 closed
+sidecar: 1794150793917 device agdhmjbu: generation 4 connects without signaling
+sidecar: 1794150793917 data channel 4: ICE Checking
+sidecar: 1794150816257 data channel 4: ICE Completed
+sidecar: 1794150835622 data channel 4: DTLS up
+sidecar: 1794150861765 data channel 4 closed
+sidecar: 1794150861831 device agdhmjbu: generation 5 connects without signaling
+sidecar: 1794150861831 data channel 5: ICE Checking
+sidecar: 1794150874103 data channel 5: ICE Completed
+sidecar: 1794150883147 data channel 5: DTLS up
+sidecar: 1794150908200 data channel 5 open
+sidecar: 1794150909728 device agdhmjbu: now on Rtc(PeerId(5))
+sidecar: 1794150916636 device agdhmjbu stats: send 10125 B/s, delivered 5970 B/s, loss 0%, srtt 9 ms, unsynced 22970 B, backfill unsent 9439 B, in flight 61 packets, sent 244 received 117 packets, SCTP queue 4331 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150921406 device agdhmjbu: command 66 (message.dispatch) replied, backfill unsent 10325 B
+sidecar: 1794150921726 device agdhmjbu: new newest text, backfill unsent 12670 B
+sidecar: 1794150926656 device agdhmjbu stats: send 10125 B/s, delivered 5970 B/s, loss 0%, srtt 1426 ms, unsynced 23091 B, backfill unsent 12527 B, in flight 181 packets, sent 368 received 125 packets, SCTP queue 12352 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150936676 device agdhmjbu stats: send 5062 B/s, delivered 5970 B/s, loss 0%, srtt 1426 ms, unsynced 24138 B, backfill unsent 13076 B, in flight 311 packets, sent 498 received 125 packets, SCTP queue 6187 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150946697 device agdhmjbu stats: send 2000 B/s, delivered 5970 B/s, loss 0%, srtt 1426 ms, unsynced 24638 B, backfill unsent 12714 B, in flight 381 packets, sent 568 received 125 packets, SCTP queue 2332 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150956707 device agdhmjbu stats: send 2000 B/s, delivered 5038 B/s, loss 17%, srtt 4626 ms, unsynced 27229 B, backfill unsent 16250 B, in flight 338 packets, sent 599 received 135 packets, SCTP queue 2170 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150966717 device agdhmjbu stats: send 3000 B/s, delivered 4028 B/s, loss 20%, srtt 6695 ms, unsynced 26603 B, backfill unsent 16330 B, in flight 358 packets, sent 641 received 145 packets, SCTP queue 3828 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150976726 device agdhmjbu stats: send 3000 B/s, delivered 3371 B/s, loss 17%, srtt 8599 ms, unsynced 25043 B, backfill unsent 16384 B, in flight 326 packets, sent 698 received 168 packets, SCTP queue 2962 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150986727 device agdhmjbu stats: send 4500 B/s, delivered 2883 B/s, loss 16%, srtt 9999 ms, unsynced 22336 B, backfill unsent 16243 B, in flight 244 packets, sent 788 received 198 packets, SCTP queue 5058 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150996756 device agdhmjbu stats: send 4500 B/s, delivered 2883 B/s, loss 16%, srtt 9999 ms, unsynced 22336 B, backfill unsent 15903 B, in flight 258 packets, sent 892 received 198 packets, SCTP queue 4557 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151006766 device agdhmjbu stats: send 5138 B/s, delivered 2790 B/s, loss 19%, srtt 10707 ms, unsynced 20469 B, backfill unsent 15669 B, in flight 294 packets, sent 1006 received 202 packets, SCTP queue 4895 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151009116 device agdhmjbu: command 70 (thread.visit) replied, backfill unsent 15709 B
+sidecar: 1794151016776 device agdhmjbu stats: send 5138 B/s, delivered 2006 B/s, loss 51%, srtt 12198 ms, unsynced 19746 B, backfill unsent 11819 B, in flight 331 packets, sent 1121 received 222 packets, SCTP queue 4642 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151019242 device agdhmjbu: command 72 (runtime-request.respond) replied, backfill unsent 11785 B
+sidecar: 1794151019266 device agdhmjbu: new newest text, backfill unsent 14749 B
+sidecar: 1794151026786 device agdhmjbu stats: send 6189 B/s, delivered 2267 B/s, loss 46%, srtt 11123 ms, unsynced 23889 B, backfill unsent 16533 B, in flight 378 packets, sent 1244 received 243 packets, SCTP queue 5448 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151036796 device agdhmjbu stats: send 8383 B/s, delivered 3099 B/s, loss 45%, srtt 11020 ms, unsynced 29760 B, backfill unsent 21283 B, in flight 449 packets, sent 1395 received 255 packets, SCTP queue 6195 B, 0 dropped by a full SCTP buffer
+sidecar: 1794151037026 device agdhmjbu: command 74 (runtime-request.respond) replied, backfill unsent 21283 B

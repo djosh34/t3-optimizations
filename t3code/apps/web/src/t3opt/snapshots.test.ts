@@ -12,6 +12,7 @@ function put(
   meta: object,
   content: string | object,
   ranges?: Array<[number, number]>,
+  rev = 1n,
 ) {
   const data = encoder.encode(typeof content === "string" ? content : JSON.stringify(content));
   const have = ranges ?? [[0, data.length]];
@@ -19,7 +20,7 @@ function put(
   for (const [s, e] of have) kept.set(data.subarray(s, e), s);
   objects.set(BigInt(id), {
     meta: encoder.encode(JSON.stringify(meta)),
-    rev: 1n,
+    rev,
     len: data.length,
     ranges: have,
     data: kept,
@@ -107,6 +108,37 @@ describe("threadSnapshot", () => {
     expect(after.messages.map((m) => m.text)).toEqual(["Hi there"]);
   });
 
+  it("streams a growing text, not its shorter complete self", () => {
+    const objects = new Objects();
+    thread(objects);
+    put(objects, 3, { t: "t1", c: "turnItems", i: "a" }, item("a", "assistant_message", 1, "m-a"));
+    put(objects, 4, { t: "t1", m: "m-a", k: "assistant" }, "Hello");
+    put(objects, 4, { t: "t1", m: "m-a", k: "assistant" }, "Hello world", [[0, 8]]);
+    const texts = () => {
+      const rows = threadSnapshot(objects, "t1")?.projection.visibleTurnItems as
+        | Array<{ item: { text: string } }>
+        | undefined;
+      return (rows ?? []).map((r) => r.item.text);
+    };
+    expect(texts()).toEqual(["Hello wo…"]);
+    // Also in a new revision after a complete one, partly here and growing:
+    // its newest bytes show, not the old revision.
+    put(objects, 4, { t: "t1", m: "m-a", k: "assistant" }, "Hello world");
+    put(objects, 4, { t: "t1", m: "m-a", k: "assistant" }, "Hallo world!", [[0, 3]], 2n);
+    put(
+      objects,
+      4,
+      { t: "t1", m: "m-a", k: "assistant" },
+      "Hallo world!",
+      [
+        [0, 3],
+        [6, 12],
+      ],
+      2n,
+    );
+    expect(texts()).toEqual(["Hal…world!"]);
+  });
+
   it("orders rows by ordinal and keeps the frame's inherited rows first", () => {
     const objects = new Objects();
     thread(objects);
@@ -154,6 +186,17 @@ describe("shellSnapshot", () => {
       threads: [{ id: "t1" }],
       archivedThreads: [{ id: "t2" }],
     });
+  });
+
+  it("keeps a thread's row while its new revision arrives", () => {
+    const objects = new Objects();
+    put(objects, 1, { c: "shell" }, { schemaVersion: 2, snapshotSequence: 3 });
+    put(objects, 2, { c: "thread", i: "t1", l: "active" }, { id: "t1", visitedAt: "a" });
+    const next = { id: "t1", visitedAt: "b" };
+    put(objects, 2, { c: "thread", i: "t1", l: "active" }, next, [[0, 5]], 2n);
+    expect(shellSnapshot(objects)?.threads).toEqual([{ id: "t1", visitedAt: "a" }]);
+    put(objects, 2, { c: "thread", i: "t1", l: "active" }, next, undefined, 2n);
+    expect(shellSnapshot(objects)?.threads).toEqual([next]);
   });
 });
 

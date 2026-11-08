@@ -1,0 +1,40 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794159095106 connected to t3
+sidecar: 1794159096639 device kxa6awx9 paired
+sidecar: 1794159097165 device kxa6awx9: generation 1 signaled
+sidecar: 1794159097168 data channel 1: ICE Checking
+sidecar: 1794159097265 data channel 1: ICE Completed
+sidecar: 1794159097266 data channel 1: DTLS up
+sidecar: 1794159097269 data channel 1 open
+sidecar: 1794159097269 device kxa6awx9: now on Rtc(PeerId(1))
+sidecar: 1794159097270 device kxa6awx9: lost its cache, syncing everything
+sidecar: 1794159101979 data channel 1 closed
+sidecar: 1794159102170 device kxa6awx9: generation 2 connects without signaling
+sidecar: 1794159102171 data channel 2: ICE Checking
+sidecar: 1794159102217 data channel 2: ICE Completed
+sidecar: 1794159102218 data channel 2: DTLS up
+sidecar: 1794159102219 data channel 2 open
+sidecar: 1794159102336 device kxa6awx9: now on Rtc(PeerId(2))
+sidecar: 1794159102756 device kxa6awx9: command 21 (thread.visit) replied, backfill unsent 10952 B
+sidecar: 1794159103747 device kxa6awx9 stats: send 6070 B/s, delivered 6474 B/s, loss 0%, srtt 14 ms, unsynced 15314 B, backfill unsent 10260 B, in flight 1 packets, sent 71 received 43 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794159103747 device kxa6awx9 sent most: {"c":"config"} (History order 18446744073709551615, sent 38661 B, acked 38647/38647 B, 0 new revisions); {"c":"thread","i":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df","l":"active"} (Status order 18, sent 1814 B, acked 671/1857 B, 1 new revisions); {"c":"descriptor"} (History order 18446744073709551615, sent 1768 B, acked 1768/1768 B, 0 new revisions); {"c":"frame","t":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df"} (Status order 18446744073709551615, sent 1175 B, acked 21/1032 B, 1 new revisions); {"c":"turnItems","i":"turn-item:provider:acpRegistry:native-item:provider-instance%3Alab%3Alab-4137233-1%3Aturn%3A1%3Aassistant%3A0","t":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df"} (Status order 1000003, sent 1108 B, acked 1108/1108 B, 0 new revisions)
+sidecar: 1794159107146 device kxa6awx9: command 36 (message.dispatch) replied, backfill unsent 0 B
+sidecar: 1794159107366 device kxa6awx9: new newest text, backfill unsent 10478 B
+sidecar: 1794159108186 device kxa6awx9: command 38 (thread.visit) replied, backfill unsent 14717 B
+sidecar: 1794159110146 device kxa6awx9: command 41 (message.dispatch) replied, backfill unsent 3527 B
+sidecar: 1794159110406 device kxa6awx9: new newest text, backfill unsent 6419 B
+sidecar: 1794159113753 device kxa6awx9 stats: send 11022 B/s, delivered 8817 B/s, loss 0%, srtt 71 ms, unsynced 5 B, backfill unsent 0 B, in flight 14 packets, sent 322 received 154 packets, SCTP queue 528 B, 0 dropped by a full SCTP buffer
+sidecar: 1794159113753 device kxa6awx9 sent most: {"c":"thread","i":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df","l":"active"} (Status order 65, sent 7629 B, acked 1943/1943 B, 5 new revisions); {"c":"image","i":"mcp-bdbbbb1c-5518-4614-bd16-9b02051eb4df-521fe1dd-fffd-42f5-a1df-87e47f4c4ee8","y":"image/png"} (Image order 34, sent 7611 B, acked 7030/7030 B, 0 new revisions); {"c":"providerSessions","i":"provider-session:provider-instance:lab:thread:mcp%3Abdbbbb1c-5518-4614-bd16-9b02051eb4df:ecf0c5de-60f2-4e5e-974d-d027f2c27e3d","t":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df"} (History order 12, sent 2688 B, acked 2688/2688 B, 0 new revisions); {"c":"turnItems","i":"turn-item:provider:acpRegistry:native-item:provider-instance%3Alab%3Alab-4137233-1%3Aturn%3A2%3Aassistant%3A0","t":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df"} (History order 2000002, sent 2176 B, acked 1108/1108 B, 1 new revisions); {"c":"providerThreads","i":"provider-thread:provider:acpRegistry:native-thread:pending%3Arun%3Athread%3Amcp%253Abdbbbb1c-5518-4614-bd16-9b02051eb4df%3Aordinal%3A1","t":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df"} (History order 61, sent 2147 B, acked 812/812 B, 5 new revisions)
+sidecar: 1794159118227 device kxa6awx9: command 42 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794159123766 device kxa6awx9 stats: send 21093 B/s, delivered 16822 B/s, loss 0%, srtt 78 ms, unsynced 10 B, backfill unsent 0 B, in flight 29 packets, sent 1301 received 209 packets, SCTP queue 733 B, 0 dropped by a full SCTP buffer
+sidecar: 1794159123767 device kxa6awx9 sent most: {"k":"assistant","m":"message:provider:acpRegistry:native-item:provider-instance%3Alab%3Alab-4137233-1%3Aturn%3A3%3Aassistant%3A0","t":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df"} (Tail order 3000002, sent 9768 B, acked 653/663 B, 0 new revisions); {"c":"thread","i":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df","l":"active"} (Status order 70, sent 7494 B, acked 1943/1943 B, 2 new revisions); {"c":"thread","i":"thread","t":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df"} (Status order 67, sent 1807 B, acked 951/951 B, 1 new revisions); {"c":"messages","i":"message:provider:acpRegistry:native-item:provider-instance%3Alab%3Alab-4137233-1%3Aturn%3A3%3Aassistant%3A0","t":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df"} (History order 69, sent 1221 B, acked 549/549 B, 0 new revisions)
+sidecar: 1794159128234 device kxa6awx9: command 44 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794159133767 device kxa6awx9 stats: send 37108 B/s, delivered 31776 B/s, loss 0%, srtt 76 ms, unsynced 10 B, backfill unsent 0 B, in flight 62 packets, sent 3137 received 266 packets, SCTP queue 1320 B, 0 dropped by a full SCTP buffer
+sidecar: 1794159133767 device kxa6awx9 sent most: {"k":"assistant","m":"message:provider:acpRegistry:native-item:provider-instance%3Alab%3Alab-4137233-1%3Aturn%3A3%3Aassistant%3A0","t":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df"} (Tail order 3000002, sent 17260 B, acked 1153/1163 B, 0 new revisions); {"c":"thread","i":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df","l":"active"} (Status order 72, sent 4748 B, acked 1943/1943 B, 1 new revisions); {"c":"thread","i":"thread","t":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df"} (Status order 71, sent 3136 B, acked 951/951 B, 1 new revisions)
+sidecar: 1794159137566 device kxa6awx9: command 45 (runtime-request.respond) replied, backfill unsent 0 B
+sidecar: 1794159137596 device kxa6awx9: new newest text, backfill unsent 2504 B
+sidecar: 1794159138303 device kxa6awx9: command 48 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794159143776 device kxa6awx9 stats: send 69363 B/s, delivered 58569 B/s, loss 0%, srtt 87 ms, unsynced 5 B, backfill unsent 0 B, in flight 56 packets, sent 6237 received 324 packets, SCTP queue 2932 B, 0 dropped by a full SCTP buffer
+sidecar: 1794159143776 device kxa6awx9 sent most: {"k":"assistant","m":"message:provider:acpRegistry:native-item:provider-instance%3Alab%3Alab-4137233-1%3Aturn%3A3%3Aassistant%3A1","t":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df"} (Tail order 3000005, sent 21568 B, acked 328/333 B, 0 new revisions); {"c":"thread","i":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df","l":"active"} (Status order 82, sent 11550 B, acked 1945/1945 B, 3 new revisions); {"k":"assistant","m":"message:provider:acpRegistry:native-item:provider-instance%3Alab%3Alab-4137233-1%3Aturn%3A3%3Aassistant%3A0","t":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df"} (Status order 3000002, sent 8733 B, acked 1340/1340 B, 0 new revisions); {"c":"turnItems","i":"turn-item:runtime-request:runtime-request%3Aprovider%3AacpRegistry%3Aprovider-turn%3Aprovider-turn%253Aprovider%253AacpRegistry%253Anative-turn%253Aprovider-instance%25253Alab%25253Alab-4137233-1%25253Aturn%25253A3%3Anative-request%3Alab-tool-2%3A7b069ab2-8eee-43c5-ac64-8366963e0651","t":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df"} (History order 3000004, sent 8501 B, acked 1578/1578 B, 1 new revisions); {"c":"turnItems","i":"turn-item:provider:acpRegistry:native-item:provider-instance%3Alab%3Alab-4137233-1%3Atool%3Alab-tool-2","t":"mcp:bdbbbb1c-5518-4614-bd16-9b02051eb4df"} (History order 3000003, sent 7771 B, acked 956/956 B, 1 new revisions)
+sidecar: 1794159148265 device kxa6awx9: command 49 (thread.visit) replied, backfill unsent 0 B
+sidecar: 1794159151984 device kxa6awx9: command 50 (thread.visit) replied, backfill unsent 0 B

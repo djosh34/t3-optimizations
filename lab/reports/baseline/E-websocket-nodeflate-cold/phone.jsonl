@@ -1,13 +1,11 @@
-{"t":1794014981651,"ev":"ws-open"}
-{"t":1794014981703,"ev":"ws-close"}
-{"t":1794014982201,"ev":"ws-open"}
-{"t":1794014982740,"ev":"paired"}
-{"t":1794014982780,"ev":"ws-close"}
-{"t":1794014983271,"ev":"ws-open"}
-{"t":1794014983833,"ev":"thread-open"}
-{"t":1794014987680,"ev":"screenshot","name":"ready"}
-{"t":1794014987682,"ev":"ready"}
-{"t":1794014987817,"ev":"app-loading"}
-{"t":1794015887689,"ev":"note","text":"app did not load: stopped"}
-{"t":1794015887756,"ev":"screenshot","name":"end"}
-{"t":1794015887756,"ev":"stats"}
+{"t":1794138715088,"ev":"ws-open"}
+{"t":1794138715511,"ev":"paired"}
+{"t":1794138715568,"ev":"ws-close"}
+{"t":1794138716022,"ev":"ws-open"}
+{"t":1794138716568,"ev":"thread-open"}
+{"t":1794138722413,"ev":"screenshot","name":"ready"}
+{"t":1794138722418,"ev":"ready"}
+{"t":1794138722581,"ev":"app-loading"}
+{"t":1794139622424,"ev":"note","text":"app did not load: stopped"}
+{"t":1794139622488,"ev":"screenshot","name":"end"}
+{"t":1794139622488,"ev":"stats"}

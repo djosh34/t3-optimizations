@@ -1,24 +1,24 @@
 # B, websocket, cold start, seed 1
 
-Profile B (graded): congested LTE, queue and stall stress. Commit cc6b9676f812.
+Profile B (graded): congested LTE, queue and stall stress. Commit e14300ea99fc.
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.
 
-**Status: done** after 117 s (deadline 15m0s).
+**Status: done** after 121 s (deadline 15m0s).
 
 | Measure | Value |
 |---|---|
-| App loaded after the switch | 71.1s |
-| Prompt confirmation | 1.5s |
-| Prompt reached the agent | 1.1s |
-| Time to first text | 11.9s |
-| Whole reply shown | 45.1s |
+| App loaded after the switch | 73.1s |
+| Prompt confirmation | 1.2s |
+| Prompt reached the agent | 0.8s |
+| Time to first text | 11.4s |
+| Whole reply shown | 47.3s |
 | Reply shown / produced / total (chars) | 1596 / 1596 / 1596 |
-| Newest-text lag: max / median / p95 | 16.8s / 4.8s / 13.8s |
-| Longest silence | 16.6s |
-| Approval shown after it was asked | 1.7s |
-| Bytes on the wire down / up | 3067524 / 375039 |
-| Bytes the app received / sent | 184662 / 13675 |
+| Newest-text lag: max / median / p95 | 17.1s / 5.1s / 14.1s |
+| Longest silence | 17.0s |
+| Approval shown after it was asked | 1.8s |
+| Bytes on the wire down / up | 3074356 / 345094 |
+| Bytes the app received / sent | 200616 / 13144 |
 | Reply text received / of it duplicates | 2294 / 698 |
 | WebSockets opened after the switch | 1 |
 
@@ -29,8 +29,8 @@ Every 10 s after the prompt was sent.
 | After (s) | Lag (s) | Shown | Produced |
 |---|---|---|---|
 | 0 | 0.0 | 0 | 0 |
-| 10 | 8.8 | 0 | 357 |
-| 20 | 8.8 | 397 | 758 |
+| 10 | 9.1 | 0 | 365 |
+| 20 | 9.1 | 397 | 766 |
 | 30 | 0.0 | 1077 | 1077 |
-| 40 | 1.7 | 1378 | 1443 |
-| 45 | 6.7 | 1378 | 1596 |
+| 40 | 1.3 | 1378 | 1425 |
+| 47 | 8.3 | 1378 | 1596 |

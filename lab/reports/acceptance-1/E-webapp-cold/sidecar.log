@@ -1,0 +1,27 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794150808857 connected to t3
+sidecar: 1794150810327 device s8322je2 paired
+sidecar: 1794150810958 device s8322je2: generation 1 signaled
+sidecar: 1794150810962 data channel 1: ICE Checking
+sidecar: 1794150811011 data channel 1: ICE Completed
+sidecar: 1794150811012 data channel 1: DTLS up
+sidecar: 1794150811014 data channel 1 open
+sidecar: 1794150811015 device s8322je2: now on Rtc(PeerId(1))
+sidecar: 1794150811015 device s8322je2: lost its cache, syncing everything
+sidecar: 1794150816181 data channel 1 closed
+sidecar: 1794150816582 device s8322je2: generation 2 connects without signaling
+sidecar: 1794150816583 data channel 2: ICE Checking
+sidecar: 1794150816631 data channel 2: ICE Completed
+sidecar: 1794150816632 data channel 2: DTLS up
+sidecar: 1794150816636 data channel 2 open
+sidecar: 1794150816949 device s8322je2: now on Rtc(PeerId(2))
+sidecar: 1794150816996 device s8322je2: command 21 (thread.visit) replied, backfill unsent 13048 B
+sidecar: 1794150817453 device s8322je2 stats: send 8766 B/s, delivered 5844 B/s, loss 0%, srtt 23 ms, unsynced 18325 B, backfill unsent 14234 B, in flight 0 packets, sent 76 received 37 packets, SCTP queue 0 B, 0 dropped by a full SCTP buffer
+sidecar: 1794150823196 device s8322je2: command 38 (message.dispatch) replied, backfill unsent 0 B
+sidecar: 1794150823476 device s8322je2: new newest text, backfill unsent 10491 B
+sidecar: 1794150823497 device s8322je2: command 40 (thread.visit) replied, backfill unsent 10491 B
+sidecar: 1794150824336 device s8322je2: command 41 (thread.visit) replied, backfill unsent 15153 B
+sidecar: 1794150825508 data channel 2 closed
+sidecar: 1794150829639 device s8322je2: generation 3 connects without signaling
+sidecar: 1794150829639 data channel 3: ICE Checking
+sidecar: 1794150837501 data channel 3: ICE Completed

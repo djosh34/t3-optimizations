@@ -218,7 +218,10 @@ async function watchWebapp(page) {
   if (Date.now() - lastSummary >= 10_000) {
     lastSummary = Date.now();
     const summary = await page.evaluate(
-      (id) => ({ objects: window.t3opt?.summary?.(id), link: window.t3opt?.engine?.status().link }),
+      (id) => {
+        const status = window.t3opt?.engine?.status();
+        return { objects: window.t3opt?.summary?.(id), link: status?.link, stats: status?.stats };
+      },
       cfg.threadId,
     );
     emit("note", { text: `webapp ${JSON.stringify(summary)}` });
@@ -237,8 +240,14 @@ async function watchWebapp(page) {
 
 async function webappBytes(page) {
   return page.evaluate(() => {
-    const s = window.t3opt?.engine?.status().stats;
-    return { rx: s?.receivedWireBytes ?? 0, tx: s?.sentWireBytes ?? 0 };
+    const status = window.t3opt?.engine?.status();
+    const s = status?.stats;
+    return {
+      rx: s?.receivedWireBytes ?? 0,
+      tx: s?.sentWireBytes ?? 0,
+      content: status?.receivedContentBytes ?? 0,
+      duplicates: s?.duplicateBytes ?? 0,
+    };
   });
 }
 
@@ -302,6 +311,14 @@ async function setup() {
     await editor.click({ timeout: 10_000 }).catch(() => {});
   }
   await waitForText(page, "I received the image", 120_000);
+  // The web app shows a reply's text before its turn has ended, with a
+  // "running" pill. A prompt typed then waits as a follow-up until the turn
+  // ends, so the run would measure the setup turn's sync.
+  await page.getByText("running", { exact: true }).first().waitFor({ state: "hidden", timeout: 120_000 });
+  // Until the client has the turn's end, Enter steers or queues instead of
+  // starting a turn; the send button's label says which.
+  await focusComposer(page, 60_000);
+  await page.locator('button[aria-label="Submit message"]').first().waitFor({ state: "attached", timeout: 120_000 });
   await screenshot(page, "ready");
 }
 
@@ -322,7 +339,9 @@ if (go !== "go") {
 }
 stats.rxBytes = 0;
 stats.txBytes = 0;
-const webappStart = cfg.webapp ? await webappBytes(page).catch(() => ({ rx: 0, tx: 0 })) : null;
+const webappStart = cfg.webapp
+  ? await webappBytes(page).catch(() => ({ rx: 0, tx: 0, content: 0, duplicates: 0 }))
+  : null;
 void nextCommand().then(() => {
   stopping = true;
   stopRequested();
@@ -342,12 +361,29 @@ if (cfg.kind === "cold") {
   else emit("note", { text: `app did not load: ${loaded}` });
 }
 
+// An Enter the web app's composer did not take (it stays full) is pressed
+// again, as the owner would; the measure still starts at the first one. Not
+// for the baseline client, whose composer may hold the text while its socket
+// is stalled, where a second Enter could send the prompt twice.
+let lastEnterAt = 0;
+async function enterAgainIfIgnored(page) {
+  if (!cfg.webapp || promptSentAt === undefined || Date.now() - lastEnterAt < 1_500) return;
+  const editor = page.locator('[data-testid="composer-editor"]:visible').first();
+  const text = (await editor.textContent({ timeout: 1_000 }).catch(() => "")) ?? "";
+  if (!text.includes(cfg.prompt.slice(0, 24))) return;
+  lastEnterAt = Date.now();
+  emit("note", { text: "the prompt is still in the composer: Enter again" });
+  await editor.click({ timeout: 2_000 }).catch(() => {});
+  await page.keyboard.press("Enter");
+}
+
 if (!stopping) {
   const sent = await untilStop(
     (async () => {
       await focusComposer(page, 0);
       await page.keyboard.type(cfg.prompt);
       promptSentAt = Date.now();
+      lastEnterAt = promptSentAt;
       emit("prompt-sent");
       await page.keyboard.press("Enter");
       return "sent";
@@ -358,9 +394,12 @@ if (!stopping) {
 
 let shown = 0;
 let approvalVisible = false;
+let scrollToEndShown = false;
+let streamingShot = false;
 while (!stopping) {
   try {
     if (cfg.webapp) await untilStop(watchWebapp(page));
+    await untilStop(enterAgainIfIgnored(page));
     const n = await untilStop(sampleText(page));
     if (typeof n === "number" && n !== shown) {
       shown = n;
@@ -369,6 +408,19 @@ while (!stopping) {
     if (shown === reply.length) {
       emit("complete");
       break;
+    }
+    // The timeline stopped following new text: the owner would have to tap.
+    const toEnd = page.getByRole("button", { name: "Scroll to end" }).first();
+    if (await toEnd.isVisible().catch(() => false)) {
+      if (!scrollToEndShown) emit("note", { text: "Scroll to end shows" });
+      scrollToEndShown = true;
+    } else {
+      scrollToEndShown = false;
+    }
+    // One picture of a long reply streaming at the bottom of the timeline.
+    if (!streamingShot && shown >= reply.length / 2) {
+      streamingShot = true;
+      await screenshot(page, "streaming");
     }
     const approve = page.getByRole("button", { name: /^(Approve|Yes)$/ }).first();
     if (await approve.isVisible()) {
@@ -393,6 +445,13 @@ if (webappStart !== null) {
   const end = await webappBytes(page).catch(() => webappStart);
   stats.rxBytes = end.rx - webappStart.rx;
   stats.txBytes = end.tx - webappStart.tx;
+  // The app gets content from sync-core, not reply text over a WebSocket:
+  // all content it received, and of it what it had received before.
+  stats.replyBytes = end.content - webappStart.content;
+  stats.duplicateReplyBytes = end.duplicates - webappStart.duplicates;
+  // The shim's last calls and fetches, to see what shared the link with the prompt.
+  const trace = await page.evaluate(() => window.t3opt?.trace ?? []).catch(() => []);
+  emit("note", { text: `shim trace\n${trace.join("\n")}` });
 }
 emit("stats", stats);
 await browser.close();

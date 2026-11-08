@@ -149,9 +149,20 @@ const BACKGROUND_CALLS = new Set([
   "scheduledTasks.subscribe",
 ]);
 
+/**
+ * Calls the shim answers at once from their last reply, while the sidecar
+ * answers them again in the background. The client refreshes its providers
+ * whenever the owner types, and takes no Enter until the reply is here: on
+ * case 50 a full round trip each time (issue #46).
+ */
+const ANSWERED_FROM_LAST_REPLY = new Set(["server.refreshProviders"]);
+const lastReplies = new Map<string, unknown>();
+
 export function isBackgroundCall(tag: string): boolean {
   return BACKGROUND_CALLS.has(tag);
 }
+
+const FOLLOW_INTERVAL_MS = 250;
 
 /** A request id as the client sent it; replies carry it back unchanged. */
 type RequestId = string | number;
@@ -165,7 +176,7 @@ interface Stream {
   stop: () => void;
 }
 
-class RpcServer {
+export class RpcServer {
   private readonly streams = new Map<string, Stream>();
 
   constructor(
@@ -232,11 +243,31 @@ class RpcServer {
     this.send({ _tag: "Chunk", requestId: id, values });
   }
 
-  /** A stream answered from synced state: `values` again on every change. */
+  /**
+   * A stream answered from synced state: `values` again on every change, at
+   * most every `FOLLOW_INTERVAL_MS`. A thread snapshot is tens of kB: built,
+   * sent and rendered for every packet, it kept WebKit's main thread busy for
+   * half a minute at a time on case 50 (issue #46).
+   */
   private follow(id: RequestId, values: (first: boolean) => unknown[] | null) {
     let first = true;
     let last = "";
+    let lastRun = -Infinity;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const update = () => {
+      if (timer !== null) return;
+      const wait = lastRun + FOLLOW_INTERVAL_MS - performance.now();
+      if (wait > 0) {
+        timer = setTimeout(() => {
+          timer = null;
+          run();
+        }, wait);
+        return;
+      }
+      run();
+    };
+    const run = () => {
+      lastRun = performance.now();
       let v: unknown[] | null;
       try {
         v = values(first);
@@ -251,13 +282,18 @@ class RpcServer {
       first = false;
       this.chunk(id, v);
     };
-    const stop = this.engine.objects.subscribe(update);
+    const unsubscribe = this.engine.objects.subscribe(update);
+    const stop = () => {
+      unsubscribe();
+      if (timer !== null) clearTimeout(timer);
+    };
     this.streams.set(String(id), { pending: null, awaitingAck: false, replaces: true, stop });
     update();
   }
 
   private async request(id: RequestId, tag: string, payload: unknown) {
-    trace(`rpc ${id} ${tag}`);
+    const command = tag === "orchestration.dispatchCommand" ? (payload as Json | null) : null;
+    trace(`rpc ${id} ${tag}${command ? ` ${String(command.type ?? "")}` : ""}`);
     const objects = this.engine.objects;
     switch (tag) {
       case "server.probe":
@@ -312,9 +348,18 @@ class RpcServer {
         break;
       }
       case "orchestration.dispatchCommand": {
-        // Every command, also those the client sends by itself (thread.visit):
-        // the client sends the next one only after the last one's reply.
-        const command = payload as Json | null;
+        // The client sends a thread's next command only after the last reply
+        // and ignores a visit's: a visit held a prompt back 278 s (#46).
+        // Answered at once, it stays a command, so a later mark-unread still
+        // comes after it.
+        if (command?.type === "thread.visit") {
+          this.exit(id, { _tag: "Success", value: { sequence: 0 } });
+          void this.engine
+            .request("command", payload)
+            .then((r) => r.reply)
+            .catch((error: unknown) => trace(`visit failed: ${String(error)}`));
+          return;
+        }
         const { seq, reply } = await this.engine.request("command", payload);
         if (command?.type === "message.dispatch") trackPrompt(this.engine, seq, reply);
         const r = readReply(await reply);
@@ -325,8 +370,27 @@ class RpcServer {
     // Everything else: one call to the sidecar, one reply. A call for what is
     // on screen or what a tap needs gets the reply class (#16); the client's
     // own reports, refreshes and side subscriptions go at the background class.
+    const key = ANSWERED_FROM_LAST_REPLY.has(tag) ? `${tag} ${JSON.stringify(payload)}` : null;
+    const last = key === null ? undefined : lastReplies.get(key);
+    if (key !== null && last !== undefined) {
+      // Answered; the fresh reply only replaces the last one.
+      this.exit(id, last);
+      void this.engine
+        .request("call", { tag, payload }, true)
+        .then(({ reply }) => reply)
+        .then((value) => {
+          const r = readReply(value);
+          if ("exit" in r && (r.exit as Json | null)?._tag === "Success")
+            lastReplies.set(key, r.exit);
+        })
+        .catch((error: unknown) => trace(`refresh of ${tag} failed: ${String(error)}`));
+      return;
+    }
     const { reply } = await this.engine.request("call", { tag, payload }, isBackgroundCall(tag));
     const r = readReply(await reply);
+    if ("exit" in r && key !== null && (r.exit as Json | null)?._tag === "Success") {
+      lastReplies.set(key, r.exit);
+    }
     if ("chunk" in r) {
       // The sidecar takes a stream's first chunk; the stream stays open here.
       if (!this.streams.has(String(id))) {

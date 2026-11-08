@@ -70,9 +70,20 @@ enum Pending {
     Live,
     ConfigStream,
     Config,
-    Call { device: String, seq: u64 },
-    Command { device: String, seq: u64 },
-    AssetUrl { id: String, mime: String },
+    Call {
+        device: String,
+        seq: u64,
+    },
+    /// `kind` is the command's type, for the log.
+    Command {
+        device: String,
+        seq: u64,
+        kind: String,
+    },
+    AssetUrl {
+        id: String,
+        mime: String,
+    },
 }
 
 /// A thread snapshot is fetched this long after its last change.
@@ -83,6 +94,8 @@ const SAVE_EVERY: Duration = Duration::from_secs(2);
 const TICK: Duration = Duration::from_millis(5);
 const REPORTS_MAX: u64 = 4 << 20;
 const STATS_EVERY: Duration = Duration::from_secs(10);
+/// How many of the objects that took the most packet bytes the stats name.
+const BUSIEST_LOGGED: usize = 5;
 
 pub struct App {
     data: DataDir,
@@ -258,16 +271,43 @@ impl App {
                 _ => 0,
             };
             log(format!(
-                "device {} stats: send {:.0} B/s, delivered {:.0} B/s, loss {:.0}%, srtt {} ms, unsynced {} B, in flight {} packets, sent {} received {} packets, SCTP queue {queued} B, {dropped} dropped by a full SCTP buffer",
+                "device {} stats: send {:.0} B/s, delivered {:.0} B/s, loss {:.0}%, srtt {} ms, unsynced {} B, backfill unsent {} B, in flight {} packets, sent {} received {} packets, SCTP queue {queued} B, {dropped} dropped by a full SCTP buffer",
                 d.record.id,
                 s.send_rate,
                 s.delivered_rate,
                 s.loss * 100.0,
                 s.srtt_ms.map_or("-".into(), |r| format!("{r:.0}")),
                 s.unsynced_bytes,
+                s.unsent_backfill_bytes,
                 s.inflight_packets,
                 s.sent_packets,
                 s.received_packets,
+            ));
+        }
+        for d in self.devices.values_mut().filter(|d| d.link.is_some()) {
+            let busy = d.server.take_busiest(BUSIEST_LOGGED);
+            if busy.is_empty() {
+                continue;
+            }
+            let list: Vec<String> = busy
+                .iter()
+                .map(|b| {
+                    format!(
+                        "{} ({:?} order {}, sent {} B, acked {}/{} B, {} new revisions)",
+                        String::from_utf8_lossy(&b.meta),
+                        b.class,
+                        b.order,
+                        b.sent,
+                        b.acked,
+                        b.len,
+                        b.revs
+                    )
+                })
+                .collect();
+            log(format!(
+                "device {} sent most: {}",
+                d.record.id,
+                list.join("; ")
             ));
         }
     }
@@ -282,6 +322,7 @@ impl App {
             PipeEvent::IceState(peer, state) => {
                 log(format!("data channel {}: ICE {state}", peer.0))
             }
+            PipeEvent::DtlsUp(peer) => log(format!("data channel {}: DTLS up", peer.0)),
             PipeEvent::Failed(peer, e) => log(format!("data channel {} failed: {e}", peer.0)),
             PipeEvent::Closed(peer) => {
                 log(format!("data channel {} closed", peer.0));
@@ -512,14 +553,18 @@ impl App {
                 "device {device}: lost its cache, syncing everything"
             )),
             Incoming::Command { seq, payload } => match serde_json::from_slice::<Value>(&payload) {
-                Ok(p) => self.request(
-                    "orchestration.dispatchCommand",
-                    p,
-                    Pending::Command {
-                        device: device.to_owned(),
-                        seq,
-                    },
-                ),
+                Ok(p) => {
+                    let kind = p["type"].as_str().unwrap_or_default().to_owned();
+                    self.request(
+                        "orchestration.dispatchCommand",
+                        p,
+                        Pending::Command {
+                            device: device.to_owned(),
+                            seq,
+                            kind,
+                        },
+                    )
+                }
                 Err(e) => self.reply(device, seq, &json!({"error": format!("bad command: {e}")})),
             },
             Incoming::Call { seq, payload, .. } => {
@@ -805,8 +850,19 @@ impl App {
         };
         let success = exit["_tag"].as_str() == Some("Success");
         match pending {
-            Pending::Call { device, seq } | Pending::Command { device, seq } => {
+            Pending::Call { device, seq } => {
                 self.reply(&device, seq, &json!({"exit": exit}));
+            }
+            Pending::Command { device, seq, kind } => {
+                self.reply(&device, seq, &json!({"exit": exit}));
+                // The reply goes out before any backfill not sent yet: the
+                // lab's acceptance report reads this line (issue #46).
+                if let Some(d) = self.devices.get(&device) {
+                    log(format!(
+                        "device {device}: command {seq} ({kind}) replied, backfill unsent {} B",
+                        d.server.stats().unsent_backfill_bytes
+                    ));
+                }
             }
             Pending::AssetUrl { id, mime } => match exit["value"]["relativeUrl"].as_str() {
                 Some(url) if success => {

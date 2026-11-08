@@ -176,6 +176,10 @@ fn role_name(controlling: bool) -> &'static str {
 
 const REMOTE_PEER_REFLEXIVE_TEMP_FOUNDATION: &str = "tmp_prflx";
 
+/// t3-optimizations patch: how many times a binding reply is sent; see
+/// `stun_server_handle_message`.
+const REPLY_COPIES: usize = 3;
+
 /// States the ICE connection can be in.
 ///
 /// More details on connection states can be found in the [ICE RFC][1].
@@ -1665,14 +1669,21 @@ impl IceAgent {
             .expect("IO error writing STUN reply");
         buf.truncate(n);
 
-        let trans = Transmit {
-            proto,
-            source: local_addr,
-            destination: remote_addr,
-            contents: buf.into(),
-        };
-
-        self.transmit.push_back(trans);
+        // t3-optimizations patch: an ice-lite agent (the sidecar) sends the
+        // reply `REPLY_COPIES` times. The phone's ICE agent (libwebrtc's)
+        // stops sending data when several of its checks go unanswered, until
+        // one is answered; at 70% loss each way a check and its one reply
+        // both arrive 9% of the time (issue #46). The phone takes the first
+        // copy and drops the rest.
+        let copies = if self.ice_lite { REPLY_COPIES } else { 1 };
+        for _ in 0..copies {
+            self.transmit.push_back(Transmit {
+                proto,
+                source: local_addr,
+                destination: remote_addr,
+                contents: buf.clone().into(),
+            });
+        }
     }
 
     fn send_role_conflict_reply(&mut self, req: &StunRequest) {
@@ -3070,6 +3081,41 @@ mod test {
     /// t3-optimizations patch: an ice-lite agent keeps sending on its pair
     /// while the remote's checks are lost, and moves to a pair the remote
     /// nominates from a new address.
+    #[test]
+    fn ice_lite_sends_each_binding_reply_three_times() {
+        // t3-optimizations patch: see `REPLY_COPIES`.
+        let mut agent = new_test_agent();
+        agent.set_ice_lite(true);
+        agent.set_controlling(false);
+        agent
+            .add_local_candidate(Candidate::host(ipv4_1(), "udp").unwrap())
+            .unwrap();
+        let remote_creds = IceCreds::new();
+        agent.set_remote_credentials(remote_creds.clone());
+        let prio = Candidate::host(ipv4_3(), "udp").unwrap().prio();
+        let now = Instant::now();
+        agent.handle_timeout(now);
+        let username = format!("{}:{}", agent.local_credentials.ufrag, remote_creds.ufrag);
+        let req = StunMessage::binding_request(&username, TransId::new(), true, 0, prio, true);
+        let bytes = serialize_stun_msg(req, &agent.local_credentials.pass.clone());
+        assert!(agent.handle_packet(
+            now,
+            StunPacket {
+                message: StunMessage::parse(&bytes).unwrap(),
+                source: ipv4_3(),
+                destination: ipv4_1(),
+                proto: Protocol::Udp,
+            },
+        ));
+        let mut replies = 0;
+        while let Some(t) = agent.poll_transmit() {
+            let m = StunMessage::parse(&t.contents).unwrap();
+            assert!(m.is_successful_binding_response());
+            replies += 1;
+        }
+        assert_eq!(replies, REPLY_COPIES);
+    }
+
     #[test]
     fn ice_lite_keeps_its_pair_and_follows_a_new_address() {
         let mut agent = new_test_agent();

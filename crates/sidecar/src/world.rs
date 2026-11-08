@@ -112,6 +112,12 @@ struct ThreadState {
     text_kind: HashMap<String, String>,
     /// Ordinal and text key of each assistant message, for the tail.
     assistant: BTreeMap<u64, String>,
+    /// The ordinal of the newest user message: the current turn starts
+    /// there.
+    turn_start: u64,
+    /// The ordinal of the turn item behind each turn item body and text
+    /// object, by object id.
+    turn_ordinals: HashMap<u64, u64>,
 }
 
 #[derive(Debug, Default)]
@@ -179,6 +185,15 @@ impl World {
     pub fn tail(&self, thread: &str) -> Option<u64> {
         let key = self.threads.get(thread)?.assistant.values().next_back()?;
         Some(object_id(&["text", thread, key]))
+    }
+
+    /// Whether an object is a message item, or its text, of the thread's
+    /// current turn: from its newest user message on.
+    pub fn in_current_turn(&self, thread: &str, id: u64) -> bool {
+        self.threads
+            .get(thread)
+            .and_then(|s| Some(*s.turn_ordinals.get(&id)? >= s.turn_start))
+            .unwrap_or(false)
     }
 
     /// The listed threads.
@@ -605,14 +620,32 @@ impl World {
             state.text_kind.insert(key.clone(), text_kind(coll, entity));
             if coll == "turnItems" {
                 self.note_assistant(thread, entity, key);
+                self.note_turn(thread, entity, object_id(&["text", thread, key]));
             }
             self.put_text(thread, key);
+        }
+        if coll == "turnItems" {
+            self.note_turn(thread, entity, object_id(&["body", thread, coll, &id]));
         }
         if unchanged {
             return;
         }
         let order = match entity["ordinal"].as_u64() {
             Some(o) if coll == "turnItems" => o,
+            // An approval or question the owner must answer goes first in
+            // the status class, and its answer too, so the phone stops
+            // offering it. With the next sequence number it went after every
+            // item of the current turn: on profile D the approval showed
+            // 103 s after it was asked (issue #46).
+            _ if coll == "runtimeRequests"
+                && (entity["status"].as_str() == Some("pending")
+                    || self
+                        .objects
+                        .get(&object_id(&["body", thread, coll, &id]))
+                        .is_some_and(|o| o.order == u64::MAX)) =>
+            {
+                u64::MAX
+            }
             _ => self.next_seq(),
         };
         let status = STATUS_COLLECTIONS.contains(&coll)
@@ -690,6 +723,29 @@ impl World {
             for k in [old_tail, new_tail].into_iter().flatten() {
                 self.changed.insert(object_id(&["text", thread, &k]));
             }
+        }
+    }
+
+    /// Notes the turn item behind an object, and a new turn when the item
+    /// is a newer user message: then the previous turn's objects change
+    /// class. Only the turn's messages count: tool rows can be large, and
+    /// they would hold back the server config, without which the app shows
+    /// nothing after a cache loss.
+    fn note_turn(&mut self, thread: &str, item: &Value, id: u64) {
+        let Some(ordinal) = item["ordinal"].as_u64() else {
+            return;
+        };
+        if !matches!(
+            item["type"].as_str(),
+            Some("user_message" | "assistant_message")
+        ) {
+            return;
+        }
+        let state = self.threads.entry(thread.to_owned()).or_default();
+        state.turn_ordinals.insert(id, ordinal);
+        if item["type"].as_str() == Some("user_message") && ordinal > state.turn_start {
+            state.turn_start = ordinal;
+            self.changed.extend(state.turn_ordinals.keys().copied());
         }
     }
 
@@ -954,6 +1010,71 @@ mod tests {
         );
         assert_eq!(w.tail("t1"), Some(new));
         assert_eq!(content(&w, new), "The sync loop starts from");
+    }
+
+    #[test]
+    fn the_current_turn_starts_at_the_newest_user_message() {
+        let mut w = World::default();
+        let user = |id: &str, ordinal: u64| {
+            json!({"id": id, "threadId": "t1", "type": "user_message", "messageId": format!("m-{id}"),
+                "ordinal": ordinal, "status": "completed", "text": "prompt", "streaming": false, "updatedAt": "1"})
+        };
+        let body = |id: &str| object_id(&["body", "t1", "turnItems", id]);
+        let text = |id: &str| object_id(&["text", "t1", &format!("m-{id}")]);
+        w.apply_event("t1", &event("turn-item.updated", user("u1", 1)));
+        w.apply_event(
+            "t1",
+            &event("turn-item.updated", item("a", 2, "first", false, "1")),
+        );
+        w.apply_event("t1", &event("turn-item.updated", user("u2", 3)));
+        w.apply_event(
+            "t1",
+            &event("turn-item.updated", item("b", 4, "second", true, "1")),
+        );
+        let tool = json!({"id": "x", "threadId": "t1", "type": "command_execution", "ordinal": 5,
+            "status": "completed", "updatedAt": "1"});
+        w.apply_event("t1", &event("turn-item.updated", tool));
+        assert!(
+            !w.in_current_turn("t1", body("x")),
+            "tool rows stay with history"
+        );
+        for id in ["u2", "b"] {
+            assert!(w.in_current_turn("t1", body(id)), "{id} body");
+            assert!(w.in_current_turn("t1", text(id)), "{id} text");
+        }
+        for id in ["u1", "a"] {
+            assert!(!w.in_current_turn("t1", body(id)), "{id} body");
+            assert!(!w.in_current_turn("t1", text(id)), "{id} text");
+        }
+    }
+
+    #[test]
+    fn a_pending_runtime_request_goes_first_in_its_class() {
+        let mut w = World::default();
+        let request = |status: &str| json!({"id": "rr1", "threadId": "t1", "status": status, "updatedAt": status});
+        w.apply_event(
+            "t1",
+            &event("turn-item.updated", item("a", 9, "text", true, "1")),
+        );
+        w.apply_event("t1", &event("runtime-request.updated", request("pending")));
+        let id = object_id(&["body", "t1", "runtimeRequests", "rr1"]);
+        let turn_item = object_id(&["body", "t1", "turnItems", "a"]);
+        let order = |w: &World, id| w.get(id).map(|o| o.order);
+        // The approval the owner must answer, ahead of the turn's items, and
+        // its answer too.
+        assert!(order(&w, id) > order(&w, turn_item));
+        w.apply_event("t1", &event("runtime-request.updated", request("resolved")));
+        assert!(order(&w, id) > order(&w, turn_item));
+        // One never pending keeps the next sequence number.
+        w.apply_event(
+            "t1",
+            &event(
+                "runtime-request.updated",
+                json!({"id": "rr2", "threadId": "t1", "status": "expired"}),
+            ),
+        );
+        let other = object_id(&["body", "t1", "runtimeRequests", "rr2"]);
+        assert!(order(&w, other) < order(&w, turn_item));
     }
 
     #[test]

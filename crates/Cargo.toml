@@ -9,6 +9,8 @@ exclude = ["vendor"]
 sctp-proto = { path = "vendor/sctp-proto" }
 # str0m's ICE agent, patched so the server keeps its path. See vendor/README.md.
 is = { path = "vendor/is" }
+# str0m's DTLS, patched so a handshake goes on through heavy loss. See vendor/README.md.
+dimpl = { path = "vendor/dimpl" }
 
 # Brotli is slow unoptimized, and the sync-core tests compress a lot.
 [profile.dev.package.brotli]

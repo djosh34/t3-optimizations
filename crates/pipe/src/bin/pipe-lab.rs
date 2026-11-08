@@ -173,6 +173,7 @@ fn webrtc(udp: SocketAddr, http: SocketAddr, mut log: Log) -> Result<(), BoxErro
                 }
                 PipeEvent::Data(_, data) => log.received(&data)?,
                 PipeEvent::IceState(id, state) => log.with_text("ice", Some(id), &state)?,
+                PipeEvent::DtlsUp(id) => log.with_text("dtls", Some(id), "up")?,
                 PipeEvent::Failed(id, error) => log.with_text("failed", Some(id), &error)?,
                 PipeEvent::Closed(id) => {
                     log.write("closed", &format!(r#","peer":{}"#, id.0))?;

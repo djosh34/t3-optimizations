@@ -1,0 +1,38 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794151990916 connected to t3
+sidecar: 1794151993107 device n857dtqm paired
+sidecar: 1794151993881 device n857dtqm: generation 1 signaled
+sidecar: 1794151993883 data channel 1: ICE Checking
+sidecar: 1794151993932 data channel 1: ICE Completed
+sidecar: 1794151993932 data channel 1: DTLS up
+sidecar: 1794151993935 data channel 1 open
+sidecar: 1794151993936 device n857dtqm: now on Rtc(PeerId(1))
+sidecar: 1794151993936 device n857dtqm: lost its cache, syncing everything
+sidecar: 1794151998991 data channel 1 closed
+sidecar: 1794151999366 device n857dtqm: generation 2 connects without signaling
+sidecar: 1794151999366 data channel 2: ICE Checking
+sidecar: 1794151999412 data channel 2: ICE Completed
+sidecar: 1794151999413 data channel 2: DTLS up
+sidecar: 1794151999415 data channel 2 open
+sidecar: 1794151999455 device n857dtqm: now on Rtc(PeerId(2))
+sidecar: 1794151999766 device n857dtqm: command 20 (thread.visit) replied, backfill unsent 13572 B
+sidecar: 1794152006576 device n857dtqm: command 37 (message.dispatch) replied, backfill unsent 0 B
+sidecar: 1794152006826 device n857dtqm: new newest text, backfill unsent 10539 B
+sidecar: 1794152007973 device n857dtqm: command 39 (thread.visit) replied, backfill unsent 15207 B
+sidecar: 1794152009366 device n857dtqm stats: send 10125 B/s, delivered 6528 B/s, loss 0%, srtt 40 ms, unsynced 14203 B, backfill unsent 10195 B, in flight 12 packets, sent 194 received 122 packets, SCTP queue 3891 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152014577 device n857dtqm: command 42 (message.dispatch) replied, backfill unsent 7002 B
+sidecar: 1794152014866 device n857dtqm: new newest text, backfill unsent 10021 B
+sidecar: 1794152019366 device n857dtqm stats: send 2531 B/s, delivered 3626 B/s, loss 36%, srtt 1889 ms, unsynced 18115 B, backfill unsent 10021 B, in flight 52 packets, sent 247 received 143 packets, SCTP queue 2523 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152029366 device n857dtqm stats: send 5695 B/s, delivered 1750 B/s, loss 59%, srtt 1924 ms, unsynced 17878 B, backfill unsent 10547 B, in flight 154 packets, sent 364 received 153 packets, SCTP queue 5691 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152039372 device n857dtqm stats: send 2000 B/s, delivered 1539 B/s, loss 62%, srtt 4118 ms, unsynced 17060 B, backfill unsent 10547 B, in flight 239 packets, sent 474 received 158 packets, SCTP queue 1749 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152049386 device n857dtqm stats: send 3000 B/s, delivered 1126 B/s, loss 57%, srtt 3886 ms, unsynced 24367 B, backfill unsent 13955 B, in flight 253 packets, sent 530 received 165 packets, SCTP queue 2763 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152059398 device n857dtqm stats: send 4476 B/s, delivered 1014 B/s, loss 66%, srtt 2488 ms, unsynced 21706 B, backfill unsent 13995 B, in flight 344 packets, sent 648 received 178 packets, SCTP queue 4264 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152069417 device n857dtqm stats: send 3032 B/s, delivered 948 B/s, loss 76%, srtt 2340 ms, unsynced 18668 B, backfill unsent 13995 B, in flight 416 packets, sent 757 received 195 packets, SCTP queue 2306 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152070081 device n857dtqm: command 45 (thread.visit) replied, backfill unsent 13995 B
+sidecar: 1794152079437 device n857dtqm stats: send 3892 B/s, delivered 882 B/s, loss 71%, srtt 1463 ms, unsynced 18895 B, backfill unsent 14035 B, in flight 465 packets, sent 876 received 209 packets, SCTP queue 3461 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152085536 device n857dtqm: command 47 (runtime-request.respond) replied, backfill unsent 14035 B
+sidecar: 1794152085586 device n857dtqm: new newest text, backfill unsent 15646 B
+sidecar: 1794152089446 device n857dtqm stats: send 4251 B/s, delivered 1116 B/s, loss 71%, srtt 2015 ms, unsynced 22018 B, backfill unsent 16587 B, in flight 461 packets, sent 989 received 221 packets, SCTP queue 4625 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152099456 device n857dtqm stats: send 2892 B/s, delivered 1058 B/s, loss 71%, srtt 3120 ms, unsynced 22041 B, backfill unsent 17029 B, in flight 444 packets, sent 1078 received 236 packets, SCTP queue 2517 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152109466 device n857dtqm stats: send 1627 B/s, delivered 831 B/s, loss 76%, srtt 3074 ms, unsynced 28234 B, backfill unsent 21228 B, in flight 451 packets, sent 1138 received 253 packets, SCTP queue 1153 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152110187 data channel 2 closed

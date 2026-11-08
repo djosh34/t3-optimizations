@@ -1,0 +1,46 @@
+sidecar ready http=10.231.0.1:8480 udp=10.231.0.1:12444
+sidecar: 1794152128897 connected to t3
+sidecar: 1794152130999 device 4buaz7ar paired
+sidecar: 1794152132244 device 4buaz7ar: generation 1 signaled
+sidecar: 1794152132248 data channel 1: ICE Checking
+sidecar: 1794152132296 data channel 1: ICE Completed
+sidecar: 1794152132300 data channel 1: DTLS up
+sidecar: 1794152132315 data channel 1 open
+sidecar: 1794152132315 device 4buaz7ar: now on Rtc(PeerId(1))
+sidecar: 1794152132315 device 4buaz7ar: lost its cache, syncing everything
+sidecar: 1794152136335 device 4buaz7ar stats: send 8463 B/s, delivered 5642 B/s, loss 0%, srtt 8 ms, unsynced 20545 B, backfill unsent 16426 B, in flight 1 packets, sent 56 received 27 packets, SCTP queue 1097 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152137443 data channel 1 closed
+sidecar: 1794152138242 device 4buaz7ar: generation 2 connects without signaling
+sidecar: 1794152138243 data channel 2: ICE Checking
+sidecar: 1794152140792 data channel 2: ICE Completed
+sidecar: 1794152140801 data channel 2: DTLS up
+sidecar: 1794152140818 data channel 2 open
+sidecar: 1794152140908 device 4buaz7ar: now on Rtc(PeerId(2))
+sidecar: 1794152140977 device 4buaz7ar: command 21 (thread.visit) replied, backfill unsent 12551 B
+sidecar: 1794152146345 device 4buaz7ar stats: send 9096 B/s, delivered 5637 B/s, loss 0%, srtt 28 ms, unsynced 92 B, backfill unsent 0 B, in flight 7 packets, sent 130 received 105 packets, SCTP queue 480 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152148146 device 4buaz7ar: command 38 (message.dispatch) replied, backfill unsent 0 B
+sidecar: 1794152148699 device 4buaz7ar: new newest text, backfill unsent 10499 B
+sidecar: 1794152148866 device 4buaz7ar: command 40 (thread.visit) replied, backfill unsent 10472 B
+sidecar: 1794152149966 device 4buaz7ar: command 41 (thread.visit) replied, backfill unsent 14883 B
+sidecar: 1794152156360 device 4buaz7ar stats: send 2000 B/s, delivered 6140 B/s, loss 0%, srtt 76 ms, unsynced 13018 B, backfill unsent 7326 B, in flight 36 packets, sent 221 received 142 packets, SCTP queue 1017 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152166376 device 4buaz7ar stats: send 2000 B/s, delivered 6140 B/s, loss 0%, srtt 76 ms, unsynced 13018 B, backfill unsent 7326 B, in flight 54 packets, sent 239 received 142 packets, SCTP queue 1017 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152176396 device 4buaz7ar stats: send 2000 B/s, delivered 6140 B/s, loss 0%, srtt 76 ms, unsynced 13018 B, backfill unsent 7326 B, in flight 72 packets, sent 257 received 142 packets, SCTP queue 4072 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152186398 device 4buaz7ar stats: send 2000 B/s, delivered 6140 B/s, loss 0%, srtt 76 ms, unsynced 13018 B, backfill unsent 7326 B, in flight 90 packets, sent 275 received 142 packets, SCTP queue 2036 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152196416 device 4buaz7ar stats: send 2000 B/s, delivered 6140 B/s, loss 0%, srtt 76 ms, unsynced 13018 B, backfill unsent 7326 B, in flight 108 packets, sent 293 received 142 packets, SCTP queue 2036 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152197866 device 4buaz7ar: command 44 (message.dispatch) replied, backfill unsent 7326 B
+sidecar: 1794152198547 device 4buaz7ar: new newest text, backfill unsent 10051 B
+sidecar: 1794152206417 device 4buaz7ar stats: send 6750 B/s, delivered 2016 B/s, loss 60%, srtt 1172 ms, unsynced 17003 B, backfill unsent 10171 B, in flight 161 packets, sent 378 received 162 packets, SCTP queue 4399 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152216426 device 4buaz7ar stats: send 3375 B/s, delivered 1285 B/s, loss 63%, srtt 2898 ms, unsynced 17096 B, backfill unsent 10720 B, in flight 259 packets, sent 540 received 173 packets, SCTP queue 2697 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152226436 device 4buaz7ar stats: send 1898 B/s, delivered 1012 B/s, loss 74%, srtt 3844 ms, unsynced 24156 B, backfill unsent 14128 B, in flight 302 packets, sent 632 received 187 packets, SCTP queue 2387 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152236446 device 4buaz7ar stats: send 2966 B/s, delivered 863 B/s, loss 69%, srtt 1850 ms, unsynced 22435 B, backfill unsent 14168 B, in flight 332 packets, sent 698 received 211 packets, SCTP queue 2507 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152246477 device 4buaz7ar stats: send 2187 B/s, delivered 906 B/s, loss 68%, srtt 2140 ms, unsynced 20559 B, backfill unsent 14168 B, in flight 376 packets, sent 787 received 226 packets, SCTP queue 1893 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152254226 device 4buaz7ar: command 50 (thread.visit) replied, backfill unsent 14208 B
+sidecar: 1794152256498 device 4buaz7ar stats: send 2734 B/s, delivered 731 B/s, loss 69%, srtt 1556 ms, unsynced 20373 B, backfill unsent 14208 B, in flight 418 packets, sent 866 received 239 packets, SCTP queue 2701 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152266518 device 4buaz7ar stats: send 3449 B/s, delivered 680 B/s, loss 76%, srtt 1312 ms, unsynced 18656 B, backfill unsent 14208 B, in flight 448 packets, sent 979 received 248 packets, SCTP queue 3477 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152272367 device 4buaz7ar: command 53 (runtime-request.respond) replied, backfill unsent 14248 B
+sidecar: 1794152272416 device 4buaz7ar: new newest text, backfill unsent 16800 B
+sidecar: 1794152276547 device 4buaz7ar stats: send 2838 B/s, delivered 948 B/s, loss 75%, srtt 2540 ms, unsynced 22551 B, backfill unsent 16747 B, in flight 392 packets, sent 1072 received 270 packets, SCTP queue 4221 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152277076 device 4buaz7ar: command 54 (runtime-request.respond) replied, backfill unsent 16747 B
+sidecar: 1794152281126 device 4buaz7ar: command 55 (runtime-request.respond) replied, backfill unsent 17296 B
+sidecar: 1794152286557 device 4buaz7ar stats: send 3548 B/s, delivered 500 B/s, loss 82%, srtt 2085 ms, unsynced 30666 B, backfill unsent 21457 B, in flight 375 packets, sent 1130 received 291 packets, SCTP queue 3564 B, 0 dropped by a full SCTP buffer
+sidecar: 1794152296566 device 4buaz7ar stats: send 3548 B/s, delivered 520 B/s, loss 76%, srtt 1649 ms, unsynced 29179 B, backfill unsent 21497 B, in flight 382 packets, sent 1204 received 313 packets, SCTP queue 4966 B, 0 dropped by a full SCTP buffer

@@ -49,11 +49,15 @@ Before every push, run:
 make check
 ```
 
-It runs the Rust checks (fmt, clippy, tests, WASM build), the Go checks (gofmt, vet, tests), `vp check` in `t3code/`, and the tests of each t3code package changed against `origin/main` (`make check BASE=<ref>` compares against another ref). The full t3code typecheck and test suites run only in CI: the `apps/server` typecheck alone needs more than 4 GB, more than the dev VM has free.
+It runs the Rust checks (fmt, clippy, tests, WASM build), the Go checks (gofmt, vet, tests), `vp check` in `t3code/`, and the tests of each t3code package changed against `origin/main` (`make check BASE=<ref>` compares against another ref). The full t3code typecheck runs only in CI (`t3code-check`), and the full test suites only when CI is started by hand: the `apps/server` typecheck alone needs more than 4 GB, more than the dev VM has free.
 
-CI (`.github/workflows/ci.yml`) runs on every PR and on `main`, with four jobs that `main` requires:
+CI (`.github/workflows/ci.yml`) runs three jobs on every PR and on `main`. A merge needs them green:
 
 - `rust`: the Rust checks.
 - `go`: the Go checks.
-- `t3code`: `vp install`, `vp check`, `vp run -r typecheck`, and the web and server unit tests.
+- `t3code-check`: `vp install`, `vp check` and `vp run -r typecheck` in `t3code/`.
+
+Two slow jobs run only when started by hand (`gh workflow run ci.yml --ref <branch>`), for a change that needs their signal and before the release:
+
+- `t3code`: the web and server unit tests.
 - `lab-smoke`: three short chaos lab runs of the baseline client, one of the pipe, one of the sidecar (`--client sidecar-native`), one of the web app (`--client webapp`), and the sidecar's integration and WebKit tests.
