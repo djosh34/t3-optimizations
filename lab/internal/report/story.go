@@ -484,8 +484,7 @@ func storySummary(runs []StoryResult, expected int64) string {
 		}
 	}
 	fmt.Fprintf(&b, "%d seeds (%d survival stories), lab commit %s.\n\n", len(runs), survival, cmp.Or(strings.Join(commits, ", "), "none"))
-	names := StoryClients
-	b.WriteString("| Over all seeds | " + strings.Join(names, " | ") + " |\n|---|" + strings.Repeat("---|", len(names)) + "\n")
+	b.WriteString("| Over all seeds | " + strings.Join(StoryClients, " | ") + " |\n|---|" + strings.Repeat("---|", len(StoryClients)) + "\n")
 	per := func(i int) []StoryClient {
 		var out []StoryClient
 		for _, r := range runs {
@@ -497,7 +496,7 @@ func storySummary(runs []StoryResult, expected int64) string {
 	}
 	row := func(name string, f func([]StoryClient) string) {
 		var cells []string
-		for i := range names {
+		for i := range StoryClients {
 			cells = append(cells, f(per(i)))
 		}
 		fmt.Fprintf(&b, "| %s | %s |\n", name, strings.Join(cells, " | "))
@@ -546,9 +545,11 @@ func storySummary(runs []StoryResult, expected int64) string {
 			}
 		}
 	}
-	b.WriteString("\nWorst seeds, by the t3opt web app's longest freeze:\n\n")
-	b.WriteString("| Seed | Story | " + strings.Join(names, " status / freeze | ") + " status / freeze |\n|---|---|" + strings.Repeat("---|", len(names)) + "\n")
-	worst := slices.Clone(runs)
+	b.WriteString("\nWorst seeds, by the t3opt web app's longest freeze (failed runs are listed above):\n\n")
+	b.WriteString("| Seed | Story | " + strings.Join(StoryClients, " status / freeze | ") + " status / freeze |\n|---|---|" + strings.Repeat("---|", len(StoryClients)) + "\n")
+	worst := slices.DeleteFunc(slices.Clone(runs), func(r StoryResult) bool {
+		return slices.ContainsFunc(r.Clients, func(c StoryClient) bool { return c.Status == runFailed })
+	})
 	slices.SortStableFunc(worst, func(a, b StoryResult) int {
 		return cmp.Compare(appFreeze(b), appFreeze(a))
 	})

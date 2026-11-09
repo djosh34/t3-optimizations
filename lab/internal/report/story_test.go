@@ -92,3 +92,12 @@ func TestSummaryOfOnlyFailedRuns(t *testing.T) {
 		}
 	}
 }
+
+func TestWorstSeedsLeaveFailedRunsOut(t *testing.T) {
+	ok := StoryResult{Seed: 1, Clients: []StoryClient{{Client: "websocket", Status: "done"}, {Client: "webapp", Status: "done", LongestFreezeS: 3}}}
+	got := storySummary([]StoryResult{ok}, 2)
+	worst := got[strings.Index(got, "Worst seeds"):]
+	if strings.Contains(worst, "run failed") || !strings.Contains(worst, "| 1 | 2G | done / 0 s | done / 3 s |") {
+		t.Errorf("worst seeds:\n%s", worst)
+	}
+}
