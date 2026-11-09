@@ -33,6 +33,14 @@ type Outages struct {
 	First, Down, Period time.Duration
 }
 
+// A Phase is one stretch of a profile with phases: from At after the profile
+// is applied until the next phase, the link is Down and Up.
+type Phase struct {
+	At       time.Duration
+	Name     string
+	Down, Up Link
+}
+
 // Profile is a named set of link conditions and faults.
 type Profile struct {
 	Name  string
@@ -51,11 +59,19 @@ type Profile struct {
 	Graded bool
 	// Soak runs one long turn for an hour.
 	Soak bool
+	// Phases, when set, change the link as the run goes on: a network story
+	// (FromStory). Down and Up are the first phase's link.
+	Phases []Phase
+	// RunFor overrides the deadline when set.
+	RunFor time.Duration
 }
 
 // Deadline is how long a run on this profile may take after the profile is
 // applied.
 func (p Profile) Deadline() time.Duration {
+	if p.RunFor > 0 {
+		return p.RunFor
+	}
 	if p.Soak {
 		return 60 * time.Minute
 	}
@@ -112,6 +128,18 @@ func (o Outages) OutageAt(t time.Duration) bool {
 		since %= o.Period
 	}
 	return since < o.Down
+}
+
+// PhaseAt is the index of the phase at offset t after the profile was
+// applied.
+func (p Profile) PhaseAt(t time.Duration) int {
+	i := 0
+	for j, ph := range p.Phases {
+		if t >= ph.At {
+			i = j
+		}
+	}
+	return i
 }
 
 // Get returns the profile with this name.

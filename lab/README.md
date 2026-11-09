@@ -39,14 +39,14 @@ The lab needs root for `ip`, `tc` and docker, and does nothing else as root: the
  phone container (docker, --network none)          server namespace t3lab<id>srv
  ┌──────────────────────────────────┐             ┌───────────────────────────────────┐
  │ WebKit, driven by driver.mjs     │   veth      │ lab front: HTTPS :8443            │
- │ via `docker exec`                ├─netem──────►│   └─► forked t3 server :3780      │
+ │ via `docker exec`                ├─netem──────►│   └─► stock t3 server :3780       │
  │ 10.231.0.2                       │◄──────netem─┤        └─► lab fakeagent (ACP)    │
  └──────────────────────────────────┘ 10.231.0.1  └───────────────────────────────────┘
 ```
 
 1. Cleanup removes what earlier labs left behind (anything named `t3lab*` whose lab process is gone). Running labs are left alone, so several runs can share the host.
 2. The lab creates the server namespace and a veth pair with GSO off, so netem sees wire-sized packets. Both ends have fixed MAC addresses and permanent neighbor entries for each other: with ARP over the shaped link, a neighbor entry fails now and then at heavy loss and the kernel drops what it queued for it, which a real phone link does not do. (The WebSocket baseline of issue #42 was measured before this fix.) It starts the phone container with no network, moves one veth end into the container's namespace and names it `t3lab<id>phone`. Playwright talks to WebKit over `docker exec`, so its control traffic never crosses the shaped link.
-3. In the server namespace it starts the forked t3 server from `t3code/` with `--base-dir` set to a fresh temp dir (deleted after the run), a home dir of its own and `PATH` without the host's provider CLIs. Its settings turn Codex and Claude off and add the fake agent as provider `lab`, so no prompt can reach a real model. It serves the baseline client build (`T3CODE_STATIC_DIR`). The lab front terminates TLS with a fresh self-signed certificate, like `tailscale serve` in production; the page is a secure context, so service workers work.
+3. In the server namespace it starts the stock v0.1.7 t3 server from `t3code/` with `--base-dir` set to a fresh temp dir (deleted after the run), a home dir of its own and `PATH` without the host's provider CLIs. Its settings turn Codex and Claude off and add the fake agent as provider `lab`, so no prompt can reach a real model. The server serves no web client: the lab front serves the baseline client build itself (the build's files, and `index.html` for page loads, which the client routes itself) and forwards every other request, API calls and the WebSocket, to the server. It compresses and caches the build as t3 does, so the bytes on the link stay what they were when t3 served it. The front terminates TLS with a fresh self-signed certificate, like `tailscale serve` in production; the page is a secure context, so service workers work.
 4. The t3 CLI adds the project, starts the "Lab thread" with a short warm-up turn and mints a pairing URL. The phone pairs, opens the thread, and sends one turn with an image attached. It is ready once that turn has ended on the phone and the composer would start a new turn (its send button reads "Submit message"): a prompt typed earlier is steered into the running turn or queued.
 5. The lab applies the profile with `tc netem` on both veth ends (server end: down, phone end: up), then tells the phone to type the measured prompt.
 6. The fake agent streams the reply. Outages, flapping and the address change happen on the profile's schedule. The phone approves the approval request when it shows.
@@ -150,7 +150,7 @@ The run starts the pipe on the clean link, lets ticks flow for 3 s, switches to 
 
 ## Sidecar runs
 
-`--client sidecar-native` runs the same scenario as the WebSocket client through the sidecar (issue #44): the forked t3 server and `crates/sidecar` in the server namespace, and `crates/native-phone` in the phone container. The native phone does what the web app will do (sync-core's phone over a WebRTC data channel, the sidecar's derived ICE credentials, storing before it acks), on str0m instead of WebKit. It pairs with a code from the t3 server, opens the lab thread, sends the measured prompt, approves the approval, and prints the same events as `driver.mjs`, so the report is the same. It skips the setup turn with an attached image: uploads do not go through the sidecar yet.
+`--client sidecar-native` runs the same scenario as the WebSocket client through the sidecar (issue #44): the stock t3 server and `crates/sidecar` in the server namespace, and `crates/native-phone` in the phone container. The native phone does what the web app will do (sync-core's phone over a WebRTC data channel, the sidecar's derived ICE credentials, storing before it acks), on str0m instead of WebKit. It pairs with a code from the t3 server, opens the lab thread, sends the measured prompt, approves the approval, and prints the same events as `driver.mjs`, so the report is the same. It skips the setup turn with an attached image: uploads do not go through the sidecar yet.
 
 ```sh
 lab/scripts/build-sidecar.sh            # once, as yourself: lab/bin/sidecar and lab/bin/native-phone
@@ -189,11 +189,48 @@ sudo ./bin/lab webapp-e2e                              # --outage 60m for the lo
 
 The steps: pair with a code from `t3 pair`; the service worker takes over; add a project and start a thread from the app; stream a reply and answer its approval; interrupt a reply; attach an image to a prompt (the upload goes through the sidecar); send a prompt on case 70 (a screenshot of each prompt state, the status line and the details panel); a thread fills in newest first after the phone lost its cache; reload with the old connection alive; recover from an outage on the same connection (ICE restart, no new connection); reopen history and images with HTTPS to the server blocked; open the app with the link down; fall back to the WebSocket when UDP goes away under an open page, and with UDP blocked from the start; update to a new build; a thread deleted while the sidecar was down leaves the phone; the cache lost with the token kept; the token lost, which pairs again.
 
-The driver asks the lab for what it cannot do itself (`shape case70`, `outage on`, `block udp on`, `block https on`, `swap build`, `delete-offline <thread>`, `mint-code`); the lab answers on its stdin. `lab/scripts/t3-command.mjs` deletes the thread through the forked server's own RPC while the sidecar is down. The run directory has `e2e.md` with each step's result, `phone.jsonl` and the screenshots in `phone/`.
+The driver asks the lab for what it cannot do itself (`shape case70`, `outage on`, `block udp on`, `block https on`, `swap build`, `delete-offline <thread>`, `mint-code`); the lab answers on its stdin. `lab/scripts/t3-command.mjs` deletes the thread through the server's own RPC while the sidecar is down. The run directory has `e2e.md` with each step's result, `phone.jsonl` and the screenshots in `phone/`.
+
+## Story runs
+
+A story is a few minutes of a 2G-like link drawn from a seed ([issue #58](https://github.com/djosh34/t3-optimizations/issues/58)): it changes every 2 to 8 s between an ordinary EDGE link (40 to 200 kbit/s, round trip 0.9 to 2.4 s, queues of 2 to 10 s), slow stretches down to bytes per second, round trips spiking to 8 s, loss in bursts, and gaps where nothing gets through for a second up to a minute and a half. One story in five is a survival story: 1 to 8 kbit/s at 70% loss. After 150 s the link comes back as the story's ordinary link. The phone keeps its address. The numbers follow [issue #15](https://github.com/djosh34/t3-optimizations/issues/15).
+
+The one generator is in `crates/sync-core/src/sim/story.rs`; `lab/bin/story <seed>` prints a seed's story as JSON, and the simulator runs the same stories (`crates/sync-core/README.md`), so a seed that fails in one can be replayed in the other.
+
+```sh
+lab/scripts/build-sidecar.sh            # once, as yourself: also lab/bin/story
+lab/scripts/build-webapp.sh
+sudo ./bin/lab story --seed 7
+./bin/lab story-summary reports/runs    # over every story run in a directory
+```
+
+`lab story` runs both web clients at the same time on the seed's story, against one stock t3 server:
+
+- Two labs, one per client, each with its own phone container and shaped link. Both links follow the story in lockstep (`tc qdisc change`, which keeps what is queued), each with the seed for netem's dice.
+- The server, the sidecar and the web app's front run in the second lab (`t3 pair`, which the sidecar runs, finds the server on its own host); the v0.1.7 client's front runs in the first. An unshaped veth pair joins the two server namespaces, and the first front forwards to the server across it.
+- Each client has its own thread, with the setup turns of the other runs, then sends the measured prompt (tagged with its client, so the agent's log tells the turns apart) as the story starts. The reply is the standard one, about 2 kB. The deadline is the story's end, 5 minutes after it starts.
+- `lab/scripts/t3-watch.mjs` is a client of the server on its own host: it logs when the server releases each piece of assistant text (`releases.jsonl`). The server releases only finished lines, and code blocks once they close.
+
+Each run writes each client's usual report in `websocket/` and `webapp/`, and `story.md` and `story.json` with both side by side:
+
+- **Prompt confirmed**, and whether within 10 s (case 70's target).
+- **First reply text** and **whole reply shown**; not done by the deadline is a failure.
+- **Newest-text lag from the server's release**, the largest, and whether within 5 s for the whole reply (case 50's target, graded from the release as [issue #59](https://github.com/djosh34/t3-optimizations/issues/59) decided). The lag from the agent is there too, for information.
+- **Freezes**: stretches in which the phone showed nothing new while the server had released text it did not show. The longest, and every one of 30 s or more as a hang.
+- **Reloads**: page loads after the switch. **WebSockets opened** after the switch: the v0.1.7 client's reconnects, the web app's fallback. **Transports**: the web app's transport at each connection; `webrtc` throughout means it stayed on the data channel (UDP), so nothing it showed waited on a TCP connection.
+- The host's load: CPUs, mean and highest load, least memory available.
+
+On GitHub Actions, a dispatch of CI with `stories` runs the seeds as a matrix, one job per seed, and the simulator on 100,000 seeds in 20 jobs; see below.
 
 ## CI
 
-The `lab-smoke` job runs profiles A, outage10 and case70 for 3 minutes each with the same setup: namespaces, the forked server, WebKit in the same image. A must finish; the other two must produce a report. It then runs `--client pipe` on case50 for 30 s, which must carry ticks both ways, `--client sidecar-native` on case70 for 3 minutes, which must get the prompt confirmed, and `--client webapp` on case70 for 3 minutes, which must too. The reports are uploaded as an artifact.
+The `lab-smoke` job runs profiles A, outage10 and case70 for 3 minutes each with the same setup: namespaces, the stock server, WebKit in the same image. A must finish; the other two must produce a report. It then runs `--client pipe` on case50 for 30 s, which must carry ticks both ways, `--client sidecar-native` on case70 for 3 minutes, which must get the prompt confirmed, and `--client webapp` on case70 for 3 minutes, which must too. The reports are uploaded as an artifact.
+
+A dispatch with `stories` set runs the story jobs instead: one build, a lab job per seed (`lab-seeds`, default 50) running `lab story`, 20 simulator jobs sharing `sim-seeds` (default 100,000; a broken seed fails its job and is named in its log), and a summary of both in the run's summary and the `stories-report` artifact.
+
+```sh
+gh workflow run ci.yml --ref <branch> -f stories=true
+```
 
 ## Code
 
@@ -201,7 +238,7 @@ The `lab-smoke` job runs profiles A, outage10 and case70 for 3 minutes each with
 - `internal/run`: one run, from setup to report.
 - `internal/netlab`: namespaces, veths, netem, outages, cleanup.
 - `internal/profile`: the profiles and their netem arguments.
-- `internal/t3server`: the forked t3 server and its setup through the t3 CLI.
+- `internal/t3server`: the stock t3 server and its setup through the t3 CLI.
 - `internal/agent`: the fake agent and its reply.
 - `internal/front`: the HTTPS front.
 - `internal/tunnel`: the TCP outer path.

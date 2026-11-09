@@ -186,7 +186,7 @@ impl Endpoint {
         log_low: Option<u64>,
     ) -> Option<Vec<u8>> {
         self.rate.decide(now);
-        self.out.prune(now);
+        self.out.prune();
         let unsynced = !self.out.is_synced();
         if !unsynced {
             self.rate.note_idle(now);

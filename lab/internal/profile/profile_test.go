@@ -70,3 +70,25 @@ func TestProfiles(t *testing.T) {
 		t.Error("F should be diagnostic")
 	}
 }
+
+func TestFromStory(t *testing.T) {
+	data := []byte(`{"seed":3,"survival":false,"runMs":300000,"segments":[
+		{"atMs":0,"name":"bursts","down":{"rateBps":96000,"delayMs":600,"jitterMs":40,"queue":20,"loss":0,"burst":[0.02,0.25]},
+		 "up":{"rateBps":48000,"delayMs":600,"jitterMs":40,"queue":10,"loss":0,"burst":[0.02,0.25]}},
+		{"atMs":4000,"name":"gap","down":{"rateBps":96000,"delayMs":600,"jitterMs":40,"queue":20,"loss":1,"burst":null},
+		 "up":{"rateBps":48000,"delayMs":600,"jitterMs":40,"queue":10,"loss":1,"burst":null}}]}`)
+	p, err := FromStory(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(p.Phases) != 2 || p.Phases[1].At != 4*time.Second || p.Deadline() != 5*time.Minute {
+		t.Fatalf("phases %+v, deadline %s", p.Phases, p.Deadline())
+	}
+	want := "limit 28 delay 600ms 40ms distribution normal loss gemodel 2.00% 25.00% 100% 0% rate 96000bit seed 1"
+	if got := strings.Join(p.Down.NetemArgs(1), " "); got != want {
+		t.Errorf("down netem\n got %s\nwant %s", got, want)
+	}
+	if got := strings.Join(p.Phases[1].Up.Loss, " "); got != "random 100.00%" {
+		t.Errorf("gap loss %q", got)
+	}
+}

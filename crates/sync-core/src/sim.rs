@@ -5,7 +5,9 @@
 //! The link follows the lab's netem setup (`lab/README.md`): per direction
 //! a rate, independent random loss applied before the rate limit (as netem
 //! does), a queue limit in packets, a one-way delay with normal jitter
-//! (which can reorder), duplication and outages. Every packet costs
+//! (which can reorder), duplication, outages, and loss in bursts (netem's
+//! `gemodel`). A scenario can change the link as it runs, as a story does
+//! ([`story`]). Every packet costs
 //! [`WIRE_OVERHEAD`] bytes more than its application bytes.
 
 use std::cmp::Reverse;
@@ -18,6 +20,9 @@ use crate::wire::{Key, Packet};
 use crate::{Class, Config, Millis, Phone, Server, Stats, WIRE_OVERHEAD};
 
 mod browser;
+pub mod story;
+
+pub use story::Story;
 
 use browser::{BrowserSctp, PACKET_HEADER, SACK_CHUNK, SctpPacket};
 
@@ -52,7 +57,7 @@ impl Rng {
 }
 
 /// One direction of the link.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct LinkSpec {
     pub rate_bps: u64,
     /// Independent random loss, 0 to 1.
@@ -65,6 +70,10 @@ pub struct LinkSpec {
     pub duplicate: f64,
     /// Times when nothing gets through, counted from the profile's start.
     pub outages: Vec<Range<Millis>>,
+    /// Loss in bursts, as netem's `gemodel p r 100% 0%`: per packet, the
+    /// chance to go from good to bad and from bad to good; packets are lost
+    /// while bad.
+    pub burst: Option<(f64, f64)>,
 }
 
 impl LinkSpec {
@@ -79,6 +88,7 @@ impl LinkSpec {
             queue: 1000,
             duplicate: 0.0,
             outages: Vec::new(),
+            burst: None,
         }
     }
 
@@ -92,6 +102,7 @@ impl LinkSpec {
             queue,
             duplicate: 0.0,
             outages: Vec::new(),
+            burst: None,
         }
     }
 }
@@ -110,6 +121,8 @@ struct Link<T> {
     order: u64,
     /// Outages are relative to this time.
     start: Millis,
+    /// In the bad state of `spec.burst`.
+    bad: bool,
 }
 
 impl<T: Clone> Link<T> {
@@ -122,7 +135,21 @@ impl<T: Clone> Link<T> {
             packets: HashMap::new(),
             order: 0,
             start: 0,
+            bad: false,
         }
+    }
+
+    /// Steps the burst model for one packet; true if it is lost.
+    fn burst_lost(&mut self, rng: &mut Rng) -> bool {
+        let Some((p, r)) = self.spec.burst else {
+            return false;
+        };
+        self.bad = if self.bad {
+            rng.f64() >= r
+        } else {
+            rng.f64() < p
+        };
+        self.bad
     }
 
     fn down(&self, at: Millis) -> bool {
@@ -132,7 +159,7 @@ impl<T: Clone> Link<T> {
 
     /// Sends a packet of `wire` bytes on the wire.
     fn send(&mut self, now: Millis, wire: usize, packet: T, rng: &mut Rng) {
-        if self.down(now) || rng.f64() < self.spec.loss {
+        if self.down(now) || rng.f64() < self.spec.loss || self.burst_lost(rng) {
             return;
         }
         let copies = if rng.f64() < self.spec.duplicate {
@@ -245,6 +272,11 @@ pub struct Scenario {
     /// ([`browser`]) instead of straight onto the link, and its SACKs share
     /// the server's direction.
     pub webkit: bool,
+    /// The link changes to these, down and up, at these times after the
+    /// profile applies.
+    pub changes: Vec<(Millis, LinkSpec, LinkSpec)>,
+    /// End the run once every prompt is confirmed and the reply is whole.
+    pub stop_when_done: bool,
 }
 
 impl Scenario {
@@ -266,6 +298,33 @@ impl Scenario {
             kills_at: Vec::new(),
             commit_delay_ms: 10,
             webkit: false,
+            changes: Vec::new(),
+            stop_when_done: false,
+        }
+    }
+
+    /// A seed's network story ([`Story`]), with the lab's short prompt and a
+    /// 2,000-character reply, through WebKit's SCTP. It ends once the reply
+    /// is whole and the prompt confirmed, or [`story::RUN_MS`] after the
+    /// story starts.
+    pub fn story(seed: u64) -> Self {
+        let story = Story::generate(seed);
+        let mut changes: Vec<(Millis, LinkSpec, LinkSpec)> = story
+            .segments
+            .into_iter()
+            .map(|s| (s.at_ms, s.down, s.up))
+            .collect();
+        let (_, down, up) = changes.remove(0);
+        Scenario {
+            down,
+            up,
+            changes,
+            duration_ms: story::RUN_MS,
+            prompts_at: vec![0],
+            reply_len: 2_000,
+            webkit: true,
+            stop_when_done: true,
+            ..Scenario::case70(seed)
         }
     }
 
@@ -474,6 +533,7 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
         s.prompts_at.iter().map(|&t| (t0 + t, None)).collect();
     out.prompt_confirmed_ms = vec![None; prompts.len()];
     let mut kills: VecDeque<Millis> = s.kills_at.iter().map(|&t| t0 + t).collect();
+    let mut changes: VecDeque<&(Millis, LinkSpec, LinkSpec)> = s.changes.iter().collect();
     let mut profile_applied = false;
     let mut backfill_set = false;
     let mut next_tick = t0;
@@ -492,6 +552,17 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
             profile_applied = true;
             down.apply(s.down.clone(), now);
             up.apply(s.up.clone(), now);
+        }
+        while let Some((_, d, u)) = changes.front().filter(|(at, _, _)| now >= t0 + at) {
+            down.apply(d.clone(), now);
+            up.apply(u.clone(), now);
+            changes.pop_front();
+        }
+        if s.stop_when_done
+            && out.reply_done_ms.is_some()
+            && out.prompt_confirmed_ms.iter().all(Option::is_some)
+        {
+            break;
         }
         if !backfill_set && now + s.backfill_lead_ms >= t0 {
             backfill_set = true;
@@ -795,6 +866,9 @@ pub fn run(s: &Scenario) -> Result<Outcome, String> {
         }
         if let Some(&k) = kills.front() {
             next = next.min(k);
+        }
+        if let Some((at, _, _)) = changes.front() {
+            next = next.min(t0 + at);
         }
         if now >= t0 {
             next = next.min(next_sample).min(next_trace);

@@ -3,6 +3,17 @@ Tag:    v0.1.7
 Commit: 322f6544dfad0a3c8a0c8cbecf2c7f7874b14268
 
 Copied as plain files, without the .repos/ folder (read-only reference
-repos that upstream keeps outside its pnpm workspace). To see what this
-repo changed, diff this folder against a checkout of that commit with
-.repos/ removed.
+repos that upstream keeps outside its pnpm workspace).
+
+What differs from the tag: only the web app's t3opt adapter (issue #45).
+
+- apps/web/src/t3opt/ and apps/web/t3opt/: the adapter and its build.
+- apps/web/scripts/t3opt-sw.mjs: its service worker.
+- apps/web/src/bootstrap.ts, apps/web/src/vite-env.d.ts,
+  apps/web/vite.config.ts: hooks that load the adapter in its build.
+- apps/web/src/components/chat/timelineViewport.ts and its test, and
+  apps/web/src/bundledDev.test.ts: changes the adapter needs.
+
+Nothing in apps/server or packages/contracts differs: t3opt runs against a
+stock t3 server (issue #58). To check, diff this folder against a checkout
+of that commit with .repos/ removed.

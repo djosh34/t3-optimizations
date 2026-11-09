@@ -1,4 +1,4 @@
-// Package agent is the lab's scripted fake agent. The forked t3 server runs it
+// Package agent is the lab's scripted fake agent. The t3 server runs it
 // as a local ACP agent (JSON-RPC over stdio). It streams a fixed reply at a
 // set rate and logs when it produced each character, so the lab can measure
 // how old the text is when the phone shows it.
@@ -40,6 +40,9 @@ type LogEvent struct {
 	Prompt string `json:"prompt,omitempty"`
 	// N is the normalized length of the reply produced so far, for text events.
 	N int `json:"n,omitempty"`
+	// Session is the ACP session of the turn: the lab tells two clients'
+	// turns apart by it.
+	Session string `json:"session,omitempty"`
 }
 
 const tick = 100 * time.Millisecond
@@ -235,7 +238,7 @@ func (s *server) handle(ctx context.Context, msg message) (any, error) {
 			delete(s.cancels, p.SessionID)
 			s.mu.Unlock()
 		}()
-		s.log(LogEvent{Ev: "prompt", Prompt: text.String()})
+		s.log(LogEvent{Ev: "prompt", Prompt: text.String(), Session: p.SessionID})
 		stop := s.play(turnCtx, p.SessionID, Script(text.String(), s.cfg.SoakParts))
 		return map[string]any{"stopReason": stop}, nil
 	}
@@ -275,7 +278,7 @@ func (s *server) play(ctx context.Context, sessionID string, steps []Step) strin
 					"content":       map[string]any{"type": "text", "text": part},
 				})
 				produced += len(Normalize(part))
-				s.log(LogEvent{Ev: "text", N: produced})
+				s.log(LogEvent{Ev: "text", N: produced, Session: sessionID})
 			}
 		case step.Approval != "":
 			if !s.approve(ctx, sessionID, fmt.Sprintf("lab-tool-%d", i), step.Approval) {
@@ -292,7 +295,7 @@ func (s *server) play(ctx context.Context, sessionID string, steps []Step) strin
 			})
 		}
 	}
-	s.log(LogEvent{Ev: "reply-done"})
+	s.log(LogEvent{Ev: "reply-done", Session: sessionID})
 	return "end_turn"
 }
 
@@ -324,7 +327,7 @@ func (s *server) approve(ctx context.Context, sessionID, toolCallID, title strin
 		fmt.Fprintf(os.Stderr, "fake agent: encode permission request: %v\n", err)
 		return false
 	}
-	s.log(LogEvent{Ev: "approval-asked"})
+	s.log(LogEvent{Ev: "approval-asked", Session: sessionID})
 	s.send(message{ID: id, Method: "session/request_permission", Params: params})
 	var result json.RawMessage
 	select {
@@ -345,7 +348,7 @@ func (s *server) approve(ctx context.Context, sessionID, toolCallID, title strin
 		fmt.Fprintf(os.Stderr, "fake agent: bad permission answer: %v\n", err)
 		return false
 	}
-	s.log(LogEvent{Ev: "approval-answered"})
+	s.log(LogEvent{Ev: "approval-answered", Session: sessionID})
 	allowed := answer.Outcome.Outcome == "selected" && answer.Outcome.OptionID == "allow-once"
 	status := "completed"
 	if !allowed {

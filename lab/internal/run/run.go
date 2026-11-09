@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -276,25 +277,12 @@ func (s *scenario) startTunnel(ctx context.Context, procs *processes) (string, e
 // deadline passes. path is the report's note on the transport.
 func (s *scenario) drive(ctx context.Context, driver *phone.Driver, reply, path string) (report.Input, error) {
 	o, lab := s.o, s.lab
-	events, err := s.u.Create(filepath.Join(s.runDir, "phone.jsonl"))
+	rec, err := s.newRecorder()
 	if err != nil {
 		return report.Input{}, err
 	}
-	defer func() {
-		if err := events.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "lab: close phone events: %v\n", err)
-		}
-	}()
-	var phoneEvents []phone.Event
-	record := func(ev phone.Event) error {
-		phoneEvents = append(phoneEvents, ev)
-		line, err := json.Marshal(ev)
-		if err != nil {
-			return err
-		}
-		_, err = events.Write(append(line, '\n'))
-		return err
-	}
+	defer rec.close()
+	record := rec.record
 
 	if err := s.waitReady(ctx, driver, record); err != nil {
 		return report.Input{}, err
@@ -340,10 +328,40 @@ func (s *scenario) drive(ctx context.Context, driver *phone.Driver, reply, path 
 		Profile: o.Profile.Name, Grade: o.Profile.Grade(), About: o.Profile.About,
 		Client: o.Client, Kind: o.Kind, Seed: o.Seed, Deadline: s.deadline,
 		Switched: switched, End: end, Reply: reply,
-		Agent: agentLog, Phone: phoneEvents,
+		Agent: agentLog, Phone: rec.events,
 		WireDown: after.Down - before.Down, WireUp: after.Up - before.Up,
 		Path: path,
 	}, nil
+}
+
+// recorder keeps a driver's events and writes them to phone.jsonl.
+type recorder struct {
+	file   io.WriteCloser
+	events []phone.Event
+}
+
+func (s *scenario) newRecorder() (*recorder, error) {
+	f, err := s.u.Create(filepath.Join(s.runDir, "phone.jsonl"))
+	if err != nil {
+		return nil, err
+	}
+	return &recorder{file: f}, nil
+}
+
+func (r *recorder) record(ev phone.Event) error {
+	r.events = append(r.events, ev)
+	line, err := json.Marshal(ev)
+	if err != nil {
+		return err
+	}
+	_, err = r.file.Write(append(line, '\n'))
+	return err
+}
+
+func (r *recorder) close() {
+	if err := r.file.Close(); err != nil {
+		fmt.Fprintf(os.Stderr, "lab: close phone events: %v\n", err)
+	}
 }
 
 // startLabProcess runs a lab subcommand as the user in a namespace. The
@@ -506,10 +524,23 @@ func (s *scenario) measure(ctx context.Context, driver *phone.Driver, record fun
 	}
 }
 
-// injectFaults applies the profile's outages and address change on time.
+// injectFaults applies the profile's faults to the run's lab.
 func (s *scenario) injectFaults(ctx context.Context, switched time.Time) error {
-	p := s.o.Profile
-	down, moved := false, false
+	return injectFaults(ctx, []*netlab.Lab{s.lab}, s.o.Profile, s.o.Seed, switched)
+}
+
+// injectFaults applies the profile's phases, outages and address change on
+// time, to every lab at once.
+func injectFaults(ctx context.Context, labs []*netlab.Lab, p profile.Profile, seed int64, switched time.Time) error {
+	down, moved, phase := false, false, 0
+	setOutage := func(ctx context.Context, on bool) error {
+		for _, lab := range labs {
+			if err := lab.SetOutage(ctx, on); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 	for {
@@ -518,21 +549,36 @@ func (s *scenario) injectFaults(ctx context.Context, switched time.Time) error {
 			if down {
 				cleanupCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancel()
-				return s.lab.SetOutage(cleanupCtx, false)
+				return setOutage(cleanupCtx, false)
 			}
 			return nil
 		case <-ticker.C:
 		}
 		offset := time.Since(switched)
-		if want := p.Outages.OutageAt(offset); want != down {
-			if err := s.lab.SetOutage(ctx, want); err != nil {
+		want := p.Outages.OutageAt(offset)
+		if len(p.Phases) > 0 {
+			if i := p.PhaseAt(offset); i != phase {
+				phase = i
+				ph := p.Phases[i]
+				fmt.Fprintf(os.Stderr, "lab: phase %q at %s\n", ph.Name, offset.Round(time.Second))
+				for _, lab := range labs {
+					if err := lab.Reshape(ctx, ph.Down, ph.Up, seed); err != nil {
+						return err
+					}
+				}
+			}
+		}
+		if want != down {
+			if err := setOutage(ctx, want); err != nil {
 				return err
 			}
 			down = want
 		}
 		if p.AddrChange > 0 && !moved && offset >= p.AddrChange {
-			if err := s.lab.ChangePhoneAddr(ctx); err != nil {
-				return err
+			for _, lab := range labs {
+				if err := lab.ChangePhoneAddr(ctx); err != nil {
+					return err
+				}
 			}
 			moved = true
 		}

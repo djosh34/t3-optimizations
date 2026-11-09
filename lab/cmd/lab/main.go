@@ -26,6 +26,8 @@ import (
 const usage = `usage:
   sudo ./bin/lab run --profile <name> --seed <n> --client <client> [flags]
   sudo ./bin/lab webapp-e2e [--outage 20s] [--seed n]   the web app end to end
+  sudo ./bin/lab story --seed <n>   both web clients side by side on a seed's network story
+  ./bin/lab story-summary <reports dir>
   sudo ./bin/lab cleanup
   ./bin/lab profiles
   ./bin/lab summary <reports dir>
@@ -60,6 +62,13 @@ func dispatch(ctx context.Context, cmd string, args []string) error {
 		return runCmd(ctx, args)
 	case "webapp-e2e":
 		return webappE2ECmd(ctx, args)
+	case "story":
+		return storyCmd(ctx, args)
+	case "story-summary":
+		if len(args) != 1 {
+			return errors.New("usage: lab story-summary <reports dir>")
+		}
+		return report.StorySummary(args[0])
 	case "cleanup":
 		return netlab.Cleanup(ctx)
 	case "profiles":
@@ -145,6 +154,42 @@ func runCmd(ctx context.Context, args []string) error {
 		LabDir:   labDir,
 		LabExe:   exe,
 		Node:     *node,
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Println(headline)
+	return nil
+}
+
+func storyCmd(ctx context.Context, args []string) error {
+	fs := flag.NewFlagSet("story", flag.ContinueOnError)
+	seed := fs.Int64("seed", 1, "the story's seed; lab/bin/story <seed> prints the story")
+	out := fs.String("out", "", "directory for the run (default lab/reports/runs)")
+	node := fs.String("node", "", "node binary for the t3 server (default: node on root's PATH)")
+	runName := fs.String("name", "", "the run's directory under --out (default s<seed>)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	var err error
+	if *node == "" {
+		if *node, err = exec.LookPath("node"); err != nil {
+			return fmt.Errorf("no node on PATH; pass --node: %w", err)
+		}
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	labDir := filepath.Dir(filepath.Dir(exe))
+	if *out == "" {
+		*out = filepath.Join(labDir, "reports", "runs")
+	}
+	if *out, err = filepath.Abs(*out); err != nil {
+		return err
+	}
+	headline, err := run.RunStory(ctx, run.StoryOptions{
+		Seed: *seed, OutDir: *out, Name: *runName, LabDir: labDir, LabExe: exe, Node: *node,
 	})
 	if err != nil {
 		return err

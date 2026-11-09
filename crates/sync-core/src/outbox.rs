@@ -57,9 +57,11 @@ impl Class {
 pub const RIDE_MAX: u64 = 256;
 /// Below this, Brotli does not pay.
 const COMPRESS_MIN: usize = 48;
-/// Packets not acked after this long are forgotten; their bytes were long
-/// since eligible again.
-const INFLIGHT_MAX_AGE: Millis = 60_000;
+/// The most unacked packets remembered; older ones are forgotten. Not an
+/// age: an ack that arrives after a gap of minutes must still find what its
+/// packets carried, or stored bytes go out again. Sending slows to a few
+/// packets a second when nothing comes back, so this is most of an hour.
+const INFLIGHT_MAX: usize = 20_000;
 
 #[derive(Debug, Clone)]
 pub(crate) struct OutObject {
@@ -499,15 +501,9 @@ impl Outbox {
         }
     }
 
-    pub fn prune(&mut self, now: Millis) {
-        let old: Vec<u64> = self
-            .inflight
-            .iter()
-            .take_while(|(_, p)| p.at + INFLIGHT_MAX_AGE < now)
-            .map(|(&seq, _)| seq)
-            .collect();
-        for seq in old {
-            self.inflight.remove(&seq);
+    pub fn prune(&mut self) {
+        while self.inflight.len() > INFLIGHT_MAX {
+            self.inflight.pop_first();
         }
     }
 
