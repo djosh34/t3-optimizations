@@ -256,6 +256,17 @@ jobs:
         working-directory: lab
       - run: cargo build --release -p sync-core --example stories
         working-directory: crates
+      # Ubuntu 24.04's tc (iproute2 6.1) has no netem seed; the VM has 6.14.
+      # Built once here, so the lab jobs do not each fetch it.
+      - name: tc from iproute2 6.14
+        run: |
+          sudo apt-get install -y --no-install-recommends libmnl-dev libelf-dev bison flex
+          curl -fsSL --retry 5 https://mirrors.edge.kernel.org/pub/linux/utils/net/iproute2/iproute2-6.14.0.tar.xz | tar -xJ -C "$RUNNER_TEMP"
+          cd "$RUNNER_TEMP/iproute2-6.14.0"
+          ./configure
+          make -j4 SUBDIRS="lib tc netem"
+          mkdir -p "$GITHUB_WORKSPACE/lab/bin/tc"
+          cp tc/tc netem/*.dist "$GITHUB_WORKSPACE/lab/bin/tc/"
       # A tar keeps the binaries' modes, which artifacts drop.
       - run: |
           cp -r ~/.cache/t3lab/baseline-client-* lab/bin/
@@ -280,16 +291,6 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: t3code/package.json
-      # Ubuntu 24.04's tc (iproute2 6.1) has no netem seed; the VM has 6.14.
-      - name: tc from iproute2 6.14
-        run: |
-          sudo apt-get install -y --no-install-recommends libmnl-dev libelf-dev bison flex
-          curl -fsSL https://mirrors.edge.kernel.org/pub/linux/utils/net/iproute2/iproute2-6.14.0.tar.xz | tar -xJ -C "$RUNNER_TEMP"
-          cd "$RUNNER_TEMP/iproute2-6.14.0"
-          ./configure
-          make -j4 SUBDIRS="lib tc netem"
-          sudo install tc/tc /usr/local/sbin/tc
-          sudo install -D -m 644 -t /usr/lib/tc netem/*.dist
       # The stock server runs from t3code/ with its dependencies.
       - run: npm i -g vite-plus@1.4.0
       - run: vp install
@@ -302,6 +303,9 @@ jobs:
           tar -xf bin.tar
           mkdir -p ~/.cache/t3lab
           mv lab/bin/baseline-client-* ~/.cache/t3lab/
+          sudo install lab/bin/tc/tc /usr/local/sbin/tc
+          sudo install -D -m 644 -t /usr/lib/tc lab/bin/tc/*.dist
+          sudo tc -V
       - name: Story run
         working-directory: lab
         run: |

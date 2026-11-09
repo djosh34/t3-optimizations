@@ -14,6 +14,7 @@
 //! the sidecar and for `wasm32-unknown-unknown` for the web app. See
 //! the crate's `README.md` for the protocol.
 
+mod compress;
 mod endpoint;
 mod inbox;
 mod outbox;

@@ -39,7 +39,7 @@ An object is bytes with an id, a class, an order within the class, a revision, a
 - Any other change (an edit in the middle, a shorter text, new meta) is a new revision. Its chunks say how many leading bytes of an older revision stay valid (`keep`). The phone cuts its copy to those bytes and fills in the rest.
 - The phone ignores chunks of a revision older than the one it holds.
 
-The server tracks per object which bytes of the current revision the phone has stored. Those are never sent again. It remembers what each unacked packet carried for the newest 20,000 packets, not for a time: an ack that arrives after a gap of minutes still marks its bytes stored. Forgetting after 60 s sent stored bytes again after every longer gap (seed 195 of the stories, issue #58). Bytes in flight go out again after the retransmit timeout; with spare room in a packet, unacked bytes go out again early, so the sender never idles until the phone has everything.
+The server tracks per object which bytes of the current revision the phone has stored. Those are never sent again. It remembers what each unacked packet carried for the newest 20,000 packets, not for a time: an ack that arrives after a gap of minutes still marks its bytes stored. Forgetting after 60 s sent stored bytes again after every longer gap (story seeds 18 and 69, issue #58). Bytes in flight go out again after the retransmit timeout; with spare room in a packet, unacked bytes go out again early, so the sender never idles until the phone has everything.
 
 ## Order
 
