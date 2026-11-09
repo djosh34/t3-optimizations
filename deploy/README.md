@@ -49,4 +49,4 @@ rm -rf ~/.t3opt ~/.t3opt-sidecar                             # the data: project
 
 ## Release
 
-A tag `v*` runs `.github/workflows/release.yml`: static (musl) sidecars for linux x86_64 and arm64, the built web app, these unit files and `install.sh`, with `SHA256SUMS`, published as a GitHub release with the notes in `release-notes/<tag>.md`.
+`.github/workflows/release.yml` builds static (musl) sidecars for linux x86_64 and arm64, the built web app, these unit files and `install.sh`, with `SHA256SUMS`. On a tag `v*` it publishes them as a GitHub release with the notes in `release-notes/<tag>.md`. On a pull request that changes `deploy/` or the workflow, or started by hand, it only builds them, as the `release` artifact. Started by hand with `tag`, it publishes an existing tag whose first run failed.

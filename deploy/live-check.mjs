@@ -94,13 +94,10 @@ try {
     return project;
   });
 
-  let threadUrl = "";
   await step("prompt-sent", async () => {
     await page.keyboard.type(prompt);
     await page.keyboard.press("Enter");
     await page.getByText(prompt).first().waitFor({ timeout: 60_000 });
-    threadUrl = page.url();
-    return new URL(threadUrl).pathname;
   });
 
   await step("reply", async () => {
@@ -109,7 +106,14 @@ try {
       .locator(`text=/^\\s*${answer}\\.?\\s*$/`)
       .first()
       .waitFor({ timeout: 300_000 });
-    return `the agent answered ${answer}`;
+    // The thread as t3opt-server lists it (the app's draft URL stays as it was).
+    const threads = await page.evaluate(async (title) => {
+      const shell = await (await fetch("/api/orchestration/shell")).json();
+      const project = shell.projects.find((p) => p.title === title);
+      return shell.threads.filter((t) => t.projectId === project?.id).map((t) => `${t.id} "${t.title}"`);
+    }, project);
+    if (threads.length !== 1) throw new Error(`the server lists ${threads.length} threads in ${project}`);
+    return `the agent answered ${answer}, in thread ${threads[0]}`;
   });
 } catch {
   // The step said why.
