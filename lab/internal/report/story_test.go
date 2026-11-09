@@ -1,6 +1,7 @@
 package report
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -59,5 +60,22 @@ func TestStoryClientGrades(t *testing.T) {
 	c := BuildStoryClient(in, rel, "a")
 	if !c.PromptMet() || !c.LagMet() || !c.OnUDP() || *c.MaxReleaseLagS != 2 {
 		t.Fatalf("%+v, lag %v", c, *c.MaxReleaseLagS)
+	}
+}
+
+func TestSummaryKeepsMissingLagApart(t *testing.T) {
+	lag := func(v float64) *float64 { return &v }
+	run := func(seed int64, l *float64) StoryResult {
+		return StoryResult{Seed: seed, DeadlineS: 300, Clients: []StoryClient{{Client: "webapp", Status: "done", RunS: 100, MaxReleaseLagS: l}}}
+	}
+	got := storySummary([]StoryResult{run(1, lag(2)), run(2, lag(4)), run(3, nil)}, 4)
+	for _, want := range []string{
+		"seeds 4.",
+		"| 2.0 / 2.0 / 4.0 s (2 without any released text) |",
+		"| Reply completed by the deadline | 0/4 |",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("summary lacks %q:\n%s", want, got)
+		}
 	}
 }

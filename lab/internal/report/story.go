@@ -523,13 +523,7 @@ func storySummary(runs []StoryResult, expected int64) string {
 	row("Reply completed by the deadline", share(func(c StoryClient) bool { return c.CompleteS != nil }))
 	row("Prompt confirmed within 10 s (case 70)", share(StoryClient.PromptMet))
 	row("Newest text within 5 s of the server's release (case 50)", share(StoryClient.LagMet))
-	// No lag means no text at all: the worst, the whole run.
-	row("Max lag from the server's release, median / p95 / worst", spread(func(c StoryClient) float64 {
-		if c.MaxReleaseLagS == nil {
-			return c.RunS
-		}
-		return *c.MaxReleaseLagS
-	}))
+	row("Max lag from the server's release, median / p95 / worst", releaseLagSpread)
 	row("Longest freeze, median / p95 / worst", spread(func(c StoryClient) float64 { return c.LongestFreezeS }))
 	row("Hangs (freezes of 30 s or more)", total(func(c StoryClient) int { return len(c.Hangs) }))
 	row("Reloads", total(func(c StoryClient) int { return c.Reloads }))
@@ -572,6 +566,27 @@ func storySummary(runs []StoryResult, expected int64) string {
 		fmt.Fprintf(&b, "| %s | %s | %s |\n", seed, kind, strings.Join(cells, " | "))
 	}
 	return b.String()
+}
+
+// releaseLagSpread spreads the measured lags. A client the server released
+// no text for has none; those are counted, not taken as 0 (they fail the
+// other rows).
+func releaseLagSpread(cs []StoryClient) string {
+	var v []float64
+	for _, c := range cs {
+		if c.MaxReleaseLagS != nil {
+			v = append(v, *c.MaxReleaseLagS)
+		}
+	}
+	out := "none measured"
+	if len(v) > 0 {
+		maxV, median, p95 := quantiles(v)
+		out = fmt.Sprintf("%.1f / %.1f / %.1f s", median, p95, maxV)
+	}
+	if n := len(cs) - len(v); n > 0 {
+		out += fmt.Sprintf(" (%d without any released text)", n)
+	}
+	return out
 }
 
 func appFreeze(r StoryResult) float64 {
