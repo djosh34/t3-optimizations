@@ -27,7 +27,7 @@ const usage = `usage:
   sudo ./bin/lab run --profile <name> --seed <n> --client <client> [flags]
   sudo ./bin/lab webapp-e2e [--outage 20s] [--seed n]   the web app end to end
   sudo ./bin/lab story --seed <n>   both web clients side by side on a seed's network story
-  ./bin/lab story-summary <reports dir>
+  ./bin/lab story-summary [--seeds n] <reports dir>
   sudo ./bin/lab cleanup
   ./bin/lab profiles
   ./bin/lab summary <reports dir>
@@ -65,10 +65,15 @@ func dispatch(ctx context.Context, cmd string, args []string) error {
 	case "story":
 		return storyCmd(ctx, args)
 	case "story-summary":
-		if len(args) != 1 {
-			return errors.New("usage: lab story-summary <reports dir>")
+		fs := flag.NewFlagSet("story-summary", flag.ContinueOnError)
+		seeds := fs.Int64("seeds", 0, "seeds 1 to this were run; a missing one counts as failed")
+		if err := fs.Parse(args); err != nil {
+			return err
 		}
-		return report.StorySummary(args[0])
+		if fs.NArg() != 1 {
+			return errors.New("usage: lab story-summary [--seeds n] <reports dir>")
+		}
+		return report.StorySummary(fs.Arg(0), *seeds)
 	case "cleanup":
 		return netlab.Cleanup(ctx)
 	case "profiles":

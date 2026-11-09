@@ -1,6 +1,7 @@
 package run
 
 import (
+	"cmp"
 	"context"
 	"encoding/base64"
 	"errors"
@@ -40,13 +41,14 @@ type StoryOptions struct {
 // agent's log says which turn is whose.
 func storyPrompt(client string) string { return agent.MeasuredPrompt + " (" + client + ")" }
 
-// RunStory runs the untouched v0.1.7 web client and the t3opt web app at the
-// same time on the same seed's story, against one stock t3 server: each
-// client in its own lab (phone container, shaped link), the v0.1.7 client's
-// front in the first lab, the server, the sidecar and the web app's front
-// in the second, the two server namespaces joined by an unshaped bridge.
-// The sidecar runs `t3 pair`, which finds the server on its own host. Both links follow the story in lockstep. It writes each client's
-// report and story.json, and returns the headline.
+// RunStory runs the untouched v0.1.7 web client and the t3opt web app at
+// the same time on the same seed's story, against one stock t3 server. Each
+// client has its own lab: a phone container and a shaped link. The first
+// lab has the v0.1.7 client's front; the second has the server, the sidecar
+// and the web app's front. The sidecar runs `t3 pair`, which finds the
+// server on its own host. An unshaped bridge joins the two server
+// namespaces. Both links follow the story in lockstep. It writes each
+// client's report and story.json, and returns the headline.
 func RunStory(ctx context.Context, o StoryOptions) (string, error) {
 	u, err := userproc.Invoking()
 	if err != nil {
@@ -100,7 +102,7 @@ func RunStory(ctx context.Context, o StoryOptions) (string, error) {
 		}()
 	}
 
-	runDir := filepath.Join(o.OutDir, cmpOr(o.Name, fmt.Sprintf("s%d", o.Seed)))
+	runDir := filepath.Join(o.OutDir, cmp.Or(o.Name, fmt.Sprintf("s%d", o.Seed)))
 	if err := u.WriteFile(filepath.Join(runDir, "story-input.json"), storyJSON); err != nil {
 		return "", err
 	}
@@ -119,6 +121,7 @@ func RunStory(ctx context.Context, o StoryOptions) (string, error) {
 		return "", err
 	}
 	result.Commit = buildCommit()
+	result.DeadlineS = p.Deadline().Seconds()
 	for _, seg := range p.Phases {
 		result.Phases = append(result.Phases, fmt.Sprintf("%s@%.0f", seg.Name, seg.At.Seconds()))
 	}
@@ -130,13 +133,6 @@ func RunStory(ctx context.Context, o StoryOptions) (string, error) {
 		parts = append(parts, fmt.Sprintf("%s %s, prompt %s, freeze %.0fs", c.Client, c.Status, fmtOpt(c.PromptConfirmationS), c.LongestFreezeS))
 	}
 	return fmt.Sprintf("story seed %d: %s", o.Seed, strings.Join(parts, "; ")), nil
-}
-
-func cmpOr(a, b string) string {
-	if a != "" {
-		return a
-	}
-	return b
 }
 
 func fmtOpt(v *float64) string {

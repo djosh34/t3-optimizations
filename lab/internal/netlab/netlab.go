@@ -213,18 +213,26 @@ func (l *Lab) CreateTunnel(ctx context.Context, uid int) error {
 // TunnelIf is the name of the TUN device in both namespaces.
 func (l *Lab) TunnelIf() string { return l.tunnelIf }
 
+type side struct {
+	ns, dev string
+	link    profile.Link
+	seed    int64
+}
+
+// sides are the two ends that shape: down on the server end, up on the
+// phone end, each with its own netem seed.
+func (l *Lab) sides(down, up profile.Link, seed int64) []side {
+	return []side{
+		{l.ServerNS, l.serverIf, down, seed},
+		{l.PhoneNS, l.phoneIf, up, seed + 1},
+	}
+}
+
 // Shape applies netem to both directions: down on the server end, up on the
 // phone end. A FIFO under netem keeps jitter from reordering packets, unless
 // the link asks for reordering.
 func (l *Lab) Shape(ctx context.Context, down, up profile.Link, seed int64) error {
-	for _, side := range []struct {
-		ns, dev string
-		link    profile.Link
-		seed    int64
-	}{
-		{l.ServerNS, l.serverIf, down, seed},
-		{l.PhoneNS, l.phoneIf, up, seed + 1},
-	} {
+	for _, side := range l.sides(down, up, seed) {
 		// A replace keeps an old FIFO child; start from an empty root.
 		if _, err := Run(ctx, "tc", "-n", side.ns, "qdisc", "del", "dev", side.dev, "root"); err != nil &&
 			!strings.Contains(err.Error(), "No such file") && !strings.Contains(err.Error(), "Cannot delete qdisc with handle of zero") {
@@ -247,14 +255,7 @@ func (l *Lab) Shape(ctx context.Context, down, up profile.Link, seed int64) erro
 // Reshape changes both directions' netem in place, keeping what is queued,
 // as a phone's link changes under it.
 func (l *Lab) Reshape(ctx context.Context, down, up profile.Link, seed int64) error {
-	for _, side := range []struct {
-		ns, dev string
-		link    profile.Link
-		seed    int64
-	}{
-		{l.ServerNS, l.serverIf, down, seed},
-		{l.PhoneNS, l.phoneIf, up, seed + 1},
-	} {
+	for _, side := range l.sides(down, up, seed) {
 		args := append([]string{"-n", side.ns, "qdisc", "change", "dev", side.dev, "root", "handle", "10:", "netem"}, side.link.NetemArgs(side.seed)...)
 		if err := run(ctx, "tc", args...); err != nil {
 			return err

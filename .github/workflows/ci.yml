@@ -145,7 +145,7 @@ jobs:
       - name: tc from iproute2 6.14
         run: |
           sudo apt-get install -y --no-install-recommends libmnl-dev libelf-dev bison flex
-          curl -fsSL https://mirrors.edge.kernel.org/pub/linux/utils/net/iproute2/iproute2-6.14.0.tar.xz | tar -xJ -C "$RUNNER_TEMP"
+          curl -fsSL --retry 5 https://mirrors.edge.kernel.org/pub/linux/utils/net/iproute2/iproute2-6.14.0.tar.xz | tar -xJ -C "$RUNNER_TEMP"
           cd "$RUNNER_TEMP/iproute2-6.14.0"
           ./configure
           make -j4 SUBDIRS="lib tc netem"
@@ -374,11 +374,13 @@ jobs:
           pattern: sim-*
           path: sim
           merge-multiple: true
-      - run: |
+      - env:
+          LAB_SEEDS: ${{ inputs.lab-seeds }}
+        run: |
           {
             echo "# Lab: both web clients on each seed's story"
             echo
-            lab/bin/lab story-summary stories
+            lab/bin/lab story-summary --seeds "$LAB_SEEDS" stories
             echo
             echo "# Simulator: the sync protocol alone"
             echo

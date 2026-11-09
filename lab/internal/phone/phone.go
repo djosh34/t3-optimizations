@@ -75,7 +75,7 @@ type PipeConfig struct {
 type NativeConfig struct {
 	// Origin is the sidecar's HTTP side.
 	Origin string `json:"origin"`
-	// Code is a pairing code of the forked t3 server.
+	// Code is a pairing code of the t3 server.
 	Code     string `json:"code"`
 	ThreadID string `json:"threadId"`
 	Prompt   string `json:"prompt"`

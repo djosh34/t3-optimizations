@@ -190,6 +190,8 @@ func freezes(sent, end time.Time, shown, released []sample) []Freeze {
 type StoryClient struct {
 	Client string `json:"client"`
 	Status string `json:"status"`
+	// RunS is the time from the switch to the end of the client's run.
+	RunS float64 `json:"runS"`
 	// Seconds after the prompt was sent; nil if it never happened.
 	PromptConfirmationS *float64 `json:"promptConfirmationS"`
 	TimeToFirstTextS    *float64 `json:"timeToFirstTextS"`
@@ -198,7 +200,9 @@ type StoryClient struct {
 	// agent is for information. Nil when there was no text to lag behind.
 	MaxReleaseLagS *float64 `json:"maxReleaseLagS"`
 	MaxAgentLagS   *float64 `json:"maxAgentLagS"`
-	LongestFreezeS float64  `json:"longestFreezeS"`
+	// LongestFreezeS is the longest freeze; for a client that did not show
+	// the whole reply, at least its silence to the end of the run.
+	LongestFreezeS float64 `json:"longestFreezeS"`
 	// Hangs are freezes of HangAfter or more.
 	Hangs []Freeze `json:"hangs"`
 	// Reloads are page loads after the switch.
@@ -239,13 +243,17 @@ type Load struct {
 
 // StoryResult is one seed's story run.
 type StoryResult struct {
-	Seed     int64         `json:"seed"`
-	Survival bool          `json:"survival"`
-	Commit   string        `json:"commit"`
-	Load     Load          `json:"load"`
-	Clients  []StoryClient `json:"clients"`
+	Seed     int64  `json:"seed"`
+	Survival bool   `json:"survival"`
+	Commit   string `json:"commit"`
+	// DeadlineS is the run's deadline after the switch.
+	DeadlineS float64       `json:"deadlineS"`
+	Load      Load          `json:"load"`
+	Clients   []StoryClient `json:"clients"`
 	// Phases names the story's segments, "name@seconds".
 	Phases []string `json:"phases"`
+	// Dir is the run's directory name in a reports dir.
+	Dir string `json:"-"`
 }
 
 // BuildStoryClient measures one client of a story run. releases are the
@@ -253,7 +261,7 @@ type StoryResult struct {
 func BuildStoryClient(in Input, rel []Release, thread string) StoryClient {
 	r := Build(in)
 	c := StoryClient{
-		Client: in.Client, Status: r.Status,
+		Client: in.Client, Status: r.Status, RunS: r.RunS,
 		PromptConfirmationS: r.PromptConfirmationS, TimeToFirstTextS: r.TimeToFirstTextS,
 		CompleteS: r.CompleteS, MaxAgentLagS: r.MaxLagS,
 	}
@@ -277,6 +285,11 @@ func BuildStoryClient(in Input, rel []Release, thread string) StoryClient {
 		}
 	}
 	if sent.IsZero() {
+		// The prompt never went out: frozen for the whole run.
+		c.LongestFreezeS = r.RunS
+		if r.RunS >= HangAfter.Seconds() {
+			c.Hangs = []Freeze{{ForS: r.RunS}}
+		}
 		return c
 	}
 	end := in.End
@@ -287,7 +300,23 @@ func BuildStoryClient(in Input, rel []Release, thread string) StoryClient {
 	if len(released) > 0 {
 		c.MaxReleaseLagS = ptr(maxLag(end, shown, released))
 	}
-	for _, f := range freezes(sent, end, shown, released) {
+	found := freezes(sent, end, shown, released)
+	// Not done: the silence since the phone last showed new text counts,
+	// also when the server had released nothing new (the prompt never got
+	// through, say).
+	if r.CompleteS == nil {
+		last := sent
+		for _, s := range shown {
+			last = s.t
+		}
+		silence := Freeze{AtS: secs(last.Sub(sent)), ForS: secs(end.Sub(last))}
+		if n := len(found); n > 0 && !found[n-1].Ended {
+			found[n-1] = silence
+		} else {
+			found = append(found, silence)
+		}
+	}
+	for _, f := range found {
 		c.LongestFreezeS = max(c.LongestFreezeS, f.ForS)
 		if f.ForS >= HangAfter.Seconds() {
 			c.Hangs = append(c.Hangs, f)
@@ -381,8 +410,10 @@ func (s StoryResult) Write(dir string, write func(path string, data []byte) erro
 }
 
 // StorySummary prints Markdown over every story.json under dir: both
-// clients over all seeds, and the worst seeds.
-func StorySummary(dir string) error {
+// clients over all seeds, every hang and reload, and the worst seeds. With
+// expected > 0, seeds 1 to expected without a story.json are listed as
+// failed runs and count as failures.
+func StorySummary(dir string, expected int64) error {
 	paths, err := filepath.Glob(filepath.Join(dir, "*", "story.json"))
 	if err != nil {
 		return err
@@ -397,24 +428,46 @@ func StorySummary(dir string) error {
 		if err := json.Unmarshal(data, &s); err != nil {
 			return fmt.Errorf("%s: %w", p, err)
 		}
+		s.Dir = filepath.Base(filepath.Dir(p))
 		runs = append(runs, s)
 	}
 	if len(runs) == 0 {
 		return fmt.Errorf("no story.json under %s", dir)
 	}
 	slices.SortFunc(runs, func(a, b StoryResult) int { return cmp.Compare(a.Seed, b.Seed) })
-	fmt.Print(storySummary(runs))
+	fmt.Print(storySummary(runs, expected))
 	return nil
 }
 
-func storySummary(runs []StoryResult) string {
+// failedRun stands for a seed whose run left no story.json: each client
+// failed, frozen until the deadline.
+func failedRun(seed int64, like StoryResult) StoryResult {
+	r := StoryResult{Seed: seed, DeadlineS: like.DeadlineS}
+	for _, c := range like.Clients {
+		r.Clients = append(r.Clients, StoryClient{Client: c.Client, Status: "run failed", RunS: like.DeadlineS, LongestFreezeS: like.DeadlineS})
+	}
+	return r
+}
+
+func storySummary(runs []StoryResult, expected int64) string {
 	var b strings.Builder
+	var missing []string
+	for seed := int64(1); seed <= expected; seed++ {
+		if !slices.ContainsFunc(runs, func(r StoryResult) bool { return r.Seed == seed }) {
+			missing = append(missing, fmt.Sprint(seed))
+			runs = append(runs, failedRun(seed, runs[0]))
+		}
+	}
+	slices.SortFunc(runs, func(a, b StoryResult) int { return cmp.Compare(a.Seed, b.Seed) })
+	if len(missing) > 0 {
+		fmt.Fprintf(&b, "**Runs that failed and left no report, counted as failures for both clients:** seeds %s.\n\n", strings.Join(missing, ", "))
+	}
 	survival, commits := 0, []string{}
 	for _, r := range runs {
 		if r.Survival {
 			survival++
 		}
-		if !slices.Contains(commits, r.Commit) {
+		if r.Commit != "" && !slices.Contains(commits, r.Commit) {
 			commits = append(commits, r.Commit)
 		}
 	}
@@ -470,9 +523,10 @@ func storySummary(runs []StoryResult) string {
 	row("Reply completed by the deadline", share(func(c StoryClient) bool { return c.CompleteS != nil }))
 	row("Prompt confirmed within 10 s (case 70)", share(StoryClient.PromptMet))
 	row("Newest text within 5 s of the server's release (case 50)", share(StoryClient.LagMet))
+	// No lag means no text at all: the worst, the whole run.
 	row("Max lag from the server's release, median / p95 / worst", spread(func(c StoryClient) float64 {
 		if c.MaxReleaseLagS == nil {
-			return 0
+			return c.RunS
 		}
 		return *c.MaxReleaseLagS
 	}))
@@ -487,6 +541,15 @@ func storySummary(runs []StoryResult) string {
 		return share(StoryClient.OnUDP)(cs)
 	})
 
+	b.WriteString("\nEvery hang (a freeze of 30 s or more, seconds after the prompt) and reload:\n\n")
+	b.WriteString("| Seed | Client | Hangs | Reloads |\n|---|---|---|---|\n")
+	for _, r := range runs {
+		for _, c := range r.Clients {
+			if len(c.Hangs) > 0 || c.Reloads > 0 {
+				fmt.Fprintf(&b, "| %d | %s | %s | %d |\n", r.Seed, c.Client, fmtHangs(c.Hangs), c.Reloads)
+			}
+		}
+	}
 	b.WriteString("\nWorst seeds, by the t3opt web app's longest freeze:\n\n")
 	b.WriteString("| Seed | Story | " + strings.Join(names, " status / freeze | ") + " status / freeze |\n|---|---|" + strings.Repeat("---|", len(names)) + "\n")
 	worst := slices.Clone(runs)
@@ -502,7 +565,11 @@ func storySummary(runs []StoryResult) string {
 		for _, c := range r.Clients {
 			cells = append(cells, fmt.Sprintf("%s / %.0f s", c.Status, c.LongestFreezeS))
 		}
-		fmt.Fprintf(&b, "| [%d](s%d/story.md) | %s | %s |\n", r.Seed, r.Seed, kind, strings.Join(cells, " | "))
+		seed := fmt.Sprint(r.Seed)
+		if r.Dir != "" {
+			seed = fmt.Sprintf("[%d](%s/story.md)", r.Seed, r.Dir)
+		}
+		fmt.Fprintf(&b, "| %s | %s | %s |\n", seed, kind, strings.Join(cells, " | "))
 	}
 	return b.String()
 }
