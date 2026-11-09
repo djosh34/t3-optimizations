@@ -1,0 +1,128 @@
+name: Release
+
+# A tag v* builds the release files and publishes a GitHub release with
+# them; deploy/install.sh installs from it. A pull request that changes the
+# release, or a run started by hand, builds the files as the `release`
+# artifact only. By hand, `tag` naming an existing tag also publishes (for a
+# tag whose first run failed).
+on:
+  push:
+    tags:
+      - "v*"
+  pull_request:
+    paths:
+      - deploy/**
+      - .github/workflows/release.yml
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: An existing tag to publish; empty builds only
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  REF: ${{ inputs.tag || github.ref }}
+
+jobs:
+  # Static (musl) binaries, so they run on any glibc, such as EL9's 2.34.
+  sidecar:
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+            target: x86_64-unknown-linux-musl
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.REF }}
+      - run: sudo apt-get install -y --no-install-recommends musl-tools
+      - run: rustup toolchain install && rustup target add ${{ matrix.target }}
+        working-directory: crates
+      - run: cargo build --release --locked -p sidecar --target ${{ matrix.target }}
+        working-directory: crates
+      - run: |
+          cp crates/target/${{ matrix.target }}/release/sidecar t3opt-sidecar-linux-${{ matrix.arch }}
+          file t3opt-sidecar-linux-${{ matrix.arch }}
+          ./t3opt-sidecar-linux-${{ matrix.arch }} 2>&1 | grep -q '^sidecar: missing'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sidecar-${{ matrix.arch }}
+          path: t3opt-sidecar-linux-${{ matrix.arch }}
+
+  webapp:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.REF }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: t3code/package.json
+      - run: npm i -g vite-plus@1.4.0
+      - run: vp install
+        working-directory: t3code
+      - run: scripts/unset-hooks-path.sh
+      - run: rustup toolchain install
+        working-directory: crates
+      # The label, shown in the app's details panel, is the tag, or else
+      # (empty) the commit.
+      - env:
+          LABEL: ${{ inputs.tag || (github.ref_type == 'tag' && github.ref_name) || '' }}
+        run: |
+          lab/scripts/build-webapp.sh "$RUNNER_TEMP/web" "$LABEL"
+          tar -czf t3opt-web.tar.gz -C "$RUNNER_TEMP/web" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: webapp
+          path: t3opt-web.tar.gz
+
+  files:
+    needs: [sidecar, webapp]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.REF }}
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - run: |
+          cp deploy/install.sh deploy/t3opt-server.service deploy/t3opt-sidecar.service out/
+          cd out
+          sha256sum t3opt-* install.sh >SHA256SUMS
+          cat SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: out/
+
+  publish:
+    needs: files
+    if: github.ref_type == 'tag' || inputs.tag != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.REF }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+          path: out
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: gh release create "$TAG" out/* --verify-tag --title "t3opt $TAG" --notes-file "deploy/release-notes/$TAG.md"

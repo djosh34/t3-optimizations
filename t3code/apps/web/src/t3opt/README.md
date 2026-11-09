@@ -1,6 +1,6 @@
 # t3opt: the home-screen web app
 
-The t3code web client, served by the sidecar (`crates/sidecar`), talking to it through sync-core instead of the forked server's WebSocket ([issue #45](https://github.com/djosh34/t3-optimizations/issues/45)). `lab/scripts/build-webapp.sh` builds it with `T3OPT_BUILD=1`; a normal build never loads this folder.
+The t3code web client, served by the sidecar (`crates/sidecar`), talking to it through sync-core instead of the t3 server's WebSocket ([issue #45](https://github.com/djosh34/t3-optimizations/issues/45)). `lab/scripts/build-webapp.sh` builds it with `T3OPT_BUILD=1`; a normal build never loads this folder.
 
 `src/bootstrap.ts` runs `startT3opt()` (`index.ts`) before the app: it opens IndexedDB, starts the sync engine when the app is paired, puts the shim in front of `fetch` and `WebSocket`, and mounts the status line. The rest of the web client is unchanged.
 
@@ -10,14 +10,14 @@ The t3code web client, served by the sidecar (`crates/sidecar`), talking to it t
 - `store.ts`: IndexedDB. The pairing (device id, 128-bit token), the WebRTC certificate and the kept answer, the connection generation, and sync-core's saved state and objects.
 - `engine.ts`: moves packets between the phone and the link. What a packet brought is committed to IndexedDB first; only then does the phone ack it, so a page killed in between gets it again. Commands and calls are stored in the phone's log before they go out: nothing is sent while such a write is not committed, or a page killed in between would number its next entry again.
 - `link.ts`: the transport (below).
-- `objects.ts`, `snapshots.ts`: the synced objects (`crates/sidecar/README.md`, "What phones get") and the forked server's state rebuilt from them.
+- `objects.ts`, `snapshots.ts`: the synced objects (`crates/sidecar/README.md`, "What phones get") and the t3 server's state rebuilt from them.
 - `shim.ts`: the in-page server (below).
 - `StatusLine.tsx`: the status line and its details panel.
 - `serviceWorker.ts` and `../../t3opt/sw.js`: the offline shell and updates.
 
 ## The shim
 
-The client keeps its own RPC and HTTP code; the shim takes the place of the forked server behind it.
+The client keeps its own RPC and HTTP code; the shim takes the place of the t3 server behind it.
 
 A WebSocket to `/ws` is a `ShimSocket` that speaks the same Effect RPC JSON:
 
@@ -25,7 +25,7 @@ A WebSocket to `/ws` is a `ShimSocket` that speaks the same Effect RPC JSON:
 - `orchestration.subscribeThread` also tells the sidecar which thread is open (`sidecar.focus`), so its newest text goes first.
 - `assets.createUrl` for an image the sync link brings (one a turn item refers to; the sidecar fetches all of those) waits for its bytes, up to two minutes, and answers with one `blob:` URL per image for the page's life; without the bytes by then (the sidecar's fetch can fail), the call goes to the sidecar. Images are the last class, and the client keeps the URL it gets, so a server URL would stay broken without HTTPS.
 - `orchestration.dispatchCommand` goes out as a sync-core command; the status line follows a prompt from queued to sent to "server has it" to confirmed.
-- Every other call goes to the sidecar as one call and one reply. Calls for what the owner sees or taps (connection and auth state, VCS status, settings, an upload's URL) get the reply class, ahead of history (#16): the composer sends only while the client counts the environment as connected. The client's own reports and side subscriptions (`isBackgroundCall` in `shim.ts`) go at the background class, as an urgent reply is repeated at heavy loss. Subscriptions get the first value t3 sends and stay open without updates: `subscribeServerLifecycle`, `subscribeAuthAccess`, `subscribeVcsStatus`, `subscribeTerminalMetadata`, `subscribeWorktreeSetup`, `subscribeProjectClones`, `subscribeResourceTelemetry`, `subscribeDeviceState`, `subscribeDiscoveredLocalServers`, `subscribePreviewEvents`, `orchestration.subscribeCommandOutput`, `orchestration.subscribeLiveText`, `pullRequests.subscribeRefreshes`, `scheduledTasks.subscribe`, `provider.auth.subscribe`, `provider.install.subscribe` and `provider.chatgpt.handoff.subscribe`. What they show can be stale until a reload; moving them into synced state is a later outcome. Commands, also those the client sends by itself (`thread.visit`), are urgent: the client sends a prompt only after the reply to the command before it.
+- Every other call goes to the sidecar as one call and one reply. Calls for what the owner sees or taps (connection and auth state, VCS status, settings, an upload's URL) get the reply class, ahead of history (#16): the composer sends only while the client counts the environment as connected. The client's own reports and side subscriptions (`isBackgroundCall` in `shim.ts`) go at the background class, as an urgent reply is repeated at heavy loss. Subscriptions get the first value t3 sends and stay open without updates: `subscribeServerLifecycle`, `subscribeAuthAccess`, `subscribeVcsStatus`, `subscribeTerminalMetadata`, `subscribeWorktreeSetup`, `subscribeProjectClones`, `subscribeResourceTelemetry`, `subscribeDeviceState`, `subscribeDiscoveredLocalServers`, `subscribePreviewEvents`, `orchestration.subscribeCommandOutput`, `pullRequests.subscribeRefreshes`, `scheduledTasks.subscribe`, `provider.auth.subscribe`, `provider.install.subscribe` and `provider.chatgpt.handoff.subscribe`. What they show can be stale until a reload; moving them into synced state is a later outcome. Commands, also those the client sends by itself (`thread.visit`), are urgent: the client sends a prompt only after the reply to the command before it.
 
 Fetches to the page's own `/api`, `/oauth` and `/.well-known` paths:
 
@@ -34,7 +34,7 @@ Fetches to the page's own `/api`, `/oauth` and `/.well-known` paths:
 - An assistant text can arrive before its turn item: the newest text goes first, and its turn item, a kilobyte of JSON, waits behind the thread's status. The shim shows the text in a stand-in row, a copy of the thread's newest complete assistant item with this text, in the newest run, after every other item. The real item has the same id and takes its place.
 - The snapshot loaders (`/api/orchestration/shell`, `/api/orchestration/threads/:id` and `/bounded`) come from synced state. A thread shows as soon as its thread body is here; turn items and texts fill in as they arrive, a missing part of a text shown as `…`. Every turn item the phone has gets a row, by t3's own visibility rule, so `hasMoreHistory` is always false and history never needs the network.
 - The client's own traces are dropped.
-- Everything else goes to the forked server through the sidecar (`sidecar.http`); a request with a body, such as an image upload, at the background class.
+- Everything else goes to the t3 server through the sidecar (`sidecar.http`); a request with a body, such as an image upload, at the background class.
 
 ## The link
 
@@ -50,7 +50,7 @@ Every minute, and when the page is hidden, the app posts its link statistics to 
 
 ## Pairing and the cache
 
-- First open: t3code's pairing screen; a code from `t3 pair --base-dir <the forked server's dir>`.
+- First open: t3code's pairing screen; a code from `t3 pair --base-dir <the t3 server's dir>`.
 - IndexedDB lost its content but kept the token: the phone starts with a new random epoch, which tells the sidecar to sync everything again (sync-core's README: the epoch takes the place of the one-byte flag of issue #19).
 - IndexedDB lost the token too: the pairing screen again.
 

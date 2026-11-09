@@ -1,0 +1,21 @@
+# A second, independent t3: the stock v0.1.7 release, with its own data in
+# ~/.t3opt, on localhost only. The t3opt sidecar is its client. It shares
+# nothing with an official t3code (~/.t3) on the same host. Installed by
+# deploy/install.sh; see deploy/README.md.
+[Unit]
+Description=t3opt server: a second, stock t3 v0.1.7 for the t3opt sidecar
+Documentation=https://github.com/djosh34/t3-optimizations/tree/main/deploy
+StartLimitIntervalSec=0
+
+[Service]
+# PATH, so t3 finds the agents' CLIs (claude, codex, ...).
+EnvironmentFile=%h/.config/t3opt/env
+# A fresh server would add its working directory as a project.
+Environment=T3CODE_AUTO_BOOTSTRAP_PROJECT_FROM_CWD=false
+WorkingDirectory=%h
+ExecStart=%h/.local/share/t3opt/t3-0.1.7/t3 serve --base-dir %h/.t3opt --host 127.0.0.1 --port 13773 --no-browser
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
