@@ -394,7 +394,7 @@ func eachClient(scenarios []*scenario, f func(int, *scenario) error) error {
 func turnOf(log []agent.LogEvent, prompt string) []agent.LogEvent {
 	session := ""
 	for _, ev := range log {
-		if ev.Ev == "prompt" && ev.Prompt == prompt {
+		if ev.Ev == "prompt" && strings.Contains(ev.Prompt, prompt) {
 			session = ev.Session
 		}
 	}
