@@ -491,15 +491,18 @@ export class Link {
     if (this.transport === "websocket") {
       // The WebSocket runs over TCP; a closed one is opened again.
       if (this.ws === null) this.openWebSocket();
-      // A retry whose channel closed, or whose ICE got nothing back, is replaced.
+      // A retry is replaced when its channel closed, its ICE got nothing back, or
+      // it did not open within three minutes: the WebSocket carries the packets.
       const probe = this.rtc;
       const replaceAfter = this.rtcWorked ? REPLACE_UNANSWERED_MS : FALLBACK_AFTER_MS;
-      const unanswered =
+      const age = probe === null ? 0 : now - probe.createdAt;
+      if (
         probe !== null &&
         probe.dc.readyState !== "open" &&
-        !probe.iceEverUp &&
-        now - probe.createdAt > replaceAfter;
-      if (probe !== null && (unanswered || probe.dc.readyState === "closed")) {
+        (probe.dc.readyState === "closed" ||
+          (!probe.iceEverUp && age > replaceAfter) ||
+          age > FALLBACK_AFTER_WORKED_MS)
+      ) {
         probe.pc.close();
         this.rtc = null;
       }
