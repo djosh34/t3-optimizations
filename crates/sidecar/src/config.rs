@@ -9,7 +9,7 @@ use serde::Deserialize;
 
 pub const USAGE: &str = "usage: sidecar [--config <file.toml>] [flags]
 
-  --t3-url <url>          the forked t3 server, such as http://127.0.0.1:13773
+  --t3-url <url>          the t3 server, such as http://127.0.0.1:13773
   --t3-base-dir <dir>     its --base-dir, which every t3 command gets
   --t3-command <cmd>      how to run its CLI, such as \"node /opt/t3opt/t3code/apps/server/src/bin.ts\"
   --data-dir <dir>        the sidecar's own data: tokens, certificate, phones

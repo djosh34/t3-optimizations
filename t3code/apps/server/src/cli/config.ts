@@ -138,11 +138,6 @@ const EnvServerConfig = Config.all({
   host: Config.String("T3CODE_HOST").pipe(Config.option, Config.map(Option.getOrUndefined)),
   t3Home: Config.String("T3CODE_HOME").pipe(Config.option, Config.map(Option.getOrUndefined)),
   devUrl: Config.URL("VITE_DEV_SERVER_URL").pipe(Config.option, Config.map(Option.getOrUndefined)),
-  // The chaos lab serves a pinned v0.1.7 web client build through this server.
-  staticDir: Config.String("T3CODE_STATIC_DIR").pipe(
-    Config.option,
-    Config.map(Option.getOrUndefined),
-  ),
   devAllowedOrigins: Config.String("T3CODE_DEV_ALLOWED_ORIGINS").pipe(
     Config.withDefault(""),
     Config.map((value) =>
@@ -423,9 +418,7 @@ export const resolveServerConfig = Effect.fn("config.resolveServerConfig")(funct
     ),
     () => 443,
   );
-  const staticDir = devUrl
-    ? undefined
-    : (env.staticDir ?? (yield* ServerConfig.resolveStaticDir()));
+  const staticDir = devUrl ? undefined : yield* ServerConfig.resolveStaticDir();
   const explicitHost = resolveOptionPrecedence(
     normalizedFlags.host,
     Option.fromUndefinedOr(env.host),

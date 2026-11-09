@@ -2,7 +2,7 @@
 //! one record and one sync state per paired phone.
 //!
 //! ```text
-//! <data dir>/t3-token             bearer token for the forked t3 server
+//! <data dir>/t3-token             bearer token for the t3 server
 //! <data dir>/cert.der, key.der    DTLS certificate of every connection
 //! <data dir>/devices/<id>.json    a paired phone: token, certificate, generation
 //! <data dir>/devices/<id>.sync    its sync-core Server state (Server::save)
