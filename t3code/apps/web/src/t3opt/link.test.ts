@@ -158,11 +158,30 @@ describe("Link", () => {
     // ICE gets through on the new connection, its channel never opens, and
     // three minutes later it closes.
     const second = FakePeer.all[1];
-    second?.ice("connected");
+    if (!second) throw new Error("no second connection");
+    second.ice("connected");
     await vi.advanceTimersByTimeAsync(180_000);
-    if (second) second.channel.readyState = "closed";
+    second.channel.readyState = "closed";
     await vi.advanceTimersByTimeAsync(30_000);
+    expect(FakePeer.all).toHaveLength(3);
     expect(link.info().transport).toBe("webrtc");
+  });
+
+  it("tries WebRTC again from the WebSocket after a retry's channel closed", async () => {
+    const link = setup();
+    await link.start();
+    // UDP blocked from the start: the WebSocket after 20 s.
+    await vi.advanceTimersByTimeAsync(21_000);
+    expect(link.info().transport).toBe("websocket");
+    await vi.advanceTimersByTimeAsync(60_000);
+    const retry = FakePeer.all.at(-1);
+    if (!retry) throw new Error("no retry");
+    // ICE gets through, the handshake does not, and the channel closes.
+    retry.ice("connected");
+    retry.channel.readyState = "closed";
+    const before = FakePeer.all.length;
+    await vi.advanceTimersByTimeAsync(61_000);
+    expect(FakePeer.all.length).toBeGreaterThan(before);
   });
 
   it("stays on WebRTC in an outage, where the probe cannot connect", async () => {

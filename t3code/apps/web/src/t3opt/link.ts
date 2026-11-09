@@ -152,7 +152,7 @@ export class Link {
   private opened = false;
   /** WebRTC carried a channel on this page. */
   private rtcWorked = false;
-  /** Since when WebRTC connections are tried without a channel opening. */
+  /** Since when WebRTC connections are tried without a channel opening or ICE getting through. */
   private rtcTryingSince: number | null = null;
   private readonly startedAt = Date.now();
   private lastRtcTry = 0;
@@ -491,15 +491,15 @@ export class Link {
     if (this.transport === "websocket") {
       // The WebSocket runs over TCP; a closed one is opened again.
       if (this.ws === null) this.openWebSocket();
-      // A retry whose ICE got nothing back is replaced, as on WebRTC.
+      // A retry whose channel closed, or whose ICE got nothing back, is replaced.
       const probe = this.rtc;
       const replaceAfter = this.rtcWorked ? REPLACE_UNANSWERED_MS : FALLBACK_AFTER_MS;
-      if (
+      const unanswered =
         probe !== null &&
         probe.dc.readyState !== "open" &&
         !probe.iceEverUp &&
-        now - probe.createdAt > replaceAfter
-      ) {
+        now - probe.createdAt > replaceAfter;
+      if (probe !== null && (unanswered || probe.dc.readyState === "closed")) {
         probe.pc.close();
         this.rtc = null;
       }
