@@ -7,9 +7,9 @@
 //! simulator's CPU, and the sidecar's on every packet (issue #63). The
 //! encoder here takes its large blocks from a per-thread pool instead.
 //!
-//! A reused block is reset to zero, except the `u32` position table: the
-//! hasher reads a position only where its counts say it wrote one, as C
-//! Brotli does with memory from `malloc`. So the output is the same as with
+//! A reused block is reset to zero, except blocks of `u32`. At quality 9 the
+//! only large one is the position table, which the hasher reads only where
+//! its counts say it wrote, as C Brotli does with memory from `malloc`. So the output is the same as with
 //! fresh tables (`pooled_output_is_the_same_as_fresh`), at a tenth of the
 //! cost.
 

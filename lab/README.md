@@ -193,7 +193,7 @@ The driver asks the lab for what it cannot do itself (`shape case70`, `outage on
 
 ## Story runs
 
-A story is a few minutes of a 2G-like link drawn from a seed ([issue #58](https://github.com/djosh34/t3-optimizations/issues/58)): it changes every 2 to 8 s between an ordinary EDGE link (40 to 200 kbit/s, round trip 0.9 to 2.4 s, queues of 2 to 10 s), slow stretches down to bytes per second, round trips spiking to 8 s, loss in bursts, and gaps where nothing gets through for a second up to a minute and a half. One story in five is a survival story: 1 to 8 kbit/s at 70% loss. After 150 s the link comes back as the story's ordinary link. The phone keeps its address. The numbers follow [issue #15](https://github.com/djosh34/t3-optimizations/issues/15).
+A story is a few minutes of a 2G-like link drawn from a seed ([issue #58](https://github.com/djosh34/t3-optimizations/issues/58)): it changes every 2 to 8 s between an ordinary EDGE link (40 to 200 kbit/s, round trip 0.9 to 2.4 s, queues of 2 to 10 s and at least 2 packets), slow stretches down to bytes per second, round trips spiking to 8 s, loss in bursts, and gaps where nothing gets through for a second up to a minute and a half. One story in five is a survival story: 1 to 8 kbit/s at 70% loss. After 150 s the link comes back as the story's ordinary link. The phone keeps its address. The numbers follow [issue #15](https://github.com/djosh34/t3-optimizations/issues/15).
 
 The one generator is in `crates/sync-core/src/sim/story.rs`; `lab/bin/story <seed>` prints a seed's story as JSON, and the simulator runs the same stories (`crates/sync-core/README.md`), so a seed that fails in one can be replayed in the other.
 

@@ -336,7 +336,7 @@ impl App {
                 _ => 0,
             };
             log(format!(
-                "device {} stats: send {:.0} B/s, delivered {:.0} B/s, loss {:.0}%, srtt {} ms, unsynced {} B, backfill unsent {} B, in flight {} packets, sent {} received {} packets, SCTP queue {queued} B, {dropped} dropped by a full SCTP buffer",
+                "device {} stats: send {:.0} B/s, delivered {:.0} B/s, loss {:.0}%, srtt {} ms, unsynced {} B, backfill unsent {} B, unacked {} packets, sent {} received {} packets, SCTP queue {queued} B, {dropped} dropped by a full SCTP buffer",
                 d.record.id,
                 s.send_rate,
                 s.delivered_rate,

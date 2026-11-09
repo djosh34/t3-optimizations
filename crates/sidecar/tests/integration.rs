@@ -474,7 +474,7 @@ fn sidecar_end_to_end() -> R {
     let thread = setup.thread.clone();
 
     // A prompt: confirmed, and the reply streams as t3 releases it: whole
-    // paragraphs, as t3 holds an open one back.
+    // lines, as t3 holds an unfinished one back.
     let warm: Vec<String> = assistant_texts(&phone, &thread);
     let seq = phone.command(&prompt_command(&thread, MEASURED_PROMPT)?);
     let reply = wait_reply("prompt confirmed", &mut phone, seq, Duration::from_secs(30))?;

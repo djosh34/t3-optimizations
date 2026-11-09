@@ -12,9 +12,10 @@
 //! broken seeds are printed. `summary` reads such files and prints the
 //! spread of prompt time, reply time and text lag as Markdown.
 
+use std::cell::Cell;
 use std::fs;
+use std::panic;
 use std::process::ExitCode;
-use std::sync::Mutex;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::thread;
 
@@ -61,33 +62,45 @@ fn simulate(seed: u64) -> String {
     )
 }
 
+thread_local! {
+    /// The seed this thread simulates, for the panic message.
+    static SEED: Cell<u64> = const { Cell::new(0) };
+}
+
 fn run_range(from: u64, to: u64, out: &str) -> ExitCode {
+    // A panic is a broken seed too: it ends the run, and says which seed.
+    let report = panic::take_hook();
+    panic::set_hook(Box::new(move |info| {
+        eprintln!("broken: seed {} panicked", SEED.get());
+        report(info);
+    }));
     let next = AtomicU64::new(from);
-    let lines = Mutex::new(Vec::new());
     let threads = thread::available_parallelism().map_or(1, |n| n.get());
-    thread::scope(|scope| {
-        for _ in 0..threads {
-            scope.spawn(|| {
-                loop {
-                    let seed = next.fetch_add(1, Ordering::Relaxed);
-                    if seed > to {
-                        return;
+    let results: Vec<thread::Result<Vec<(u64, String)>>> = thread::scope(|scope| {
+        let workers: Vec<_> = (0..threads)
+            .map(|_| {
+                scope.spawn(|| {
+                    let mut lines = Vec::new();
+                    loop {
+                        let seed = next.fetch_add(1, Ordering::Relaxed);
+                        if seed > to {
+                            return lines;
+                        }
+                        SEED.set(seed);
+                        lines.push((seed, simulate(seed)));
                     }
-                    let line = simulate(seed);
-                    if let Ok(mut l) = lines.lock() {
-                        l.push((seed, line));
-                    }
-                }
-            });
-        }
+                })
+            })
+            .collect();
+        workers.into_iter().map(|w| w.join()).collect()
     });
-    let mut lines = match lines.into_inner() {
-        Ok(l) => l,
-        Err(e) => {
-            eprintln!("a simulation thread failed: {e}");
-            return ExitCode::FAILURE;
+    let mut lines = Vec::new();
+    for r in results {
+        match r {
+            Ok(l) => lines.extend(l),
+            Err(_) => return ExitCode::FAILURE,
         }
-    };
+    }
     lines.sort();
     let broken: Vec<&String> = lines
         .iter()
