@@ -32,16 +32,16 @@ const COUNT_WINDOWED_STREAMS: ReadonlySet<string> = new Set([
 
 interface Window {
   readonly bytes: boolean;
-  readonly sizes: number[];
-  readonly sentAt: number[];
+  // Unacknowledged chunks, oldest first: size in bytes (0 when not counted) and send time.
+  readonly pending: Array<{ readonly size: number; readonly at: number }>;
   // A chunk went out without the early ACK; the client's own ACK releases the stream.
   held: boolean;
 }
 
-const isFull = (window: Window, now: number) =>
-  window.sizes.length >= MAX_PENDING_CHUNKS ||
-  window.sizes.reduce((total, size) => total + size, 0) >= MAX_PENDING_BYTES ||
-  (!window.bytes && window.sentAt.length > 0 && now - window.sentAt[0]! >= BACKED_UP_AFTER_MS);
+const isFull = ({ bytes, pending }: Window, now: number) =>
+  pending.length >= MAX_PENDING_CHUNKS ||
+  pending.reduce((total, chunk) => total + chunk.size, 0) >= MAX_PENDING_BYTES ||
+  (!bytes && pending.length > 0 && now - pending[0]!.at >= BACKED_UP_AFTER_MS);
 
 export function withOutputWindow(
   protocol: RpcServer.Protocol["Service"],
@@ -61,7 +61,7 @@ export function withOutputWindow(
     let windows = clients.get(clientId);
     if (!windows) clients.set(clientId, (windows = new Map()));
     if (!windows.has(requestId)) {
-      windows.set(requestId, { bytes, sizes: [], sentAt: [], held: false });
+      windows.set(requestId, { bytes, pending: [], held: false });
     }
   });
   return {
@@ -81,8 +81,7 @@ export function withOutputWindow(
             const window = windowFor(clientId, String(message.requestId));
             if (window) {
               return Effect.flatMap(Clock.currentTimeMillis, (now) => {
-                window.sizes.shift();
-                window.sentAt.shift();
+                window.pending.shift();
                 if (!window.held || isFull(window, now)) return Effect.void;
                 window.held = false;
                 return write(clientId, message);
@@ -102,8 +101,8 @@ export function withOutputWindow(
           const window = windowFor(clientId, String(response.requestId));
           if (window) {
             return Effect.flatMap(Clock.currentTimeMillis, (now) => {
-              window.sizes.push(window.bytes ? Buffer.byteLength(JSON.stringify(response)) : 0);
-              window.sentAt.push(now);
+              const size = window.bytes ? Buffer.byteLength(JSON.stringify(response)) : 0;
+              window.pending.push({ size, at: now });
               if (isFull(window, now)) {
                 window.held = true;
                 return send;
