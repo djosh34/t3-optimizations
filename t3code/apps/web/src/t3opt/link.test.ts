@@ -139,13 +139,16 @@ describe("Link", () => {
     // The three minutes count from the first try, not the newest connection.
     await vi.advanceTimersByTimeAsync(119_000);
     expect(link.info().transport).toBe("websocket");
-    // WebRTC is tried again from the WebSocket, and given as long.
+    // WebRTC is tried again from the WebSocket, a fresh connection every minute.
     const before = FakePeer.all.length;
     await vi.advanceTimersByTimeAsync(60_000);
     expect(FakePeer.all).toHaveLength(before + 1);
     const retry = FakePeer.all.at(-1);
     await vi.advanceTimersByTimeAsync(30_000);
     expect(retry?.closed).toBe(false);
+    await vi.advanceTimersByTimeAsync(32_000);
+    expect(retry?.closed).toBe(true);
+    expect(FakePeer.all).toHaveLength(before + 2);
   });
 
   it("stays on WebRTC in an outage, where the probe cannot connect", async () => {

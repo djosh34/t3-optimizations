@@ -489,12 +489,14 @@ export class Link {
     if (this.transport === "websocket") {
       // The WebSocket runs over TCP; a closed one is opened again.
       if (this.ws === null) this.openWebSocket();
+      // A retry whose ICE got nothing back is replaced, as on WebRTC.
       const probe = this.rtc;
+      const replaceAfter = this.rtcWorked ? REPLACE_UNANSWERED_MS : FALLBACK_AFTER_MS;
       if (
         probe !== null &&
         probe.dc.readyState !== "open" &&
         !probe.iceEverUp &&
-        now - probe.createdAt > this.fallbackAfter()
+        now - probe.createdAt > replaceAfter
       ) {
         probe.pc.close();
         this.rtc = null;
