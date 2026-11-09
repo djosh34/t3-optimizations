@@ -122,6 +122,18 @@ describe("Link", () => {
     expect(peer.closed).toBe(true);
   });
 
+  it("gives a later connection three minutes before calling UDP blocked", async () => {
+    const { link, peer } = await openLink();
+    // The channel closes; its replacement never gets ICE through, as at 70% loss.
+    peer.channel.readyState = "closed";
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(FakePeer.all).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(link.info().transport).toBe("webrtc");
+    await vi.advanceTimersByTimeAsync(160_000);
+    expect(link.info().transport).toBe("websocket");
+  });
+
   it("stays on WebRTC in an outage, where the probe cannot connect", async () => {
     const { link, peer } = await openLink();
     await vi.advanceTimersByTimeAsync(5_000);

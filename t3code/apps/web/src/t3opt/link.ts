@@ -20,6 +20,8 @@ const DEAD_AFTER_MS = 60_000;
 const DEAD_ICE_UP_MS = 20_000;
 /** A first WebRTC connection whose ICE has not connected by then falls back to the WebSocket. */
 const FALLBACK_AFTER_MS = 20_000;
+/** The same for a later connection, once WebRTC worked on this page: a bad cell is likelier. */
+const FALLBACK_AFTER_WORKED_MS = 180_000;
 /**
  * Silent this long with ICE down for the last `PROBE_ICE_DOWN_MS`: a WebSocket
  * probe opens; open and still silent `SWITCH_AFTER_PROBE_MS` later, it takes over.
@@ -146,6 +148,8 @@ export class Link {
   private trying = "starting";
   /** A channel opened on this page. */
   private opened = false;
+  /** WebRTC carried a channel on this page. */
+  private rtcWorked = false;
   private readonly startedAt = Date.now();
   private lastRtcTry = 0;
   private iceRestarts = 0;
@@ -327,6 +331,7 @@ export class Link {
       if (this.rtc !== rtc) return;
       this.handshakeMs = Date.now() - rtc.createdAt;
       this.opened = true;
+      this.rtcWorked = true;
       if (this.transport === "websocket") {
         // WebRTC works again: it takes over from the WebSocket.
         const ws = this.ws;
@@ -489,15 +494,15 @@ export class Link {
       return;
     }
     // ICE never got through on this connection (the page's first, or one after
-    // the channel closed): UDP is blocked, the WebSocket carries packets. ICE
-    // up means only a slow handshake (minutes at 70% loss), where TCP does worse.
+    // the channel closed): UDP is blocked, the WebSocket carries packets. ICE up
+    // means only a slow handshake (minutes at 70% loss), where TCP does worse.
     const pending = this.rtc;
     const blocked =
       pending === null
         ? !this.opened && now - this.startedAt > FALLBACK_AFTER_MS
         : pending.dc.readyState !== "open" &&
           !pending.iceEverUp &&
-          now - pending.createdAt > FALLBACK_AFTER_MS;
+          now - pending.createdAt > (this.rtcWorked ? FALLBACK_AFTER_WORKED_MS : FALLBACK_AFTER_MS);
     if (blocked) {
       this.rtc?.pc.close();
       this.rtc = null;
