@@ -1,13 +1,18 @@
 name: Release
 
 # A tag v* builds the release files and publishes a GitHub release with
-# them; deploy/install.sh installs from it. Started by hand, it builds the
-# files of the chosen ref as an artifact, and publishes a release only when
-# `tag` names an existing tag (for a tag whose first run failed).
+# them; deploy/install.sh installs from it. A pull request that changes the
+# release, or a run started by hand, builds the files as the `release`
+# artifact only. By hand, `tag` naming an existing tag also publishes (for a
+# tag whose first run failed).
 on:
   push:
     tags:
       - "v*"
+  pull_request:
+    paths:
+      - deploy/**
+      - .github/workflows/release.yml
   workflow_dispatch:
     inputs:
       tag:
