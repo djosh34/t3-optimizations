@@ -207,6 +207,14 @@ describe("Link", () => {
     expect(FakePeer.all).toHaveLength(3);
     await vi.advanceTimersByTimeAsync(15_000);
     expect(FakePeer.all).toHaveLength(4);
+    // Twelve minutes for the next, and no longer after that.
+    for (const peers of [5, 6]) {
+      FakePeer.all.at(-1)?.ice("connected");
+      await vi.advanceTimersByTimeAsync(710_000);
+      expect(FakePeer.all).toHaveLength(peers - 1);
+      await vi.advanceTimersByTimeAsync(15_000);
+      expect(FakePeer.all).toHaveLength(peers);
+    }
   });
 
   it("stays on WebRTC in an outage, where the probe cannot connect", async () => {

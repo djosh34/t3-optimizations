@@ -26,9 +26,10 @@ const FALLBACK_AFTER_WORKED_MS = 180_000;
 const REPLACE_UNANSWERED_MS = 60_000;
 /**
  * A connection whose channel has not opened by then is replaced, ICE up or not; each
- * replaced in a row gets twice as long, as a cold handshake at 70% loss took 234 s.
+ * replaced in a row gets twice as long, up to 12 minutes: a cold handshake at 70% loss took 234 s.
  */
 const OPEN_WITHIN_MS = 180_000;
+const OPEN_WITHIN_MAX_MS = 720_000;
 /**
  * Silent this long with ICE down for the last `PROBE_ICE_DOWN_MS`: a WebSocket
  * probe opens; open and still silent `SWITCH_AFTER_PROBE_MS` later, it takes over.
@@ -497,7 +498,7 @@ export class Link {
 
   /** The connection's channel has not opened in time: its handshake stalled. */
   private stalled(rtc: Rtc, now: number): boolean {
-    return now - rtc.createdAt >= OPEN_WITHIN_MS * 2 ** this.stalls;
+    return now - rtc.createdAt >= Math.min(OPEN_WITHIN_MS * 2 ** this.stalls, OPEN_WITHIN_MAX_MS);
   }
 
   private async step(now: number): Promise<void> {
@@ -510,8 +511,9 @@ export class Link {
       if (probe !== null && probe.dc.readyState !== "open") {
         const replaceAfter = this.rtcWorked ? REPLACE_UNANSWERED_MS : FALLBACK_AFTER_MS;
         const unanswered = !probe.iceEverUp && now - probe.createdAt >= replaceAfter;
-        const stalled = !unanswered && this.stalled(probe, now);
-        if (probe.dc.readyState === "closed" || unanswered || stalled) {
+        const closed = probe.dc.readyState === "closed";
+        const stalled = !closed && !unanswered && this.stalled(probe, now);
+        if (closed || unanswered || stalled) {
           if (stalled) this.stalls += 1;
           probe.pc.close();
           this.rtc = null;
