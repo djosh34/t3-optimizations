@@ -147,6 +147,7 @@ export class Link {
   private wsOnly = false;
   private trying = "starting";
   /** A channel opened on this page. */
+  /** A connection opened on this page, on either transport. */
   private opened = false;
   /** WebRTC carried a channel on this page. */
   private rtcWorked = false;
@@ -474,6 +475,11 @@ export class Link {
     }
   }
 
+  /** How long a connection whose ICE never got through is waited for. */
+  private fallbackAfter(): number {
+    return this.rtcWorked ? FALLBACK_AFTER_WORKED_MS : FALLBACK_AFTER_MS;
+  }
+
   private async step(now: number): Promise<void> {
     if (this.transport === "websocket") {
       // The WebSocket runs over TCP; a closed one is opened again.
@@ -483,7 +489,7 @@ export class Link {
         probe !== null &&
         probe.dc.readyState !== "open" &&
         !probe.iceEverUp &&
-        now - probe.createdAt > FALLBACK_AFTER_MS
+        now - probe.createdAt > this.fallbackAfter()
       ) {
         probe.pc.close();
         this.rtc = null;
@@ -494,15 +500,15 @@ export class Link {
       return;
     }
     // ICE never got through on this connection (the page's first, or one after
-    // the channel closed): UDP is blocked, the WebSocket carries packets. ICE up
-    // means only a slow handshake (minutes at 70% loss), where TCP does worse.
+    // the channel closed): UDP is blocked, the WebSocket carries packets. ICE
+    // up means only a slow handshake (minutes at 70% loss), where TCP does worse.
     const pending = this.rtc;
     const blocked =
       pending === null
         ? !this.opened && now - this.startedAt > FALLBACK_AFTER_MS
         : pending.dc.readyState !== "open" &&
           !pending.iceEverUp &&
-          now - pending.createdAt > (this.rtcWorked ? FALLBACK_AFTER_WORKED_MS : FALLBACK_AFTER_MS);
+          now - pending.createdAt > this.fallbackAfter();
     if (blocked) {
       this.rtc?.pc.close();
       this.rtc = null;

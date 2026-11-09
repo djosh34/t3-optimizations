@@ -66,6 +66,8 @@ class FakeSocket {
 }
 
 function setup() {
+  // An earlier test's link still steps on the shared fake clock.
+  vi.clearAllTimers();
   FakePeer.all = [];
   FakeSocket.all = [];
   vi.stubGlobal("RTCPeerConnection", FakePeer);
@@ -132,6 +134,12 @@ describe("Link", () => {
     expect(link.info().transport).toBe("webrtc");
     await vi.advanceTimersByTimeAsync(160_000);
     expect(link.info().transport).toBe("websocket");
+    // WebRTC is tried again from the WebSocket, and given as long.
+    await vi.advanceTimersByTimeAsync(60_000);
+    const retry = FakePeer.all[2];
+    expect(retry).toBeDefined();
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(retry?.closed).toBe(false);
   });
 
   it("stays on WebRTC in an outage, where the probe cannot connect", async () => {
