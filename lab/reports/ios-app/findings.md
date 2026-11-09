@@ -29,7 +29,7 @@ The fork ran from the working tree. During the comparison its server code change
 |---|---|
 | A, B, C | Both servers finish on both seeds, with the same timings (within 1.1 s). |
 | D (8 s RTT, 16.7% bursty loss) | Neither finishes. The fork shows the first 397 characters on both seeds (first text at 24.1 s and 18.4 s); v0.1.7 shows no reply text. Repeated alone on seed 1: the same. |
-| E, case70, rate100 | Neither shows reply text by the deadline on either seed. On case70 the fork sent 35 to 37% fewer bytes down. Prompt confirmation is within 2.3 s between the servers, in both directions. |
+| E, case70, rate100 | Neither shows reply text by the deadline on either seed. On case70 the fork's runs carried 35 to 37% fewer bytes down the wire; the phone received 80 application bytes and no reply text in all four runs, so the difference is not in text updates the app saw. Prompt confirmation is within 2.3 s between the servers, in both directions. |
 | case50 | Seed 1: the fork showed 397 characters and v0.1.7 none. Repeated alone, neither showed any, so that difference was run-to-run spread. Seed 2: neither shows text. |
 | loss30 | Seed 1: the fork showed 1,077 characters, v0.1.7 none. Seed 2: both finish, the fork with a longest silence of 26.0 s against 32.4 s. TCP at 30% loss varies widely between runs (issue #7), so one seed proves little here. |
 | rtt3000 (3 s RTT) | Both finish on both seeds. The fork's first text is 1.5 to 1.8 s earlier, with the same max lag. The longest silence is 3.9 s shorter on seed 1 and 3.9 s longer on seed 2. |
@@ -48,13 +48,13 @@ These runs were repeated alone with the fork's backed-up threshold set to 0 ms a
 
 - **The D gain comes from the window.** Several chunks per 8 s round trip get through instead of one.
 - **The outage10 cost comes from the window too.** Chunks the server sends just before the link goes down are already in TCP when the outage starts. Without the window they would still be in the server. Why that costs 2 s more is not proven. A guess: those chunks wait on TCP's retransmission backoff, where v0.1.7 sends its next chunk fresh after the link is back.
-- **The coalescing** shows as fewer bytes on case70 (35 to 37% less down). No run here shows it changing what the phone displays.
+- **The coalescing:** no run here isolates it. The fewer wire bytes on case70 come from the two changes together, and may also be TCP behaving differently under loss; no control run separates them. No run shows the coalescing changing what the phone displays.
 
 ## Verdict
 
 **Both changes stay, with the threshold at 1000 ms.**
 
-- **The gains:** the window gets reply text through on a slow, long-delay link (D), where v0.1.7 shows nothing in 15 minutes. That holds on both seeds and when repeated alone. The fork also shows the first text sooner on rtt3000, and the coalescing sends fewer bytes on case70.
+- **The gains:** the window gets reply text through on a slow, long-delay link (D), where v0.1.7 shows nothing in 15 minutes. That holds on both seeds and when repeated alone. The fork also shows the first text sooner on rtt3000. On case70 the fork's runs carried fewer wire bytes, with the cause not isolated.
 - **Neutral:** A, B, C, E, case70 (apart from the bytes) and rate100.
 - **The cost, an open trade-off:** about 2 s more to the first text after a 10 s outage. It is reproduced alone, and a 500 ms threshold does not remove it. Removing it means switching the window off (0 ms), which also removes the D gain.
 - **What is unclear:** loss30, case50 and flap vary from run to run more than the servers differ.
