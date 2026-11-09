@@ -71,7 +71,7 @@ func TestSummaryKeepsMissingLagApart(t *testing.T) {
 	got := storySummary([]StoryResult{run(1, lag(2)), run(2, lag(4)), run(3, nil)}, 4)
 	for _, want := range []string{
 		"seeds 4.",
-		"| 2.0 / 2.0 / 4.0 s (2 without any released text) |",
+		"| 2.0 / 2.0 / 4.0 s (without any released text: 1) (failed runs: 1) |",
 		"| Reply completed by the deadline | 0/4 |",
 	} {
 		if !strings.Contains(got, want) {
@@ -85,7 +85,8 @@ func TestSummaryOfOnlyFailedRuns(t *testing.T) {
 	for _, want := range []string{
 		"seeds 1, 2.",
 		"| Reply completed by the deadline | 0/2 | 0/2 |",
-		"| Longest freeze, median / p95 / worst | none measured (2 runs failed) | none measured (2 runs failed) |",
+		"| Longest freeze, median / p95 / worst | none measured (failed runs: 2) | none measured (failed runs: 2) |",
+		"| Max lag from the server's release, median / p95 / worst | none measured (failed runs: 2) | none measured (failed runs: 2) |",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("summary lacks %q:\n%s", want, got)

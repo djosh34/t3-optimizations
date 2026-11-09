@@ -586,18 +586,24 @@ func freezeSpread(cs []StoryClient) string {
 		out = fmt.Sprintf("%.1f / %.1f / %.1f s", median, p95, maxV)
 	}
 	if n := len(cs) - len(v); n > 0 {
-		out += fmt.Sprintf(" (%d runs failed)", n)
+		out += fmt.Sprintf(" (failed runs: %d)", n)
 	}
 	return out
 }
 
 // releaseLagSpread spreads the measured lags. A client the server released
-// no text for has none; those are counted, not taken as 0 (they fail the
-// other rows).
+// no text for has none, and a failed run measured nothing; both are
+// counted, not taken as 0 (they fail the other rows).
 func releaseLagSpread(cs []StoryClient) string {
 	var v []float64
+	noText, failed := 0, 0
 	for _, c := range cs {
-		if c.MaxReleaseLagS != nil {
+		switch {
+		case c.Status == runFailed:
+			failed++
+		case c.MaxReleaseLagS == nil:
+			noText++
+		default:
 			v = append(v, *c.MaxReleaseLagS)
 		}
 	}
@@ -606,8 +612,11 @@ func releaseLagSpread(cs []StoryClient) string {
 		maxV, median, p95 := quantiles(v)
 		out = fmt.Sprintf("%.1f / %.1f / %.1f s", median, p95, maxV)
 	}
-	if n := len(cs) - len(v); n > 0 {
-		out += fmt.Sprintf(" (%d without any released text)", n)
+	if noText > 0 {
+		out += fmt.Sprintf(" (without any released text: %d)", noText)
+	}
+	if failed > 0 {
+		out += fmt.Sprintf(" (failed runs: %d)", failed)
 	}
 	return out
 }
