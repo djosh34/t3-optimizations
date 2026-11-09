@@ -10,7 +10,7 @@ Issue [#47](https://github.com/djosh34/t3-optimizations/issues/47). The table of
   - **Windowed acks:** up to 8 chunks go out before the server waits for the client's acks. Copied from upstream main.
   - **One update for a backed-up client:** a subscription whose oldest unacked chunk is 1 s old waits for the client. The text updates that queue up meanwhile are coalesced into the newest one.
 
-The fork ran from the working tree. During the comparison its server code changed only by a removed comment (`ac62acf6`) and formatting (`d9f253b0`). The lab binary was `16112c25` with the runner script edited (`-dirty`).
+The fork ran from the working tree. During the comparison its server code changed only by a removed comment (`ac62acf6`) and formatting (`d9f253b0`). The lab binary was `16112c25` with the runner script edited (`-dirty`). The one-array change to `OutputProtocol.ts` (`32fa25f5`) came after every run here and does not change behaviour.
 
 ## Run conditions
 
@@ -38,7 +38,7 @@ The fork ran from the working tree. During the comparison its server code change
 
 ## Which change does what
 
-These runs were repeated alone with the fork's backed-up threshold set to 0 ms. With 0 ms only one chunk is in flight, as in v0.1.7, so the ack window is off but the coalescing stays.
+These runs were repeated alone with the fork's backed-up threshold set to 0 ms and 500 ms, by editing `BACKED_UP_AFTER_MS` in `t3code/apps/server/src/terminal/OutputProtocol.ts` before each fork run (`/tmp` script, not kept; the runs are `alone/*-0-*`, `*-T0-*` and `*-T500-*`). With 0 ms only one chunk is in flight, as in v0.1.7, so the ack window is off but the coalescing stays.
 
 | Run, alone | v0.1.7 | fork, 1000 ms | fork, 500 ms | fork, 0 ms |
 |---|---|---|---|---|
