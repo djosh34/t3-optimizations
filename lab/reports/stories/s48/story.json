@@ -1,0 +1,68 @@
+{
+  "seed": 48,
+  "survival": true,
+  "commit": "9c461bdca554",
+  "deadlineS": 300,
+  "load": {
+    "cpus": 4,
+    "meanLoad1": 4.509672131147541,
+    "maxLoad1": 5.91,
+    "minMemAvailMB": 12283
+  },
+  "clients": [
+    {
+      "client": "websocket",
+      "status": "not done by deadline",
+      "runS": 300,
+      "promptConfirmationS": null,
+      "timeToFirstTextS": null,
+      "completeS": null,
+      "maxReleaseLagS": null,
+      "maxAgentLagS": null,
+      "longestFreezeS": 298.517,
+      "hangs": [
+        {
+          "atS": 0,
+          "forS": 298.517,
+          "ended": false
+        }
+      ],
+      "reloads": 0,
+      "webSocketsOpened": 1
+    },
+    {
+      "client": "webapp",
+      "status": "done",
+      "runS": 246.729,
+      "promptConfirmationS": 199.897,
+      "timeToFirstTextS": 210.624,
+      "completeS": 244.605,
+      "maxReleaseLagS": 2.441,
+      "maxAgentLagS": 17.799,
+      "longestFreezeS": 2.4,
+      "hangs": null,
+      "reloads": 0,
+      "webSocketsOpened": 0,
+      "transports": [
+        "webrtc"
+      ]
+    }
+  ],
+  "phases": [
+    "survival@0",
+    "survival@6",
+    "survival@9",
+    "survival@12",
+    "survival@17",
+    "survival@21",
+    "survival@23",
+    "survival@31",
+    "gap@38",
+    "survival@49",
+    "survival@54",
+    "gap@58",
+    "survival@87",
+    "gap@90",
+    "back@178"
+  ]
+}

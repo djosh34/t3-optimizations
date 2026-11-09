@@ -1,0 +1,1175 @@
+{
+  "profile": "story",
+  "about": "seed 35's 2G story",
+  "grade": "graded",
+  "client": "webapp",
+  "kind": "warm",
+  "seed": 35,
+  "commit": "9c461bdca554",
+  "path": "WebRTC data channel from WebKit to the sidecar (UDP, str0m with the patched SCTP layer) over a veth pair in the lab; the app's HTTPS goes through the lab front. In production the UDP goes through Tailscale.",
+  "status": "done",
+  "deadline": "5m0s",
+  "runS": 188.215,
+  "promptConfirmationS": 51.132,
+  "timeToFirstTextS": 61.724,
+  "completeS": 185.932,
+  "agentGotPromptS": 50.008,
+  "maxLagS": 106.887,
+  "medianLagS": 13.887,
+  "p95LagS": 96.887,
+  "longestSilenceS": 105.586,
+  "shownChars": 1596,
+  "producedChars": 1596,
+  "replyChars": 1596,
+  "approvalShownAfterS": 92.876,
+  "wireDownBytes": 231701,
+  "wireUpBytes": 120650,
+  "appReceivedBytes": 81399,
+  "appSentBytes": 91565,
+  "replyBytesReceived": 30875,
+  "duplicateReplyBytes": 0,
+  "webSocketsOpenedAfterSwitch": 0,
+  "lag": [
+    {
+      "atS": 0,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 1,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 2,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 3,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 4,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 5,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 6,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 7,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 8,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 9,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 10,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 11,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 12,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 13,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 14,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 15,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 16,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 17,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 18,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 19,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 20,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 21,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 22,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 23,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 24,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 25,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 26,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 27,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 28,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 29,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 30,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 31,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 32,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 33,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 34,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 35,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 36,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 37,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 38,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 39,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 40,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 41,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 42,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 43,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 44,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 45,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 46,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 47,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 48,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 49,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 50,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 51,
+      "lagS": 0.889,
+      "shown": 0,
+      "produced": 37
+    },
+    {
+      "atS": 52,
+      "lagS": 1.889,
+      "shown": 0,
+      "produced": 77
+    },
+    {
+      "atS": 53,
+      "lagS": 2.889,
+      "shown": 0,
+      "produced": 117
+    },
+    {
+      "atS": 54,
+      "lagS": 3.889,
+      "shown": 0,
+      "produced": 157
+    },
+    {
+      "atS": 55,
+      "lagS": 4.889,
+      "shown": 0,
+      "produced": 197
+    },
+    {
+      "atS": 56,
+      "lagS": 5.889,
+      "shown": 0,
+      "produced": 239
+    },
+    {
+      "atS": 57,
+      "lagS": 6.889,
+      "shown": 0,
+      "produced": 279
+    },
+    {
+      "atS": 58,
+      "lagS": 7.889,
+      "shown": 0,
+      "produced": 318
+    },
+    {
+      "atS": 59,
+      "lagS": 8.889,
+      "shown": 0,
+      "produced": 357
+    },
+    {
+      "atS": 60,
+      "lagS": 9.889,
+      "shown": 0,
+      "produced": 397
+    },
+    {
+      "atS": 61,
+      "lagS": 10.889,
+      "shown": 0,
+      "produced": 435
+    },
+    {
+      "atS": 62,
+      "lagS": 1.887,
+      "shown": 397,
+      "produced": 478
+    },
+    {
+      "atS": 63,
+      "lagS": 2.887,
+      "shown": 397,
+      "produced": 519
+    },
+    {
+      "atS": 64,
+      "lagS": 3.887,
+      "shown": 397,
+      "produced": 558
+    },
+    {
+      "atS": 65,
+      "lagS": 4.887,
+      "shown": 397,
+      "produced": 597
+    },
+    {
+      "atS": 66,
+      "lagS": 5.887,
+      "shown": 397,
+      "produced": 635
+    },
+    {
+      "atS": 67,
+      "lagS": 6.887,
+      "shown": 397,
+      "produced": 677
+    },
+    {
+      "atS": 68,
+      "lagS": 7.887,
+      "shown": 397,
+      "produced": 718
+    },
+    {
+      "atS": 69,
+      "lagS": 8.887,
+      "shown": 397,
+      "produced": 758
+    },
+    {
+      "atS": 70,
+      "lagS": 9.887,
+      "shown": 397,
+      "produced": 799
+    },
+    {
+      "atS": 71,
+      "lagS": 10.887,
+      "shown": 397,
+      "produced": 839
+    },
+    {
+      "atS": 72,
+      "lagS": 11.887,
+      "shown": 397,
+      "produced": 882
+    },
+    {
+      "atS": 73,
+      "lagS": 12.887,
+      "shown": 397,
+      "produced": 922
+    },
+    {
+      "atS": 74,
+      "lagS": 13.887,
+      "shown": 397,
+      "produced": 961
+    },
+    {
+      "atS": 75,
+      "lagS": 14.887,
+      "shown": 397,
+      "produced": 1000
+    },
+    {
+      "atS": 76,
+      "lagS": 15.887,
+      "shown": 397,
+      "produced": 1041
+    },
+    {
+      "atS": 77,
+      "lagS": 16.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 78,
+      "lagS": 17.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 79,
+      "lagS": 18.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 80,
+      "lagS": 19.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 81,
+      "lagS": 20.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 82,
+      "lagS": 21.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 83,
+      "lagS": 22.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 84,
+      "lagS": 23.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 85,
+      "lagS": 24.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 86,
+      "lagS": 25.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 87,
+      "lagS": 26.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 88,
+      "lagS": 27.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 89,
+      "lagS": 28.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 90,
+      "lagS": 29.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 91,
+      "lagS": 30.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 92,
+      "lagS": 31.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 93,
+      "lagS": 32.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 94,
+      "lagS": 33.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 95,
+      "lagS": 34.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 96,
+      "lagS": 35.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 97,
+      "lagS": 36.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 98,
+      "lagS": 37.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 99,
+      "lagS": 38.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 100,
+      "lagS": 39.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 101,
+      "lagS": 40.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 102,
+      "lagS": 41.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 103,
+      "lagS": 42.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 104,
+      "lagS": 43.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 105,
+      "lagS": 44.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 106,
+      "lagS": 45.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 107,
+      "lagS": 46.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 108,
+      "lagS": 47.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 109,
+      "lagS": 48.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 110,
+      "lagS": 49.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 111,
+      "lagS": 50.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 112,
+      "lagS": 51.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 113,
+      "lagS": 52.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 114,
+      "lagS": 53.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 115,
+      "lagS": 54.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 116,
+      "lagS": 55.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 117,
+      "lagS": 56.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 118,
+      "lagS": 57.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 119,
+      "lagS": 58.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 120,
+      "lagS": 59.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 121,
+      "lagS": 60.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 122,
+      "lagS": 61.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 123,
+      "lagS": 62.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 124,
+      "lagS": 63.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 125,
+      "lagS": 64.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 126,
+      "lagS": 65.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 127,
+      "lagS": 66.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 128,
+      "lagS": 67.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 129,
+      "lagS": 68.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 130,
+      "lagS": 69.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 131,
+      "lagS": 70.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 132,
+      "lagS": 71.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 133,
+      "lagS": 72.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 134,
+      "lagS": 73.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 135,
+      "lagS": 74.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 136,
+      "lagS": 75.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 137,
+      "lagS": 76.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 138,
+      "lagS": 77.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 139,
+      "lagS": 78.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 140,
+      "lagS": 79.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 141,
+      "lagS": 80.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 142,
+      "lagS": 81.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 143,
+      "lagS": 82.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 144,
+      "lagS": 83.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 145,
+      "lagS": 84.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 146,
+      "lagS": 85.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 147,
+      "lagS": 86.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 148,
+      "lagS": 87.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 149,
+      "lagS": 88.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 150,
+      "lagS": 89.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 151,
+      "lagS": 90.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 152,
+      "lagS": 91.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 153,
+      "lagS": 92.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 154,
+      "lagS": 93.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 155,
+      "lagS": 94.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 156,
+      "lagS": 95.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 157,
+      "lagS": 96.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 158,
+      "lagS": 97.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 159,
+      "lagS": 98.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 160,
+      "lagS": 99.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 161,
+      "lagS": 100.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 162,
+      "lagS": 101.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 163,
+      "lagS": 102.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 164,
+      "lagS": 103.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 165,
+      "lagS": 104.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 166,
+      "lagS": 105.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 167,
+      "lagS": 106.887,
+      "shown": 397,
+      "produced": 1077
+    },
+    {
+      "atS": 168,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 169,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 170,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 171,
+      "lagS": 0.136,
+      "shown": 1077,
+      "produced": 1086
+    },
+    {
+      "atS": 172,
+      "lagS": 1.136,
+      "shown": 1077,
+      "produced": 1124
+    },
+    {
+      "atS": 173,
+      "lagS": 2.136,
+      "shown": 1077,
+      "produced": 1163
+    },
+    {
+      "atS": 174,
+      "lagS": 3.136,
+      "shown": 1077,
+      "produced": 1200
+    },
+    {
+      "atS": 175,
+      "lagS": 4.136,
+      "shown": 1077,
+      "produced": 1242
+    },
+    {
+      "atS": 176,
+      "lagS": 5.136,
+      "shown": 1077,
+      "produced": 1281
+    },
+    {
+      "atS": 177,
+      "lagS": 6.136,
+      "shown": 1077,
+      "produced": 1320
+    },
+    {
+      "atS": 178,
+      "lagS": 7.136,
+      "shown": 1077,
+      "produced": 1359
+    },
+    {
+      "atS": 179,
+      "lagS": 8.136,
+      "shown": 1077,
+      "produced": 1393
+    },
+    {
+      "atS": 180,
+      "lagS": 9.136,
+      "shown": 1077,
+      "produced": 1429
+    },
+    {
+      "atS": 181,
+      "lagS": 2.39,
+      "shown": 1378,
+      "produced": 1466
+    },
+    {
+      "atS": 182,
+      "lagS": 3.39,
+      "shown": 1378,
+      "produced": 1499
+    },
+    {
+      "atS": 183,
+      "lagS": 4.39,
+      "shown": 1378,
+      "produced": 1532
+    },
+    {
+      "atS": 184,
+      "lagS": 5.39,
+      "shown": 1378,
+      "produced": 1567
+    },
+    {
+      "atS": 185,
+      "lagS": 6.39,
+      "shown": 1378,
+      "produced": 1596
+    }
+  ],
+  "notes": [
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058\",\"thread\":\"961/961\",\"assistant\":\"32/32 21/21\",\"runs\":\"1014/1014 971/971\",\"user\":\"10/10 9/9\",\"attempts\":\"659/659 659/659\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":2,\"iceRestarts\":0,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217069100,\"silences\":0,\"longestSilenceMs\":1313,\"longestRecoveredGapMs\":1313},\"stats\":{\"sendRate\":3375,\"deliveredRate\":3024.1506368607206,\"loss\":0,\"srttMs\":10.713087218623528,\"minRttMs\":null,\"sentPackets\":154,\"sentWireBytes\":42397,\"receivedPackets\":146,\"receivedWireBytes\":103799,\"lastHeardMs\":14860,\"unsyncedBytes\":1193,\"inflightPackets\":29,\"duplicateBytes\":0}}",
+    "prompt queued",
+    "prompt sent",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058\",\"thread\":\"961/961\",\"assistant\":\"32/32 21/21\",\"runs\":\"1014/1014 971/971\",\"user\":\"10/10 9/9\",\"attempts\":\"659/659 659/659\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"ICE restart 1\",\"open\":true,\"generation\":2,\"iceRestarts\":1,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217069100,\"silences\":0,\"longestSilenceMs\":1313,\"longestRecoveredGapMs\":1313},\"stats\":{\"sendRate\":125,\"deliveredRate\":3024.1506368607206,\"loss\":0,\"srttMs\":10.713087218623528,\"minRttMs\":null,\"sentPackets\":166,\"sentWireBytes\":48539,\"receivedPackets\":146,\"receivedWireBytes\":103799,\"lastHeardMs\":14860,\"unsyncedBytes\":1193,\"inflightPackets\":41,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058\",\"thread\":\"961/961\",\"assistant\":\"32/32 21/21\",\"runs\":\"1014/1014 971/971\",\"user\":\"10/10 9/9\",\"attempts\":\"659/659 659/659\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"ICE restart 2\",\"open\":true,\"generation\":2,\"iceRestarts\":2,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217069100,\"silences\":0,\"longestSilenceMs\":1313,\"longestRecoveredGapMs\":1313},\"stats\":{\"sendRate\":50,\"deliveredRate\":3024.1506368607206,\"loss\":0,\"srttMs\":10.713087218623528,\"minRttMs\":null,\"sentPackets\":166,\"sentWireBytes\":48539,\"receivedPackets\":146,\"receivedWireBytes\":103799,\"lastHeardMs\":14860,\"unsyncedBytes\":1650,\"inflightPackets\":41,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058\",\"thread\":\"961/961\",\"assistant\":\"32/32 21/21\",\"runs\":\"1014/1014 971/971\",\"user\":\"10/10 9/9\",\"attempts\":\"659/659 659/659\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"ICE restart 3\",\"open\":true,\"generation\":2,\"iceRestarts\":3,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217069100,\"silences\":0,\"longestSilenceMs\":1313,\"longestRecoveredGapMs\":1313},\"stats\":{\"sendRate\":50,\"deliveredRate\":3024.1506368607206,\"loss\":0,\"srttMs\":10.713087218623528,\"minRttMs\":null,\"sentPackets\":167,\"sentWireBytes\":49211,\"receivedPackets\":146,\"receivedWireBytes\":103799,\"lastHeardMs\":14860,\"unsyncedBytes\":1650,\"inflightPackets\":42,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058\",\"thread\":\"961/961\",\"assistant\":\"32/32 21/21\",\"runs\":\"1014/1014 971/971\",\"user\":\"10/10 9/9\",\"attempts\":\"659/659 659/659\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"ICE restart 3\",\"open\":true,\"generation\":2,\"iceRestarts\":3,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217069100,\"silences\":0,\"longestSilenceMs\":1313,\"longestRecoveredGapMs\":1313},\"stats\":{\"sendRate\":50,\"deliveredRate\":3024.1506368607206,\"loss\":0,\"srttMs\":10.713087218623528,\"minRttMs\":null,\"sentPackets\":168,\"sentWireBytes\":49883,\"receivedPackets\":146,\"receivedWireBytes\":103799,\"lastHeardMs\":14860,\"unsyncedBytes\":2107,\"inflightPackets\":43,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058 167/849\",\"thread\":\"961/961\",\"assistant\":\"32/32 21/21\",\"runs\":\"1014/1014 971/971\",\"user\":\"10/10 9/9\",\"attempts\":\"659/659 659/659\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":2,\"iceRestarts\":3,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217122296,\"silences\":1,\"longestSilenceMs\":53196,\"longestRecoveredGapMs\":53196},\"stats\":{\"sendRate\":2000,\"deliveredRate\":2133.119118650553,\"loss\":0.2357142857142857,\"srttMs\":202.12395131629557,\"minRttMs\":1542,\"sentPackets\":169,\"sentWireBytes\":50555,\"receivedPackets\":147,\"receivedWireBytes\":104256,\"lastHeardMs\":68055,\"unsyncedBytes\":1258,\"inflightPackets\":43,\"duplicateBytes\":0}}",
+    "prompt confirmed",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058 849/849\",\"thread\":\"654/961\",\"assistant\":\"32/32 21/21 344/498\",\"runs\":\"1014/1014 971/971 616/839\",\"user\":\"10/10 9/9 57/73\",\"attempts\":\"659/659 659/659 635/635\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":2,\"iceRestarts\":3,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217132494,\"silences\":1,\"longestSilenceMs\":53196,\"longestRecoveredGapMs\":53196},\"stats\":{\"sendRate\":2531.7073170731705,\"deliveredRate\":1808.7495090390155,\"loss\":0,\"srttMs\":1583.0541777068174,\"minRttMs\":1421,\"sentPackets\":236,\"sentWireBytes\":65911,\"receivedPackets\":211,\"receivedWireBytes\":126565,\"lastHeardMs\":78254,\"unsyncedBytes\":0,\"inflightPackets\":43,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058 849/849 1068/1068\",\"thread\":\"679/961\",\"assistant\":\"32/32 21/21 498/498\",\"runs\":\"1014/1014 971/971 684/839\",\"user\":\"10/10 9/9 57/73\",\"attempts\":\"659/659 659/659 635/635\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":2,\"iceRestarts\":3,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217135431,\"silences\":1,\"longestSilenceMs\":53196,\"longestRecoveredGapMs\":53196},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":1583.0541777068174,\"minRttMs\":1421,\"sentPackets\":266,\"sentWireBytes\":72371,\"receivedPackets\":220,\"receivedWireBytes\":130028,\"lastHeardMs\":81191,\"unsyncedBytes\":167,\"inflightPackets\":63,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058 849/849 1068/1068\",\"thread\":\"679/961\",\"assistant\":\"32/32 21/21 498/498\",\"runs\":\"1014/1014 971/971 684/839\",\"user\":\"10/10 9/9 57/73\",\"attempts\":\"659/659 659/659 635/635\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"ICE restart 5\",\"open\":true,\"generation\":2,\"iceRestarts\":5,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217135431,\"silences\":1,\"longestSilenceMs\":53196,\"longestRecoveredGapMs\":53196},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":1583.0541777068174,\"minRttMs\":1421,\"sentPackets\":282,\"sentWireBytes\":77605,\"receivedPackets\":220,\"receivedWireBytes\":130028,\"lastHeardMs\":81191,\"unsyncedBytes\":624,\"inflightPackets\":79,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058 849/849 1068/1068\",\"thread\":\"679/961\",\"assistant\":\"32/32 21/21 498/498\",\"runs\":\"1014/1014 971/971 684/839\",\"user\":\"10/10 9/9 57/73\",\"attempts\":\"659/659 659/659 635/635\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"ICE restart 5\",\"open\":true,\"generation\":2,\"iceRestarts\":5,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217135431,\"silences\":1,\"longestSilenceMs\":53196,\"longestRecoveredGapMs\":53196},\"stats\":{\"sendRate\":50,\"deliveredRate\":0,\"loss\":0,\"srttMs\":1583.0541777068174,\"minRttMs\":null,\"sentPackets\":292,\"sentWireBytes\":80888,\"receivedPackets\":220,\"receivedWireBytes\":130028,\"lastHeardMs\":81191,\"unsyncedBytes\":1081,\"inflightPackets\":89,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058 849/849 1068/1068\",\"thread\":\"679/961\",\"assistant\":\"32/32 21/21 498/498\",\"runs\":\"1014/1014 971/971 684/839\",\"user\":\"10/10 9/9 57/73\",\"attempts\":\"659/659 659/659 635/635\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"ICE restart 6\",\"open\":true,\"generation\":2,\"iceRestarts\":6,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217135431,\"silences\":1,\"longestSilenceMs\":53196,\"longestRecoveredGapMs\":53196},\"stats\":{\"sendRate\":50,\"deliveredRate\":0,\"loss\":0,\"srttMs\":1583.0541777068174,\"minRttMs\":null,\"sentPackets\":293,\"sentWireBytes\":81218,\"receivedPackets\":220,\"receivedWireBytes\":130028,\"lastHeardMs\":81191,\"unsyncedBytes\":1081,\"inflightPackets\":90,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058 849/849 1068/1068\",\"thread\":\"679/961\",\"assistant\":\"32/32 21/21 498/498\",\"runs\":\"1014/1014 971/971 684/839\",\"user\":\"10/10 9/9 57/73\",\"attempts\":\"659/659 659/659 635/635\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"ICE restart 6\",\"open\":true,\"generation\":2,\"iceRestarts\":6,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217135431,\"silences\":1,\"longestSilenceMs\":53196,\"longestRecoveredGapMs\":53196},\"stats\":{\"sendRate\":50,\"deliveredRate\":0,\"loss\":0,\"srttMs\":1583.0541777068174,\"minRttMs\":null,\"sentPackets\":295,\"sentWireBytes\":81878,\"receivedPackets\":220,\"receivedWireBytes\":130028,\"lastHeardMs\":81191,\"unsyncedBytes\":1539,\"inflightPackets\":92,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058 849/849 1068/1068\",\"thread\":\"679/961\",\"assistant\":\"32/32 21/21 498/498\",\"runs\":\"1014/1014 971/971 684/839\",\"user\":\"10/10 9/9 57/73\",\"attempts\":\"659/659 659/659 635/635\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"ICE restart 6\",\"open\":true,\"generation\":2,\"iceRestarts\":6,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217135431,\"silences\":1,\"longestSilenceMs\":53196,\"longestRecoveredGapMs\":53196},\"stats\":{\"sendRate\":50,\"deliveredRate\":0,\"loss\":0,\"srttMs\":1583.0541777068174,\"minRttMs\":null,\"sentPackets\":296,\"sentWireBytes\":82208,\"receivedPackets\":220,\"receivedWireBytes\":130028,\"lastHeardMs\":81191,\"unsyncedBytes\":1539,\"inflightPackets\":93,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058 849/849 1068/1068\",\"thread\":\"679/961\",\"assistant\":\"32/32 21/21 498/498\",\"runs\":\"1014/1014 971/971 684/839\",\"user\":\"10/10 9/9 57/73\",\"attempts\":\"659/659 659/659 635/635\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"ICE restart 7\",\"open\":true,\"generation\":2,\"iceRestarts\":7,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217135431,\"silences\":1,\"longestSilenceMs\":53196,\"longestRecoveredGapMs\":53196},\"stats\":{\"sendRate\":50,\"deliveredRate\":0,\"loss\":0,\"srttMs\":1583.0541777068174,\"minRttMs\":null,\"sentPackets\":298,\"sentWireBytes\":82868,\"receivedPackets\":220,\"receivedWireBytes\":130028,\"lastHeardMs\":81191,\"unsyncedBytes\":1539,\"inflightPackets\":95,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058 849/849 1068/1068\",\"thread\":\"679/961\",\"assistant\":\"32/32 21/21 498/498\",\"runs\":\"1014/1014 971/971 684/839\",\"user\":\"10/10 9/9 57/73\",\"attempts\":\"659/659 659/659 635/635\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"ICE restart 7\",\"open\":true,\"generation\":2,\"iceRestarts\":7,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217135431,\"silences\":1,\"longestSilenceMs\":53196,\"longestRecoveredGapMs\":53196},\"stats\":{\"sendRate\":50,\"deliveredRate\":0,\"loss\":0,\"srttMs\":1583.0541777068174,\"minRttMs\":null,\"sentPackets\":299,\"sentWireBytes\":83198,\"receivedPackets\":220,\"receivedWireBytes\":130028,\"lastHeardMs\":81191,\"unsyncedBytes\":1997,\"inflightPackets\":96,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058 849/849 1068/1068\",\"thread\":\"679/961\",\"assistant\":\"32/32 21/21 498/498\",\"runs\":\"1014/1014 971/971 684/839\",\"user\":\"10/10 9/9 57/73\",\"attempts\":\"659/659 659/659 635/635\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"ICE restart 7\",\"open\":true,\"generation\":2,\"iceRestarts\":7,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217135431,\"silences\":1,\"longestSilenceMs\":53196,\"longestRecoveredGapMs\":53196},\"stats\":{\"sendRate\":50,\"deliveredRate\":0,\"loss\":0,\"srttMs\":1583.0541777068174,\"minRttMs\":null,\"sentPackets\":301,\"sentWireBytes\":83858,\"receivedPackets\":220,\"receivedWireBytes\":130028,\"lastHeardMs\":81191,\"unsyncedBytes\":1997,\"inflightPackets\":98,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058 849/849 1068/1068\",\"thread\":\"679/961\",\"assistant\":\"32/32 21/21 498/498\",\"runs\":\"1014/1014 971/971 684/839\",\"user\":\"10/10 9/9 57/73\",\"attempts\":\"659/659 659/659 635/635\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"ICE restart 8\",\"open\":true,\"generation\":2,\"iceRestarts\":8,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217135431,\"silences\":1,\"longestSilenceMs\":53196,\"longestRecoveredGapMs\":53196},\"stats\":{\"sendRate\":50,\"deliveredRate\":0,\"loss\":0,\"srttMs\":1583.0541777068174,\"minRttMs\":null,\"sentPackets\":302,\"sentWireBytes\":84188,\"receivedPackets\":220,\"receivedWireBytes\":130028,\"lastHeardMs\":81191,\"unsyncedBytes\":2455,\"inflightPackets\":99,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058 849/849 1068/1068 1139/1542\",\"thread\":\"679/961\",\"assistant\":\"32/32 21/21 1340/1340\",\"runs\":\"1014/1014 971/971 684/839\",\"user\":\"10/10 9/9 57/73\",\"attempts\":\"659/659 659/659 635/635\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016\",\"messages\":\"544/544 456/456 901/901 544/544\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\",\"runtimeRequests\":\"435/1045\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":2,\"iceRestarts\":8,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217243830,\"silences\":2,\"longestSilenceMs\":100367,\"longestRecoveredGapMs\":100367},\"stats\":{\"sendRate\":3000,\"deliveredRate\":1742.7157778999451,\"loss\":0,\"srttMs\":1541.7920202110622,\"minRttMs\":1432,\"sentPackets\":353,\"sentWireBytes\":98609,\"receivedPackets\":245,\"receivedWireBytes\":142265,\"lastHeardMs\":189589,\"unsyncedBytes\":398,\"inflightPackets\":108,\"duplicateBytes\":0}}",
+    "webapp {\"objects\":{\"frame\":\"1029/1029\",\"turnItems\":\"1058/1058 1093/1093 870/870 860/860 1299/1299 1093/1093 1058/1058 849/849 1093/1093 1566/1566 1068/1068 947/947\",\"thread\":\"961/961\",\"assistant\":\"32/32 21/21 1340/1340 409/409\",\"runs\":\"1014/1014 971/971 839/839\",\"user\":\"10/10 9/9 73/73\",\"attempts\":\"659/659 659/659 635/635\",\"providerTurns\":\"772/772 772/772\",\"providerThreads\":\"807/807\",\"providerSessions\":\"2653/2653\",\"nodes\":\"1016/1016 809/809 809/809 1016/1016 256/983\",\"messages\":\"544/544 456/456 901/901 544/544 543/543\",\"checkpoints\":\"777/777 611/611 777/777\",\"checkpointScopes\":\"691/691\",\"runtimeRequests\":\"1045/1045\"},\"link\":{\"transport\":\"webrtc\",\"trying\":\"webrtc live\",\"open\":true,\"generation\":2,\"iceRestarts\":8,\"newConnections\":0,\"handshakeMs\":1264,\"lastDataAt\":1794217254836,\"silences\":2,\"longestSilenceMs\":100367,\"longestRecoveredGapMs\":100367},\"stats\":{\"sendRate\":2000,\"deliveredRate\":0,\"loss\":0,\"srttMs\":1597.6016433582906,\"minRttMs\":1432,\"sentPackets\":438,\"sentWireBytes\":119108,\"receivedPackets\":323,\"receivedWireBytes\":173122,\"lastHeardMs\":200595,\"unsyncedBytes\":134,\"inflightPackets\":107,\"duplicateBytes\":0}}",
+    "shim trace\n09:37:35.496 fetch GET /api/auth/session\n09:37:35.498 fetched GET /api/auth/session 200\n09:37:36.174 fetch GET /.well-known/t3/environment\n09:37:36.175 fetched GET /.well-known/t3/environment 200\n09:37:36.199 fetch GET /.well-known/t3/environment\n09:37:36.200 fetched GET /.well-known/t3/environment 200\n09:37:36.208 rpc 0 subscribeServerConfig\n09:37:36.208 chunk 0 38462 bytes\n09:37:36.292 in Ack 0\n09:37:36.296 rpc 1 subscribeServerLifecycle\n09:37:36.297 rpc 2 subscribeServerLifecycle\n09:37:36.304 fetch GET /api/auth/session\n09:37:36.306 fetched GET /api/auth/session 200\n09:37:36.307 rpc 3 subscribeDeviceState\n09:37:36.310 rpc 4 preview.reportProfiles\n09:37:36.418 rpc 5 subscribeProjectClones\n09:37:36.429 fetch GET /api/orchestration/threads/mcp%3Ade8037da-3dee-4993-8f79-ef5618578bd5/bounded\n09:37:36.513 fetch GET /api/orchestration/shell\n09:37:36.519 fetched GET /api/orchestration/shell 200\n09:37:36.598 rpc 6 orchestration.subscribeShell\n09:37:36.600 chunk 6 4594 bytes\n09:37:36.788 rpc 7 server.refreshProviders\n09:37:36.968 rpc 8 orchestration.dispatchCommand thread.visit\n09:37:36.968 exit 8 {\"_tag\":\"Success\",\"value\":{\"sequence\":0}}\n09:37:37.052 rpc 9 subscribeTerminalMetadata\n09:37:37.053 rpc 10 subscribeVcsStatus\n09:37:37.054 rpc 11 subscribePreviewEvents\n09:37:37.056 rpc 12 assets.createUrl\n09:37:37.057 rpc 13 preview.list\n09:37:37.058 rpc 14 projects.readFile\n09:37:37.066 in Ack 6\n09:37:37.066 chunk 6 4570 bytes\n09:37:37.091 in Ack 6\n09:37:37.237 fetch POST /api/observability/v1/traces\n09:37:37.237 fetched POST /api/observability/v1/traces 204\n09:37:37.307 rpc 15 server.reportClientActivity\n09:37:37.438 exit 13 {\"_tag\":\"Success\",\"value\":{\"revision\":0,\"serverEpoch\":\"0841d54e-5b13-472f-8eb7-777cd4cee0ee\",\"sessions\":[]}}\n09:37:37.610 exit 14 {\"_tag\":\"Success\",\"value\":{\"byteLength\":0,\"contents\":\"\",\"exists\":false,\"relativePath\":\"t3.json\",\"truncated\":false}}\n09:37:37.846 chunk 1 3815 bytes\n09:37:37.847 in Ack 1\n09:37:38.076 chunk 2 3815 bytes\n09:37:38.076 exit 7 {\"_tag\":\"Success\",\"value\":{\"providers\":[{\"auth\":{\"canLogout\":false,\"status\":\"unknown\"},\"checkedAt\":\"2026-11-09T09:37:05.262Z\",\"configurableProviders\":false,\"con\n09:37:38.077 in Ack 2\n09:37:38.249 chunk 10 1632 bytes\n09:37:38.249 exit 12 {\"_tag\":\"Success\",\"value\":{\"expiresAt\":1794220200000,\"relativeUrl\":\"/api/assets/eyJ2ZXJzaW9uIjoxLCJraW5kIjoicHJvamVjdC1mYXZpY29uIiwid29ya3NwYWNlUm9vdCI6Ii9ob21l\n09:37:38.249 in Ack 10\n09:37:38.294 fetch POST /api/observability/v1/traces\n09:37:38.294 fetched POST /api/observability/v1/traces 204\n09:37:38.521 chunk 6 4613 bytes\n09:37:38.522 in Ack 6\n09:37:38.772 chunk 6 4638 bytes\n09:37:38.772 in Ack 6\n09:37:39.022 chunk 6 4635 bytes\n09:37:39.023 in Ack 6\n09:37:39.382 chunk 3 876 bytes\n09:37:39.382 exit 4 {\"_tag\":\"Success\",\"value\":null}\n09:37:39.382 chunk 5 4 bytes\n09:37:39.382 chunk 9 36 bytes\n09:37:39.382 exit 15 {\"_tag\":\"Success\",\"value\":null}\n09:37:39.383 in Ack 3\n09:37:39.391 rpc 16 preview.reportProfiles\n09:37:39.391 in Ack 5\n09:37:39.392 in Ack 9\n09:37:39.459 exit 16 {\"_tag\":\"Success\",\"value\":null}\n09:37:39.524 fetch POST /api/observability/v1/traces\n09:37:39.524 fetched POST /api/observability/v1/traces 204\n09:37:41.175 fetched GET /api/orchestration/threads/mcp%3Ade8037da-3dee-4993-8f79-ef5618578bd5/bounded 200\n09:37:41.181 rpc 17 orchestration.subscribeThread\n09:37:41.181 chunk 17 8282 bytes\n09:37:41.203 in Interrupt 10\n09:37:41.206 rpc 18 subscribeVcsStatus\n09:37:41.208 in Ack 17\n09:37:41.299 in Ping \n09:37:41.417 chunk 18 1632 bytes\n09:37:41.417 in Ack 18\n09:37:41.431 chunk 17 9336 bytes\n09:37:41.432 in Ack 17\n09:37:41.476 rpc 19 server.reportClientActivity\n09:37:41.634 exit 19 {\"_tag\":\"Success\",\"value\":null}\n09:37:41.683 chunk 17 12690 bytes\n09:37:41.687 in Ack 17\n09:37:41.933 chunk 17 13497 bytes\n09:37:41.935 in Ack 17\n09:37:42.191 fetch POST /api/observability/v1/traces\n09:37:42.191 fetched POST /api/observability/v1/traces 204\n09:37:42.193 chunk 17 17976 bytes\n09:37:42.195 in Ack 17\n09:37:42.300 rpc 20 attachments.createUploadUrl\n09:37:42.409 exit 20 {\"_tag\":\"Success\",\"value\":{\"attachmentId\":\"pending-e07fa329-97ac-47ac-833c-3b21a7fc4047\",\"expiresAt\":1794217662380,\"relativeUrl\":\"/api/attachments/upload/eyJ2ZX\n09:37:42.411 fetch POST /api/attachments/upload/eyJ2ZXJzaW9uIjoxLCJraW5kIjoiYXR0YWNobWVudC11cGxvYWQiLCJ0eXBlIjoiaW1hZ2UiLCJhdHRhY2htZW50SWQiOiJwZW5kaW5nLWUwN2ZhMzI5LTk3YWMtNDdhYy04MzNjLTNiMjFhN2ZjNDA0NyIsIm5hbWUiOiJsYWIucG5nIiwibWltZVR5cGUiOiJpbWFnZS9wbmciLCJzaXplQnl0ZXMiOjcwMzAsImV4cGlyZXNBdCI6MTc5NDIxNzY2MjM4MH0.htjrSCkUGc4FZ9EIDN5tFqQAkcYIU5hH57f4YkhtXHE\n09:37:42.444 chunk 17 19019 bytes\n09:37:42.445 in Ack 17\n09:37:42.694 chunk 17 21099 bytes\n09:37:42.698 in Ack 17\n09:37:42.715 in Interrupt 18\n09:37:42.717 rpc 21 subscribeVcsStatus\n09:37:42.818 chunk 21 1632 bytes\n09:37:42.818 in Ack 21\n09:37:42.996 rpc 22 server.reportClientActivity\n09:37:43.240 fetch POST /api/observability/v1/traces\n09:37:43.240 fetched POST /api/observability/v1/traces 204\n09:37:44.421 exit 22 {\"_tag\":\"Success\",\"value\":null}\n09:37:45.634 rpc 23 orchestration.dispatchCommand message.dispatch\n09:37:46.059 fetch POST /api/observability/v1/traces\n09:37:46.059 fetched POST /api/observability/v1/traces 204\n09:37:46.112 exit 23 {\"_tag\":\"Success\",\"value\":{\"sequence\":110}}\n09:37:46.115 rpc 24 attachments.delete\n09:37:46.231 exit 24 {\"_tag\":\"Success\",\"value\":null}\n09:37:46.299 in Ping \n09:37:46.405 chunk 6 4721 bytes\n09:37:46.405 chunk 17 23892 bytes\n09:37:46.406 in Ack 6\n09:37:46.462 in Ack 17\n09:37:46.466 rpc 25 assets.createUrl\n09:37:46.655 chunk 17 26023 bytes\n09:37:46.658 in Ack 17\n09:37:46.906 chunk 17 29268 bytes\n09:37:46.909 in Ack 17\n09:37:46.964 rpc 26 orchestration.dispatchCommand thread.visit\n09:37:46.964 exit 26 {\"_tag\":\"Success\",\"value\":{\"sequence\":0}}\n09:37:47.114 fetch POST /api/observability/v1/traces\n09:37:47.114 fetched POST /api/observability/v1/traces 204\n09:37:47.155 chunk 6 4660 bytes\n09:37:47.156 chunk 17 29268 bytes\n09:37:47.156 in Ack 6\n09:37:47.167 in Ack 17\n09:37:47.405 chunk 6 4660 bytes\n09:37:47.406 in Ack 6\n09:37:47.421 chunk 17 29290 bytes\n09:37:47.422 in Ack 17\n09:37:47.676 chunk 17 31902 bytes\n09:37:47.678 in Ack 17\n09:37:47.925 chunk 17 31902 bytes\n09:37:47.928 in Ack 17\n09:37:48.159 fetch POST /api/observability/v1/traces\n09:37:48.159 fetched POST /api/observability/v1/traces 204\n09:37:48.427 chunk 17 32034 bytes\n09:37:48.429 in Ack 17\n09:37:48.952 chunk 6 4657 bytes\n09:37:48.953 chunk 17 35259 bytes\n09:37:48.957 in Ack 6\n09:37:48.959 rpc 27 orchestration.dispatchCommand thread.visit\n09:37:48.959 exit 27 {\"_tag\":\"Success\",\"value\":{\"sequence\":0}}\n09:37:48.967 in Ack 17\n09:37:48.981 in Interrupt 21\n09:37:48.986 rpc 28 subscribeVcsStatus\n09:37:48.987 exit 25 {\"_tag\":\"Success\",\"value\":{\"relativeUrl\":\"blob:https://10.231.0.1:8443/5e34d497-6a65-4ea0-9611-0ee5a8089d12\",\"expiresAt\":1794220668987}}\n09:37:49.103 chunk 28 1632 bytes\n09:37:49.104 in Ack 28\n09:37:49.203 chunk 17 35259 bytes\n09:37:49.206 in Ack 17\n09:37:49.254 rpc 29 server.reportClientActivity\n09:37:49.463 rpc 30 server.refreshProviders\n09:37:49.463 exit 30 {\"_tag\":\"Success\",\"value\":{\"providers\":[{\"auth\":{\"canLogout\":false,\"status\":\"unknown\"},\"checkedAt\":\"2026-11-09T09:37:05.262Z\",\"configurableProviders\":false,\"con\n09:37:49.504 fetch POST /api/observability/v1/traces\n09:37:49.504 fetched POST /api/observability/v1/traces 204\n09:37:50.523 fetch POST /api/observability/v1/traces\n09:37:50.523 fetched POST /api/observability/v1/traces 204\n09:37:51.299 in Ping \n09:37:51.546 rpc 31 orchestration.dispatchCommand message.dispatch\n09:37:52.546 fetch POST /api/observability/v1/traces\n09:37:52.546 fetched POST /api/observability/v1/traces 204\n09:37:56.299 in Ping \n09:37:58.309 fetch POST /api/observability/v1/traces\n09:37:58.309 fetched POST /api/observability/v1/traces 204\n09:38:01.300 in Ping \n09:38:04.255 in Interrupt 29\n09:38:04.507 rpc 32 server.reportClientActivity\n09:38:05.256 fetch POST /api/observability/v1/traces\n09:38:05.256 fetched POST /api/observability/v1/traces 204\n09:38:06.300 in Ping \n09:38:11.300 in Ping \n09:38:16.301 in Ping \n09:38:19.508 in Interrupt 32\n09:38:20.509 fetch POST /api/observability/v1/traces\n09:38:20.509 fetched POST /api/observability/v1/traces 204\n09:38:21.302 in Ping \n09:38:26.302 in Ping \n09:38:26.440 rpc 33 server.reportClientActivity\n09:38:27.440 fetch POST /api/observability/v1/traces\n09:38:27.440 fetched POST /api/observability/v1/traces 204\n09:38:31.308 in Ping \n09:38:36.311 in Ping \n09:38:41.314 in Ping \n09:38:41.441 in Interrupt 33\n09:38:42.297 exit 31 {\"_tag\":\"Success\",\"value\":{\"sequence\":139}}\n09:38:42.442 fetch POST /api/observability/v1/traces\n09:38:42.442 fetched POST /api/observability/v1/traces 204\n09:38:46.319 in Ping \n09:38:47.219 chunk 6 4721 bytes\n09:38:47.221 in Ack 6\n09:38:47.224 rpc 34 orchestration.dispatchCommand thread.visit\n09:38:47.224 exit 34 {\"_tag\":\"Success\",\"value\":{\"sequence\":0}}\n09:38:47.618 rpc 35 server.reportClientActivity\n09:38:47.772 exit 29 {\"_tag\":\"Success\",\"value\":null}\n09:38:47.900 chunk 17 35895 bytes\n09:38:47.901 in Ack 17\n09:38:48.222 fetch POST /api/observability/v1/traces\n09:38:48.222 fetched POST /api/observability/v1/traces 204\n09:38:51.322 in Ping \n09:38:51.742 chunk 6 4721 bytes\n09:38:51.743 in Ack 6\n09:38:52.496 chunk 17 39002 bytes\n09:38:52.498 in Ack 17\n09:38:52.744 fetch POST /api/observability/v1/traces\n09:38:52.744 fetched POST /api/observability/v1/traces 204\n09:38:52.804 chunk 17 39308 bytes\n09:38:52.806 in Ack 17\n09:38:53.807 fetch POST /api/observability/v1/traces\n09:38:53.807 fetched POST /api/observability/v1/traces 204\n09:38:54.001 chunk 17 39260 bytes\n09:38:54.003 in Ack 17\n09:38:55.004 fetch POST /api/observability/v1/traces\n09:38:55.004 fetched POST /api/observability/v1/traces 204\n09:38:56.326 in Ping \n09:38:57.223 rpc 36 orchestration.dispatchCommand thread.visit\n09:38:57.223 exit 36 {\"_tag\":\"Success\",\"value\":{\"sequence\":0}}\n09:38:58.224 fetch POST /api/observability/v1/traces\n09:38:58.224 fetched POST /api/observability/v1/traces 204\n09:39:01.330 in Ping \n09:39:02.619 in Interrupt 35\n09:39:02.870 rpc 37 server.reportClientActivity\n09:39:03.619 fetch POST /api/observability/v1/traces\n09:39:03.619 fetched POST /api/observability/v1/traces 204\n09:39:06.334 in Ping \n09:39:11.338 in Ping \n09:39:16.342 in Ping \n09:39:17.871 in Interrupt 37\n09:39:18.122 rpc 38 server.reportClientActivity\n09:39:18.871 fetch POST /api/observability/v1/traces\n09:39:18.871 fetched POST /api/observability/v1/traces 204\n09:39:21.346 in Ping \n09:39:26.350 in Ping \n09:39:31.354 in Ping \n09:39:33.122 in Interrupt 38\n09:39:34.123 fetch POST /api/observability/v1/traces\n09:39:34.123 fetched POST /api/observability/v1/traces 204\n09:39:36.358 in Ping \n09:39:41.362 in Ping \n09:39:41.438 rpc 39 server.reportClientActivity\n09:39:42.438 fetch POST /api/observability/v1/traces\n09:39:42.438 fetched POST /api/observability/v1/traces 204\n09:39:46.366 in Ping \n09:39:51.370 in Ping \n09:39:56.374 in Ping \n09:39:56.438 in Interrupt 39\n09:39:57.441 fetch POST /api/observability/v1/traces\n09:39:57.441 fetched POST /api/observability/v1/traces 204\n09:40:01.378 in Ping \n09:40:06.382 in Ping \n09:40:06.438 rpc 40 server.reportClientActivity\n09:40:07.438 fetch POST /api/observability/v1/traces\n09:40:07.438 fetched POST /api/observability/v1/traces 204\n09:40:11.386 in Ping \n09:40:16.391 in Ping \n09:40:21.394 in Ping \n09:40:21.438 in Interrupt 40\n09:40:22.439 fetch POST /api/observability/v1/traces\n09:40:22.439 fetched POST /api/observability/v1/traces 204\n09:40:26.399 in Ping \n09:40:31.402 in Ping \n09:40:31.439 rpc 41 server.reportClientActivity\n09:40:32.440 fetch POST /api/observability/v1/traces\n09:40:32.440 fetched POST /api/observability/v1/traces 204\n09:40:35.800 chunk 17 39462 bytes\n09:40:35.804 in Ack 17\n09:40:36.180 chunk 17 39710 bytes\n09:40:36.182 in Ack 17\n09:40:36.409 in Ping \n09:40:36.430 chunk 17 39970 bytes\n09:40:36.432 in Ack 17\n09:40:36.750 chunk 17 40216 bytes\n09:40:36.752 in Ack 17\n09:40:36.806 fetch POST /api/observability/v1/traces\n09:40:36.806 fetched POST /api/observability/v1/traces 204\n09:40:37.001 chunk 17 40406 bytes\n09:40:37.003 in Ack 17\n09:40:37.251 chunk 17 40644 bytes\n09:40:37.253 in Ack 17\n09:40:38.004 fetch POST /api/observability/v1/traces\n09:40:38.004 fetched POST /api/observability/v1/traces 204\n09:40:38.210 chunk 17 40898 bytes\n09:40:38.212 in Ack 17\n09:40:38.545 chunk 17 40948 bytes\n09:40:38.547 in Ack 17\n09:40:39.213 fetch POST /api/observability/v1/traces\n09:40:39.213 fetched POST /api/observability/v1/traces 204\n09:40:40.974 chunk 17 41950 bytes\n09:40:40.975 in Ack 17\n09:40:41.185 rpc 42 orchestration.dispatchCommand runtime-request.respond\n09:40:41.410 in Ping \n09:40:41.976 fetch POST /api/observability/v1/traces\n09:40:41.976 fetched POST /api/observability/v1/traces 204\n09:40:43.049 exit 42 {\"_tag\":\"Success\",\"value\":{\"sequence\":161}}\n09:40:43.735 rpc 43 orchestration.dispatchCommand runtime-request.respond\n09:40:44.050 fetch POST /api/observability/v1/traces\n09:40:44.051 fetched POST /api/observability/v1/traces 204\n09:40:45.007 chunk 17 41993 bytes\n09:40:45.009 in Ack 17\n09:40:45.737 chunk 17 42043 bytes\n09:40:45.737 exit 43 {\"_tag\":\"Failure\",\"cause\":[{\"_tag\":\"Fail\",\"error\":{\"_tag\":\"OrchestrationV2DispatchCommandError\",\"cause\":{\"cause\":\"Runtime request runtime-request:provider:acpRe\n09:40:45.739 in Ack 17\n09:40:46.010 fetch POST /api/observability/v1/traces\n09:40:46.010 fetched POST /api/observability/v1/traces 204\n09:40:46.240 chunk 6 4723 bytes\n09:40:46.241 in Ack 6\n09:40:46.244 rpc 44 orchestration.dispatchCommand thread.visit\n09:40:46.244 exit 44 {\"_tag\":\"Success\",\"value\":{\"sequence\":0}}\n09:40:46.414 in Ping \n09:40:46.440 in Interrupt 41\n09:40:46.691 rpc 45 server.reportClientActivity\n09:40:47.242 fetch POST /api/observability/v1/traces\n09:40:47.242 fetched POST /api/observability/v1/traces 204\n09:40:48.189 chunk 17 44904 bytes\n09:40:48.191 in Ack 17\n09:40:49.192 fetch POST /api/observability/v1/traces\n09:40:49.192 fetched POST /api/observability/v1/traces 204\n09:40:50.964 chunk 17 47883 bytes\n09:40:50.966 in Ack 17\n09:40:51.217 chunk 17 48139 bytes\n09:40:51.219 in Ack 17\n09:40:51.420 in Ping \n09:40:51.491 chunk 17 48091 bytes\n09:40:51.493 in Ack 17\n09:40:51.968 fetch POST /api/observability/v1/traces\n09:40:51.968 fetched POST /api/observability/v1/traces 204\n09:40:53.242 chunk 6 4723 bytes\n09:40:53.243 in Ack 6\n09:40:53.996 chunk 17 48091 bytes\n09:40:53.997 in Ack 17\n09:40:54.244 fetch POST /api/observability/v1/traces\n09:40:54.245 fetched POST /api/observability/v1/traces 204\n09:40:54.246 chunk 17 51627 bytes\n09:40:54.249 in Ack 17\n09:40:54.497 chunk 17 53744 bytes\n09:40:54.500 in Ack 17\n09:40:54.514 in Interrupt 28\n09:40:54.571 rpc 46 subscribeVcsStatus\n09:40:54.755 chunk 17 54699 bytes\n09:40:54.758 in Ack 17\n09:40:55.250 fetch POST /api/observability/v1/traces\n09:40:55.250 fetched POST /api/observability/v1/traces 204\n09:40:55.255 chunk 17 55683 bytes\n09:40:55.260 in Ack 17\n09:40:56.246 rpc 47 orchestration.dispatchCommand thread.visit\n09:40:56.246 exit 47 {\"_tag\":\"Success\",\"value\":{\"sequence\":0}}\n09:40:56.261 fetch POST /api/observability/v1/traces\n09:40:56.261 fetched POST /api/observability/v1/traces 204\n09:40:56.277 chunk 17 57076 bytes\n09:40:56.280 in Ack 17\n09:40:56.406 chunk 46 1713 bytes\n09:40:56.407 in Ack 46\n09:40:56.423 in Ping \n09:40:56.528 chunk 17 58965 bytes\n09:40:56.530 in Ack 17\n09:40:57.027 chunk 17 59982 bytes\n09:40:57.030 in Ack 17\n09:40:57.847 fetch POST /api/observability/v1/traces\n09:40:57.847 fetched POST /api/observability/v1/traces 204"
+  ]
+}
