@@ -204,9 +204,11 @@ type StoryClient struct {
 	// Reloads are page loads after the switch.
 	Reloads int `json:"reloads"`
 	// WebSocketsOpened counts the page's WebSockets after the switch: the
-	// v0.1.7 client's reconnects, the web app's fallback.
+	// v0.1.7 client's reconnects; for the web app, its probes for blocked
+	// UDP, which carry nothing unless it moves to them.
 	WebSocketsOpened int `json:"webSocketsOpened"`
-	// Transports is the web app's transport at each connection generation.
+	// Transports is the web app's transport each time it or the connection
+	// changed: "websocket" means it moved to TCP.
 	Transports []string `json:"transports,omitempty"`
 }
 
@@ -221,10 +223,10 @@ func (c StoryClient) LagMet() bool {
 	return c.CompleteS != nil && c.MaxReleaseLagS != nil && *c.MaxReleaseLagS <= LagTarget.Seconds()
 }
 
-// OnUDP says whether the web app stayed on the data channel: no WebSocket
-// at all.
+// OnUDP says whether the web app stayed on the data channel, never moving
+// to the WebSocket.
 func (c StoryClient) OnUDP() bool {
-	return c.WebSocketsOpened == 0 && !slices.Contains(c.Transports, "websocket")
+	return c.Client == "webapp" && len(c.Transports) > 0 && !slices.Contains(c.Transports, "websocket")
 }
 
 // Load is the host's load during the run.
@@ -332,8 +334,14 @@ func (s StoryResult) Markdown() string {
 	row("Longest freeze", func(c StoryClient) string { return fmt.Sprintf("%.1fs", c.LongestFreezeS) })
 	row("Hangs (freezes of 30 s or more)", func(c StoryClient) string { return fmtHangs(c.Hangs) })
 	row("Reloads", func(c StoryClient) string { return fmt.Sprint(c.Reloads) })
-	row("WebSockets opened after the switch", func(c StoryClient) string { return fmt.Sprint(c.WebSocketsOpened) })
+	row("WebSockets opened after the switch (v0.1.7: reconnects; web app: probes)", func(c StoryClient) string { return fmt.Sprint(c.WebSocketsOpened) })
 	row("Transports", func(c StoryClient) string { return cmp.Or(strings.Join(c.Transports, ", "), "-") })
+	row("Stayed on the data channel (UDP)", func(c StoryClient) string {
+		if c.Client != "webapp" {
+			return "-"
+		}
+		return yes(c.OnUDP())
+	})
 	return b.String()
 }
 
@@ -471,8 +479,13 @@ func storySummary(runs []StoryResult) string {
 	row("Longest freeze, median / p95 / worst", spread(func(c StoryClient) float64 { return c.LongestFreezeS }))
 	row("Hangs (freezes of 30 s or more)", total(func(c StoryClient) int { return len(c.Hangs) }))
 	row("Reloads", total(func(c StoryClient) int { return c.Reloads }))
-	row("WebSockets opened after the switch", total(func(c StoryClient) int { return c.WebSocketsOpened }))
-	row("Stayed on the data channel (UDP), no WebSocket", share(StoryClient.OnUDP))
+	row("WebSockets opened after the switch (v0.1.7: reconnects; web app: probes)", total(func(c StoryClient) int { return c.WebSocketsOpened }))
+	row("Stayed on the data channel (UDP), never on the WebSocket", func(cs []StoryClient) string {
+		if len(cs) == 0 || cs[0].Client != "webapp" {
+			return "-"
+		}
+		return share(StoryClient.OnUDP)(cs)
+	})
 
 	b.WriteString("\nWorst seeds, by the t3opt web app's longest freeze:\n\n")
 	b.WriteString("| Seed | Story | " + strings.Join(names, " status / freeze | ") + " status / freeze |\n|---|---|" + strings.Repeat("---|", len(names)) + "\n")

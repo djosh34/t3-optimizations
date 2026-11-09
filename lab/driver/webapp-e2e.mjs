@@ -437,8 +437,8 @@ await step("offline-open", async () => {
 });
 
 await step("websocket-fallback-mid-session", async () => {
-  // UDP goes away under an open page: after a minute of silence with ICE
-  // down, a WebSocket probe gets through, and 20 s later it takes over.
+  // UDP goes away under an open page: after three minutes of silence with
+  // ICE down, a WebSocket probe gets through, and 20 s later it takes over.
   await page.waitForFunction(() => window.t3opt?.engine?.status().link.trying === "webrtc live", null, {
     timeout: 120_000,
   });
@@ -446,7 +446,7 @@ await step("websocket-fallback-mid-session", async () => {
   await ask("block udp on");
   try {
     await page.waitForFunction(() => window.t3opt?.engine?.status().link.transport === "websocket", null, {
-      timeout: 180_000,
+      timeout: 300_000,
     });
     const states = await promptWithStates("lab:warmup after UDP went away", "websocket-mid", 60_000);
     return `generation ${before}, ${states}`;

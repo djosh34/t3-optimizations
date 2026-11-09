@@ -111,7 +111,9 @@ describe("Link", () => {
     // ICE notices a few seconds after the last packet.
     await vi.advanceTimersByTimeAsync(5_000);
     peer.ice("disconnected");
-    await vi.advanceTimersByTimeAsync(70_000);
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(FakeSocket.all).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(130_000);
     const probe = FakeSocket.all[0];
     expect(probe).toBeDefined();
     probe?.open();

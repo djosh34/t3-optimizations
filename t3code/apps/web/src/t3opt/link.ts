@@ -24,9 +24,12 @@ const FALLBACK_AFTER_MS = 20_000;
  * Silent this long with ICE down for the last `PROBE_ICE_DOWN_MS`: a WebSocket
  * probe opens. Open and still silent `SWITCH_AFTER_PROBE_MS` later, UDP is blocked
  * and it takes over; in an outage it cannot connect, and ICE recovers first.
+ * Long, because UDP worked on this page: a bad cell is far likelier than a
+ * network that starts blocking UDP. After a minute, a 70%-loss link at bytes
+ * per second moved to TCP once in 44 lab stories, where TCP does worse.
  */
-const PROBE_WS_AFTER_MS = 60_000;
-const PROBE_ICE_DOWN_MS = 40_000;
+const PROBE_WS_AFTER_MS = 180_000;
+const PROBE_ICE_DOWN_MS = 150_000;
 const SWITCH_AFTER_PROBE_MS = 20_000;
 /** WebRTC is tried again this often while it failed to connect. */
 const RTC_RETRY_MS = 10_000;
