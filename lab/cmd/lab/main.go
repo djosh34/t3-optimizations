@@ -219,10 +219,11 @@ func frontCmd(ctx context.Context, args []string) error {
 	listen := fs.String("listen", ":8443", "TLS address")
 	upstream := fs.String("upstream", "", "t3 server address")
 	noDeflate := fs.Bool("no-deflate", false, "remove the WebSocket compression offer")
+	clientDir := fs.String("client-dir", "", "web client build to serve")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	return front.Serve(ctx, front.Config{Listen: *listen, Upstream: *upstream, NoDeflate: *noDeflate})
+	return front.Serve(ctx, front.Config{Listen: *listen, Upstream: *upstream, NoDeflate: *noDeflate, ClientDir: *clientDir})
 }
 
 func tunnelCmd(ctx context.Context, args []string) error {

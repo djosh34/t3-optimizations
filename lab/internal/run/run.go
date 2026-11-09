@@ -209,13 +209,13 @@ func (s *scenario) execute(parent context.Context, repo, staticDir, phoneDir str
 	}
 	server, err := t3server.Start(procs.ctx, t3server.Config{
 		User: u, NS: lab.ServerNS, LabID: lab.ID, T3Code: filepath.Join(repo, "t3code"), RunDir: s.runDir,
-		LabExe: o.LabExe, StaticDir: staticDir, Node: o.Node, CharsPerSecond: CharsPerSecond, SoakParts: soak,
+		LabExe: o.LabExe, Node: o.Node, CharsPerSecond: CharsPerSecond, SoakParts: soak,
 	})
 	if err != nil {
 		return report.Input{}, err
 	}
 	procs.watch("t3 server", server.Exited())
-	frontArgs := []string{"front", "--listen", ":" + frontPort, "--upstream", fmt.Sprintf("127.0.0.1:%d", t3server.Port)}
+	frontArgs := []string{"front", "--listen", ":" + frontPort, "--upstream", fmt.Sprintf("127.0.0.1:%d", t3server.Port), "--client-dir", staticDir}
 	if o.Client == "websocket-nodeflate" {
 		frontArgs = append(frontArgs, "--no-deflate")
 	}
