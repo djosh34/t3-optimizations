@@ -163,6 +163,8 @@ type Freeze struct {
 	AtS   float64 `json:"atS"`
 	ForS  float64 `json:"forS"`
 	Ended bool    `json:"ended"`
+	// NoPrompt marks the whole run of a client whose prompt never went out.
+	NoPrompt bool `json:"noPrompt,omitempty"`
 }
 
 // freezes finds every freeze between sent and end, on a 100 ms grid.
@@ -292,7 +294,7 @@ func BuildStoryClient(in Input, rel []Release, thread string) StoryClient {
 		// The prompt never went out: frozen for the whole run.
 		c.LongestFreezeS = r.RunS
 		if r.RunS >= HangAfter.Seconds() {
-			c.Hangs = []Freeze{{ForS: r.RunS}}
+			c.Hangs = []Freeze{{ForS: r.RunS, NoPrompt: true}}
 		}
 		return c
 	}
@@ -392,6 +394,10 @@ func fmtHangs(hs []Freeze) string {
 	}
 	var parts []string
 	for _, h := range hs {
+		if h.NoPrompt {
+			parts = append(parts, fmt.Sprintf("%.0f s, the whole run: the prompt never went out", h.ForS))
+			continue
+		}
 		end := ""
 		if !h.Ended {
 			end = ", to the end"

@@ -6,8 +6,8 @@
 //!
 //! The numbers follow issue #15: EDGE carries tens to about 200 kbit/s with
 //! a round trip of 0.9 to 2.4 s that can spike to 8 s, deep queues (2 to
-//! 10 s at the link's rate, at least 2 packets, as the lab's profiles B to D), little random
-//! loss, losses in short bursts (a Gilbert-Elliott model as netem's
+//! 10 s at the link's rate, at least 2 packets, as the lab's profiles B to
+//! D), little random loss, losses in short bursts (a Gilbert-Elliott model as netem's
 //! `gemodel`), and gaps where nothing gets through, from a second to more
 //! than a minute. One story in five is a survival story: bytes per second
 //! and 70% loss. The phone keeps its address.
@@ -57,7 +57,8 @@ fn log_uniform(rng: &mut Rng, lo: f64, hi: f64) -> f64 {
     (lo.ln() + rng.f64() * (hi.ln() - lo.ln())).exp()
 }
 
-/// A link whose queue holds `queue_s` seconds of full packets at its rate.
+/// A link whose queue holds `queue_s` seconds of full packets at its rate,
+/// at least 2 packets: at bytes per second, more than `queue_s`.
 fn spec(rate_bps: f64, delay_ms: f64, jitter_ms: f64, queue_s: f64, loss: f64) -> LinkSpec {
     let queue = (rate_bps / 8.0 * queue_s / 1_200.0)
         .round()
