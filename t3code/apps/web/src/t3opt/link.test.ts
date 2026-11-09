@@ -188,6 +188,21 @@ describe("Link", () => {
     expect(FakePeer.all).toHaveLength(4);
   });
 
+  it("replaces a connection whose handshake stalled after ICE got through", async () => {
+    const { peer } = await openLink();
+    peer.channel.readyState = "closed";
+    await vi.advanceTimersByTimeAsync(2_000);
+    const second = FakePeer.all[1];
+    if (!second) throw new Error("no second connection");
+    second.ice("connected");
+    // At heavy loss a handshake takes minutes: it is waited for.
+    await vi.advanceTimersByTimeAsync(170_000);
+    expect(FakePeer.all).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(FakePeer.all).toHaveLength(3);
+    expect(second.closed).toBe(true);
+  });
+
   it("stays on WebRTC in an outage, where the probe cannot connect", async () => {
     const { link, peer } = await openLink();
     await vi.advanceTimersByTimeAsync(5_000);

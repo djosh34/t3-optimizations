@@ -24,6 +24,8 @@ const FALLBACK_AFTER_MS = 20_000;
 const FALLBACK_AFTER_WORKED_MS = 180_000;
 /** A connection whose ICE got nothing back is replaced this often: WebKit stops its checks. */
 const REPLACE_UNANSWERED_MS = 60_000;
+/** A connection whose channel has not opened by then is replaced, ICE up or not. */
+const OPEN_WITHIN_MS = 180_000;
 /**
  * Silent this long with ICE down for the last `PROBE_ICE_DOWN_MS`: a WebSocket
  * probe opens; open and still silent `SWITCH_AFTER_PROBE_MS` later, it takes over.
@@ -501,7 +503,7 @@ export class Link {
         probe.dc.readyState !== "open" &&
         (probe.dc.readyState === "closed" ||
           (!probe.iceEverUp && age > replaceAfter) ||
-          age > FALLBACK_AFTER_WORKED_MS)
+          age > OPEN_WITHIN_MS)
       ) {
         probe.pc.close();
         this.rtc = null;
@@ -542,16 +544,16 @@ export class Link {
       this.tryRtc();
       return;
     }
+    // A new connection's handshake can take minutes at heavy loss, but in a
+    // lab story one never finished after the link came back.
+    const age = now - rtc.createdAt;
     if (
-      this.rtcWorked &&
       rtc.dc.readyState !== "open" &&
-      !rtc.iceEverUp &&
-      now - rtc.createdAt >= REPLACE_UNANSWERED_MS
+      ((this.rtcWorked && !rtc.iceEverUp && age >= REPLACE_UNANSWERED_MS) || age >= OPEN_WITHIN_MS)
     ) {
       this.tryRtc();
       return;
     }
-    // A new connection's handshake can take minutes at heavy loss.
     if (rtc.dc.readyState !== "open") return;
     const silentFor = now - (this.lastDataAt ?? rtc.createdAt);
     if (silentFor < RESTART_AFTER_MS) return;
