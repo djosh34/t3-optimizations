@@ -71,7 +71,7 @@ func TestSummaryKeepsMissingLagApart(t *testing.T) {
 	got := storySummary([]StoryResult{run(1, lag(2)), run(2, lag(4)), run(3, nil)}, 4)
 	for _, want := range []string{
 		"seeds 4.",
-		"| 2.0 / 2.0 / 4.0 s (without any released text: 1) (failed runs: 1) |",
+		"| 2.0 / 2.0 / 4.0 s (without any released text: 1; failed runs: 1) |",
 		"| Reply completed by the deadline | 0/4 |",
 	} {
 		if !strings.Contains(got, want) {

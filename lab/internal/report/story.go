@@ -545,7 +545,11 @@ func storySummary(runs []StoryResult, expected int64) string {
 			}
 		}
 	}
-	b.WriteString("\nWorst seeds, by the t3opt web app's longest freeze (failed runs are listed above):\n\n")
+	b.WriteString("\nWorst seeds, by the t3opt web app's longest freeze")
+	if len(missing) > 0 {
+		b.WriteString(" (failed runs are listed above)")
+	}
+	b.WriteString(":\n\n")
 	b.WriteString("| Seed | Story | " + strings.Join(StoryClients, " status / freeze | ") + " status / freeze |\n|---|---|" + strings.Repeat("---|", len(StoryClients)) + "\n")
 	worst := slices.DeleteFunc(slices.Clone(runs), func(r StoryResult) bool {
 		return slices.ContainsFunc(r.Clients, func(c StoryClient) bool { return c.Status == runFailed })
@@ -612,11 +616,15 @@ func releaseLagSpread(cs []StoryClient) string {
 		maxV, median, p95 := quantiles(v)
 		out = fmt.Sprintf("%.1f / %.1f / %.1f s", median, p95, maxV)
 	}
+	var notes []string
 	if noText > 0 {
-		out += fmt.Sprintf(" (without any released text: %d)", noText)
+		notes = append(notes, fmt.Sprintf("without any released text: %d", noText))
 	}
 	if failed > 0 {
-		out += fmt.Sprintf(" (failed runs: %d)", failed)
+		notes = append(notes, fmt.Sprintf("failed runs: %d", failed))
+	}
+	if len(notes) > 0 {
+		out += " (" + strings.Join(notes, "; ") + ")"
 	}
 	return out
 }

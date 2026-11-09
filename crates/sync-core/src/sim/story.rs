@@ -4,13 +4,13 @@
 //! [`Scenario::story`](super::Scenario::story), so a seed that fails in one
 //! can be replayed in the other.
 //!
-//! The numbers follow issue #15: EDGE carries tens to about 200 kbit/s with
-//! a round trip of 0.9 to 2.4 s that can spike to 8 s, deep queues (2 to
-//! 10 s at the link's rate, at least 2 packets, as the lab's profiles B to
-//! D), little random loss, losses in short bursts (a Gilbert-Elliott model
-//! as netem's `gemodel`), and gaps where nothing gets through, from a second
-//! to more than a minute. One story in five is a survival story: bytes per second
-//! and 70% loss. The phone keeps its address.
+//! The numbers follow issue #15: EDGE carries tens to about 200 kbit/s with a
+//! round trip of 0.9 to 2.4 s that can spike to 8 s, deep queues (2 to 10 s at
+//! the link's rate, at least 2 packets, as the lab's profiles B to D), little
+//! random loss, losses in short bursts (a Gilbert-Elliott model as netem's
+//! `gemodel`), and gaps where nothing gets through, from a second to more than
+//! a minute. One story in five is a survival story: bytes per second and 70%
+//! loss. The phone keeps its address.
 
 use super::{LinkSpec, Rng};
 use crate::Millis;
