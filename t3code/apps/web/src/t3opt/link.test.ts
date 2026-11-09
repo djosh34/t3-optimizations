@@ -210,7 +210,7 @@ describe("Link", () => {
     // Twelve minutes for the next, and no longer after that.
     for (const peers of [5, 6]) {
       FakePeer.all.at(-1)?.ice("connected");
-      // The connection is up to 15 s old here.
+      // The connection is up to 16 s old here.
       await vi.advanceTimersByTimeAsync(700_000);
       expect(FakePeer.all).toHaveLength(peers - 1);
       await vi.advanceTimersByTimeAsync(25_000);
