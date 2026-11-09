@@ -20,7 +20,8 @@ set -euo pipefail
 repo=djosh34/t3-optimizations
 t3_version=0.1.7
 share="$HOME/.local/share/t3opt"
-config="${XDG_CONFIG_HOME:-$HOME/.config}"
+# The unit files read %h/.config/t3opt/env, so this is not $XDG_CONFIG_HOME.
+config="$HOME/.config"
 units="$config/systemd/user"
 
 assets=""
@@ -117,7 +118,8 @@ EOF
 # 3. Start both, now and after every boot.
 if [ "$(loginctl show-user "$USER" -p Linger --value 2>/dev/null)" != yes ]; then
   say "turning on lingering, so the services run without a login"
-  loginctl enable-linger "$USER" || say "could not; run: sudo loginctl enable-linger $USER"
+  loginctl enable-linger "$USER" ||
+    die "could not; run: sudo loginctl enable-linger $USER, then this script again"
 fi
 systemctl --user daemon-reload
 systemctl --user enable t3opt-server.service t3opt-sidecar.service
