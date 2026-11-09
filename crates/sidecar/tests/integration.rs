@@ -481,7 +481,7 @@ fn sidecar_end_to_end() -> R {
     assert!(succeeded(&reply), "prompt failed: {reply}");
     let mut first = None;
     run_until(
-        "first paragraph",
+        "first finished line",
         Duration::from_secs(60),
         &mut [&mut phone],
         |p| {
@@ -494,7 +494,7 @@ fn sidecar_end_to_end() -> R {
     let first = first.ok_or("no reply text")?;
     assert!(
         first.ends_with('\n'),
-        "the first text is not a whole paragraph: {first:?}"
+        "the first text is not a finished line: {first:?}"
     );
 
     // The approval, answered from the phone.

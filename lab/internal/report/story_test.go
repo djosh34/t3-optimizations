@@ -79,3 +79,16 @@ func TestSummaryKeepsMissingLagApart(t *testing.T) {
 		}
 	}
 }
+
+func TestSummaryOfOnlyFailedRuns(t *testing.T) {
+	got := storySummary(nil, 2)
+	for _, want := range []string{
+		"seeds 1, 2.",
+		"| Reply completed by the deadline | 0/2 | 0/2 |",
+		"| Longest freeze, median / p95 / worst | none measured (2 runs failed) | none measured (2 runs failed) |",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("summary lacks %q:\n%s", want, got)
+		}
+	}
+}

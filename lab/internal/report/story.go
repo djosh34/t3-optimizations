@@ -17,6 +17,10 @@ import (
 // Story runs put the untouched v0.1.7 web client and the t3opt web app side
 // by side on one seed's network story, on one stock t3 server (issue #58).
 
+// StoryClients are the clients of a story run, in report order: the
+// untouched v0.1.7 web client and the t3opt web app.
+var StoryClients = []string{"websocket", "webapp"}
+
 // Targets of the plan, graded on every story run.
 const (
 	// PromptTarget is case 70's: the prompt confirmed within 10 s.
@@ -431,20 +435,22 @@ func StorySummary(dir string, expected int64) error {
 		s.Dir = filepath.Base(filepath.Dir(p))
 		runs = append(runs, s)
 	}
-	if len(runs) == 0 {
+	if len(runs) == 0 && expected == 0 {
 		return fmt.Errorf("no story.json under %s", dir)
 	}
-	slices.SortFunc(runs, func(a, b StoryResult) int { return cmp.Compare(a.Seed, b.Seed) })
 	fmt.Print(storySummary(runs, expected))
 	return nil
 }
 
-// failedRun stands for a seed whose run left no story.json: each client
-// failed, frozen until the deadline.
-func failedRun(seed int64, like StoryResult) StoryResult {
-	r := StoryResult{Seed: seed, DeadlineS: like.DeadlineS}
-	for _, c := range like.Clients {
-		r.Clients = append(r.Clients, StoryClient{Client: c.Client, Status: "run failed", RunS: like.DeadlineS, LongestFreezeS: like.DeadlineS})
+// runFailed is the status of a client whose run left no story.json.
+const runFailed = "run failed"
+
+// failedRun stands for a seed whose run left no story.json: both clients
+// failed, with nothing measured.
+func failedRun(seed int64) StoryResult {
+	r := StoryResult{Seed: seed}
+	for _, c := range StoryClients {
+		r.Clients = append(r.Clients, StoryClient{Client: c, Status: runFailed})
 	}
 	return r
 }
@@ -455,7 +461,7 @@ func storySummary(runs []StoryResult, expected int64) string {
 	for seed := int64(1); seed <= expected; seed++ {
 		if !slices.ContainsFunc(runs, func(r StoryResult) bool { return r.Seed == seed }) {
 			missing = append(missing, fmt.Sprint(seed))
-			runs = append(runs, failedRun(seed, runs[0]))
+			runs = append(runs, failedRun(seed))
 		}
 	}
 	slices.SortFunc(runs, func(a, b StoryResult) int { return cmp.Compare(a.Seed, b.Seed) })
@@ -471,8 +477,8 @@ func storySummary(runs []StoryResult, expected int64) string {
 			commits = append(commits, r.Commit)
 		}
 	}
-	fmt.Fprintf(&b, "%d seeds (%d survival stories), lab commit %s.\n\n", len(runs), survival, strings.Join(commits, ", "))
-	names := clientNames(runs[0].Clients)
+	fmt.Fprintf(&b, "%d seeds (%d survival stories), lab commit %s.\n\n", len(runs), survival, cmp.Or(strings.Join(commits, ", "), "none"))
+	names := StoryClients
 	b.WriteString("| Over all seeds | " + strings.Join(names, " | ") + " |\n|---|" + strings.Repeat("---|", len(names)) + "\n")
 	per := func(i int) []StoryClient {
 		var out []StoryClient
@@ -501,16 +507,6 @@ func storySummary(runs []StoryResult, expected int64) string {
 			return fmt.Sprintf("%d/%d", n, len(cs))
 		}
 	}
-	spread := func(f func(StoryClient) float64) func([]StoryClient) string {
-		return func(cs []StoryClient) string {
-			var v []float64
-			for _, c := range cs {
-				v = append(v, f(c))
-			}
-			maxV, median, p95 := quantiles(v)
-			return fmt.Sprintf("%.1f / %.1f / %.1f s", median, p95, maxV)
-		}
-	}
 	total := func(f func(StoryClient) int) func([]StoryClient) string {
 		return func(cs []StoryClient) string {
 			n := 0
@@ -524,7 +520,7 @@ func storySummary(runs []StoryResult, expected int64) string {
 	row("Prompt confirmed within 10 s (case 70)", share(StoryClient.PromptMet))
 	row("Newest text within 5 s of the server's release (case 50)", share(StoryClient.LagMet))
 	row("Max lag from the server's release, median / p95 / worst", releaseLagSpread)
-	row("Longest freeze, median / p95 / worst", spread(func(c StoryClient) float64 { return c.LongestFreezeS }))
+	row("Longest freeze, median / p95 / worst", freezeSpread)
 	row("Hangs (freezes of 30 s or more)", total(func(c StoryClient) int { return len(c.Hangs) }))
 	row("Reloads", total(func(c StoryClient) int { return c.Reloads }))
 	row("WebSockets opened after the switch (v0.1.7: reconnects; web app: probes)", total(func(c StoryClient) int { return c.WebSocketsOpened }))
@@ -566,6 +562,26 @@ func storySummary(runs []StoryResult, expected int64) string {
 		fmt.Fprintf(&b, "| %s | %s | %s |\n", seed, kind, strings.Join(cells, " | "))
 	}
 	return b.String()
+}
+
+// freezeSpread spreads the longest freezes of the runs that left a report;
+// a failed run measured nothing and is counted instead.
+func freezeSpread(cs []StoryClient) string {
+	var v []float64
+	for _, c := range cs {
+		if c.Status != runFailed {
+			v = append(v, c.LongestFreezeS)
+		}
+	}
+	out := "none measured"
+	if len(v) > 0 {
+		maxV, median, p95 := quantiles(v)
+		out = fmt.Sprintf("%.1f / %.1f / %.1f s", median, p95, maxV)
+	}
+	if n := len(cs) - len(v); n > 0 {
+		out += fmt.Sprintf(" (%d runs failed)", n)
+	}
+	return out
 }
 
 // releaseLagSpread spreads the measured lags. A client the server released

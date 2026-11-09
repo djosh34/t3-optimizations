@@ -107,7 +107,7 @@ func RunStory(ctx context.Context, o StoryOptions) (string, error) {
 		return "", err
 	}
 	fmt.Fprintf(os.Stderr, "lab: story seed %d (%s) in %s\n", o.Seed, p.About, runDir)
-	clients := []string{"websocket", ClientWebapp}
+	clients := report.StoryClients
 	var scenarios []*scenario
 	for i, client := range clients {
 		scenarios = append(scenarios, &scenario{
