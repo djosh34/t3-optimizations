@@ -146,7 +146,6 @@ export class Link {
   /** Only the WebSocket, as asked with `?transport=websocket` or without WebRTC. */
   private wsOnly = false;
   private trying = "starting";
-  /** A channel opened on this page. */
   /** A connection opened on this page, on either transport. */
   private opened = false;
   /** WebRTC carried a channel on this page. */
