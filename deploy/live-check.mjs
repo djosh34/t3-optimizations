@@ -106,7 +106,8 @@ try {
       .locator(`text=/^\\s*${answer}\\.?\\s*$/`)
       .first()
       .waitFor({ timeout: 300_000 });
-    // The thread as t3opt-server lists it (the app's draft URL stays as it was).
+    // The thread in the synced thread list, which the sidecar keeps as
+    // t3opt-server has it (the app's draft URL stays as it was).
     const threads = await page.evaluate(async (title) => {
       const shell = await (await fetch("/api/orchestration/shell")).json();
       const project = shell.projects.find((p) => p.title === title);
