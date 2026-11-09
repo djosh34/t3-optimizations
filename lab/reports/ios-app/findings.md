@@ -56,5 +56,5 @@ These runs were repeated alone with the fork's backed-up threshold set to 0 ms a
 
 - **The gains:** the window gets reply text through on a slow, long-delay link (D), where v0.1.7 shows nothing in 15 minutes. That holds on both seeds and when repeated alone. The fork also shows the first text sooner on rtt3000. On case70 the fork's runs carried fewer wire bytes, with the cause not isolated.
 - **Neutral:** A, B, C, E, case70 (apart from the bytes) and rate100.
-- **The cost, an open trade-off:** about 2 s more to the first text after a 10 s outage. It is reproduced alone, and a 500 ms threshold does not remove it. Removing it means switching the window off (0 ms), which also removes the D gain.
+- **Known regression:** about 2 s more to the first text after a 10 s outage (outage10, 25.1 s and 24.5 s against 22.7 s and 22.9 s, alone). A 500 ms threshold does not remove it. The alternative is the window off (0 ms): 22.4 s and 23.0 s on outage10, the same as v0.1.7, but no reply text on D. The manager kept the window and named this regression ([decision on #47](https://github.com/djosh34/t3-optimizations/issues/47)).
 - **What is unclear:** loss30, case50 and flap vary from run to run more than the servers differ.
