@@ -20,13 +20,23 @@ const DEAD_AFTER_MS = 60_000;
 const DEAD_ICE_UP_MS = 20_000;
 /** A first WebRTC connection whose ICE has not connected by then falls back to the WebSocket. */
 const FALLBACK_AFTER_MS = 20_000;
+/** The same for a later connection, once WebRTC worked on this page: a bad cell is likelier. */
+const FALLBACK_AFTER_WORKED_MS = 180_000;
+/** A connection whose ICE got nothing back is replaced this often: WebKit stops its checks. */
+const REPLACE_UNANSWERED_MS = 60_000;
+/**
+ * A connection whose channel has not opened by then is replaced, ICE up or not; each
+ * replaced in a row gets twice as long, up to 12 minutes: a cold handshake at 70% loss took 234 s.
+ */
+const OPEN_WITHIN_MS = 180_000;
+const OPEN_WITHIN_MAX_MS = 720_000;
 /**
  * Silent this long with ICE down for the last `PROBE_ICE_DOWN_MS`: a WebSocket
- * probe opens. Open and still silent `SWITCH_AFTER_PROBE_MS` later, UDP is blocked
- * and it takes over; in an outage it cannot connect, and ICE recovers first.
+ * probe opens; open and still silent `SWITCH_AFTER_PROBE_MS` later, it takes over.
+ * Long: UDP worked on this page, so a bad cell is likelier than UDP being blocked.
  */
-const PROBE_WS_AFTER_MS = 60_000;
-const PROBE_ICE_DOWN_MS = 40_000;
+const PROBE_WS_AFTER_MS = 180_000;
+const PROBE_ICE_DOWN_MS = 150_000;
 const SWITCH_AFTER_PROBE_MS = 20_000;
 /** WebRTC is tried again this often while it failed to connect. */
 const RTC_RETRY_MS = 10_000;
@@ -144,8 +154,14 @@ export class Link {
   /** Only the WebSocket, as asked with `?transport=websocket` or without WebRTC. */
   private wsOnly = false;
   private trying = "starting";
-  /** A channel opened on this page. */
+  /** A connection opened on this page, on either transport. */
   private opened = false;
+  /** WebRTC carried a channel on this page. */
+  private rtcWorked = false;
+  /** Connections replaced in a row because their channel did not open in time. */
+  private stalls = 0;
+  /** Since when WebRTC connections are tried without a channel opening or ICE getting through. */
+  private rtcTryingSince: number | null = null;
   private readonly startedAt = Date.now();
   private lastRtcTry = 0;
   private iceRestarts = 0;
@@ -296,6 +312,7 @@ export class Link {
     const replaces = old !== null;
     const generation = this.generation + 1;
     this.generation = generation;
+    this.rtcTryingSince ??= Date.now();
     await this.storage.save({ generation });
     if (this.transport === "webrtc") {
       this.set(this.keptAnswer ? "webrtc connecting" : "webrtc signaling");
@@ -327,6 +344,9 @@ export class Link {
       if (this.rtc !== rtc) return;
       this.handshakeMs = Date.now() - rtc.createdAt;
       this.opened = true;
+      this.rtcWorked = true;
+      this.rtcTryingSince = null;
+      this.stalls = 0;
       if (this.transport === "websocket") {
         // WebRTC works again: it takes over from the WebSocket.
         const ws = this.ws;
@@ -350,6 +370,8 @@ export class Link {
         rtc.iceUpSince ??= Date.now();
         rtc.iceDownSince = null;
         rtc.iceEverUp = true;
+        // UDP gets through: the wait for blocked UDP starts again.
+        this.rtcTryingSince = null;
       } else {
         rtc.iceDownSince ??= Date.now();
         if (rtc.iceUpSince !== null) rtc.iceUpInSilenceMs += Date.now() - rtc.iceUpSince;
@@ -469,19 +491,33 @@ export class Link {
     }
   }
 
+  /** How long a connection whose ICE never got through is waited for. */
+  private fallbackAfter(): number {
+    return this.rtcWorked ? FALLBACK_AFTER_WORKED_MS : FALLBACK_AFTER_MS;
+  }
+
+  /** The connection's channel has not opened in time: its handshake stalled. */
+  private stalled(rtc: Rtc, now: number): boolean {
+    return now - rtc.createdAt >= Math.min(OPEN_WITHIN_MS * 2 ** this.stalls, OPEN_WITHIN_MAX_MS);
+  }
+
   private async step(now: number): Promise<void> {
     if (this.transport === "websocket") {
       // The WebSocket runs over TCP; a closed one is opened again.
       if (this.ws === null) this.openWebSocket();
+      // A retry is replaced when its channel closed, its ICE got nothing back, or
+      // its handshake stalled: the WebSocket carries the packets.
       const probe = this.rtc;
-      if (
-        probe !== null &&
-        probe.dc.readyState !== "open" &&
-        !probe.iceEverUp &&
-        now - probe.createdAt > FALLBACK_AFTER_MS
-      ) {
-        probe.pc.close();
-        this.rtc = null;
+      if (probe !== null && probe.dc.readyState !== "open") {
+        const replaceAfter = this.rtcWorked ? REPLACE_UNANSWERED_MS : FALLBACK_AFTER_MS;
+        const unanswered = !probe.iceEverUp && now - probe.createdAt >= replaceAfter;
+        const closed = probe.dc.readyState === "closed";
+        const stalled = !closed && !unanswered && this.stalled(probe, now);
+        if (closed || unanswered || stalled) {
+          if (stalled) this.stalls += 1;
+          probe.pc.close();
+          this.rtc = null;
+        }
       }
       if (!this.wsOnly && this.rtc === null && now - this.lastRtcTry >= RTC_RETRY_ON_WS_MS) {
         this.tryRtc();
@@ -497,10 +533,11 @@ export class Link {
         ? !this.opened && now - this.startedAt > FALLBACK_AFTER_MS
         : pending.dc.readyState !== "open" &&
           !pending.iceEverUp &&
-          now - pending.createdAt > FALLBACK_AFTER_MS;
+          now - (this.rtcTryingSince ?? pending.createdAt) > this.fallbackAfter();
     if (blocked) {
       this.rtc?.pc.close();
       this.rtc = null;
+      this.rtcTryingSince = null;
       this.lastRtcTry = now;
       this.openWebSocket();
       return;
@@ -518,7 +555,18 @@ export class Link {
       this.tryRtc();
       return;
     }
-    // A new connection's handshake can take minutes at heavy loss.
+    // A new connection's handshake can take minutes at heavy loss, but in a
+    // lab story one never finished after the link came back.
+    if (rtc.dc.readyState !== "open") {
+      const unanswered =
+        this.rtcWorked && !rtc.iceEverUp && now - rtc.createdAt >= REPLACE_UNANSWERED_MS;
+      const stalled = !unanswered && this.stalled(rtc, now);
+      if (unanswered || stalled) {
+        if (stalled) this.stalls += 1;
+        this.tryRtc();
+        return;
+      }
+    }
     if (rtc.dc.readyState !== "open") return;
     const silentFor = now - (this.lastDataAt ?? rtc.createdAt);
     if (silentFor < RESTART_AFTER_MS) return;

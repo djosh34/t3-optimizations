@@ -137,3 +137,19 @@ fn the_send_rate_does_not_decay_at_70_percent_loss() {
     // The link takes 12.5 kB/s after loss; it sends at least that.
     assert!(late >= 12_500.0, "rate {late:.0} B/s");
 }
+
+/// Network stories that broke once: each seed is a bug that was fixed.
+#[test]
+fn stories_that_broke_hold() {
+    // 18 and 69: after a gap of more than a minute the server had forgotten
+    // what its unacked packets carried, so late acks could not mark their
+    // bytes stored, and they went out again.
+    for seed in [18, 69] {
+        let o = simulate("story", &Scenario::story(seed));
+        assert!(
+            o.prompt_confirmed_ms[0].is_some(),
+            "seed {seed}: prompt never confirmed"
+        );
+        assert!(o.reply_done_ms.is_some(), "seed {seed}: reply never whole");
+    }
+}

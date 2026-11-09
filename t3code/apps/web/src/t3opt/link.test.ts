@@ -66,6 +66,8 @@ class FakeSocket {
 }
 
 function setup() {
+  // An earlier test's link still steps on the shared fake clock.
+  vi.clearAllTimers();
   FakePeer.all = [];
   FakeSocket.all = [];
   vi.stubGlobal("RTCPeerConnection", FakePeer);
@@ -111,13 +113,109 @@ describe("Link", () => {
     // ICE notices a few seconds after the last packet.
     await vi.advanceTimersByTimeAsync(5_000);
     peer.ice("disconnected");
-    await vi.advanceTimersByTimeAsync(70_000);
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(FakeSocket.all).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(130_000);
     const probe = FakeSocket.all[0];
     expect(probe).toBeDefined();
     probe?.open();
     await vi.advanceTimersByTimeAsync(25_000);
     expect(link.info().transport).toBe("websocket");
     expect(peer.closed).toBe(true);
+  });
+
+  it("gives a later connection three minutes before calling UDP blocked", async () => {
+    const { link, peer } = await openLink();
+    // The channel closes; its replacement never gets ICE through, as at 70% loss.
+    peer.channel.readyState = "closed";
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(FakePeer.all).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(link.info().transport).toBe("webrtc");
+    // WebKit stops sending unanswered checks: a fresh connection every minute.
+    await vi.advanceTimersByTimeAsync(31_000);
+    expect(FakePeer.all).toHaveLength(3);
+    expect(FakePeer.all[1]?.closed).toBe(true);
+    // The three minutes count from the first try, not the newest connection.
+    await vi.advanceTimersByTimeAsync(119_000);
+    expect(link.info().transport).toBe("websocket");
+    // WebRTC is tried again from the WebSocket, a fresh connection every minute.
+    const before = FakePeer.all.length;
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(FakePeer.all).toHaveLength(before + 1);
+    const retry = FakePeer.all.at(-1);
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(retry?.closed).toBe(false);
+    await vi.advanceTimersByTimeAsync(32_000);
+    expect(retry?.closed).toBe(true);
+    expect(FakePeer.all).toHaveLength(before + 2);
+  });
+
+  it("starts the wait for blocked UDP again once ICE got through", async () => {
+    const { link, peer } = await openLink();
+    peer.channel.readyState = "closed";
+    await vi.advanceTimersByTimeAsync(2_000);
+    // ICE gets through on the new connection, its channel never opens, and
+    // three minutes later it closes.
+    const second = FakePeer.all[1];
+    if (!second) throw new Error("no second connection");
+    second.ice("connected");
+    await vi.advanceTimersByTimeAsync(180_000);
+    second.channel.readyState = "closed";
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(FakePeer.all).toHaveLength(3);
+    expect(link.info().transport).toBe("webrtc");
+  });
+
+  it("replaces a retry from the WebSocket whose channel closed or never opened", async () => {
+    const link = setup();
+    await link.start();
+    // UDP blocked from the start: the WebSocket after 20 s.
+    await vi.advanceTimersByTimeAsync(21_000);
+    expect(link.info().transport).toBe("websocket");
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(FakePeer.all).toHaveLength(2);
+    const retry = FakePeer.all[1];
+    if (!retry) throw new Error("no retry");
+    // ICE gets through, the handshake does not, and the channel closes.
+    retry.ice("connected");
+    retry.channel.readyState = "closed";
+    await vi.advanceTimersByTimeAsync(61_000);
+    expect(FakePeer.all).toHaveLength(3);
+    // ICE gets through on the next, and its channel never opens.
+    FakePeer.all[2]?.ice("connected");
+    await vi.advanceTimersByTimeAsync(181_000);
+    expect(FakePeer.all).toHaveLength(4);
+  });
+
+  it("replaces a connection whose handshake stalled after ICE got through", async () => {
+    const { peer } = await openLink();
+    peer.channel.readyState = "closed";
+    await vi.advanceTimersByTimeAsync(2_000);
+    const second = FakePeer.all[1];
+    if (!second) throw new Error("no second connection");
+    second.ice("connected");
+    // At heavy loss a handshake takes minutes: it is waited for.
+    await vi.advanceTimersByTimeAsync(170_000);
+    expect(FakePeer.all).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(FakePeer.all).toHaveLength(3);
+    expect(second.closed).toBe(true);
+    // The next stalls too: it gets twice as long, six minutes.
+    FakePeer.all[2]?.ice("connected");
+    await vi.advanceTimersByTimeAsync(350_000);
+    expect(FakePeer.all).toHaveLength(3);
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(FakePeer.all).toHaveLength(4);
+    // Twelve minutes for the next, and no longer after that.
+    for (const peers of [5, 6]) {
+      FakePeer.all.at(-1)?.ice("connected");
+      // The connection is up to 16 s old here.
+      await vi.advanceTimersByTimeAsync(700_000);
+      expect(FakePeer.all).toHaveLength(peers - 1);
+      await vi.advanceTimersByTimeAsync(25_000);
+      expect(FakePeer.all).toHaveLength(peers);
+    }
   });
 
   it("stays on WebRTC in an outage, where the probe cannot connect", async () => {

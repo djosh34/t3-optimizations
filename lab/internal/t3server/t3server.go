@@ -1,10 +1,11 @@
-// Package t3server runs the lab's throwaway t3 server: the forked server from
-// t3code/, with its own base dir, a home dir of its own, and the fake agent as
-// its only provider.
+// Package t3server runs the lab's throwaway t3 server: the stock v0.1.7 server
+// from t3code/, with its own base dir, a home dir of its own, and the fake
+// agent as its only provider. It serves no web client; the lab front does.
 package t3server
 
 import (
 	"bufio"
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -36,8 +37,8 @@ type Config struct {
 	RunDir string
 	// LabExe is the lab binary, which the server starts as the fake agent.
 	LabExe string
-	// StaticDir is the web client build the server serves; empty serves none.
-	StaticDir string
+	// Host is the address the server listens on; empty is 127.0.0.1.
+	Host string
 	// Node is the node binary that runs the server.
 	Node           string
 	CharsPerSecond int
@@ -89,7 +90,7 @@ func Start(ctx context.Context, cfg Config) (*Server, error) {
 		return nil, err
 	}
 	cmd := u.Command(ctx, cfg.NS, s.env(), s.work, cfg.Node, s.bin(),
-		"serve", "--base-dir", s.baseDir, "--port", strconv.Itoa(Port), "--host", "127.0.0.1")
+		"serve", "--base-dir", s.baseDir, "--port", strconv.Itoa(Port), "--host", cmp.Or(cfg.Host, "127.0.0.1"))
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, errors.Join(err, log.Close())
@@ -139,16 +140,12 @@ func (s *Server) CLI() []string { return []string{s.cfg.Node, s.bin()} }
 // them and a home dir of the server's own. PATH has node's directory for the
 // server's own child processes.
 func (s *Server) env() []string {
-	env := []string{
+	return []string{
 		"HOME=" + s.home,
 		"PATH=" + filepath.Dir(s.cfg.Node) + ":/usr/bin:/bin",
 		"LANG=C.UTF-8",
 		"T3CODE_NO_BROWSER=true",
 	}
-	if s.cfg.StaticDir != "" {
-		env = append(env, "T3CODE_STATIC_DIR="+s.cfg.StaticDir)
-	}
-	return env
 }
 
 // settings turns off the providers that are on by default, so no prompt can
@@ -197,31 +194,41 @@ func (s *Server) Setup(ctx context.Context, origin string) (threadID, pairURL st
 	if _, err := s.cli(ctx, "project", "add", "--base-dir", s.baseDir, s.work); err != nil {
 		return "", "", err
 	}
-	out, err := s.cli(ctx, "thread", "start", "--base-dir", s.baseDir, "--provider", "lab", "--model", agent.Model,
-		"--title", "Lab thread", "--json", "--wait", s.work, agent.WarmupPrompt)
+	threadID, err = s.StartThread(ctx, "Lab thread")
 	if err != nil {
 		return "", "", err
+	}
+	out, err := s.cli(ctx, "auth", "pairing", "create", "--base-dir", s.baseDir, "--base-url", origin, "--ttl", "1h", "--label", "lab-phone")
+	if err != nil {
+		return "", "", err
+	}
+	for _, line := range strings.Split(out, "\n") {
+		if url, ok := strings.CutPrefix(line, "Pair URL: "); ok {
+			return threadID, strings.TrimSpace(url), nil
+		}
+	}
+	return "", "", fmt.Errorf("no pairing URL in %q", out)
+}
+
+// StartThread starts a thread in the lab's project, after Setup, with one
+// short warm-up turn, and returns its id.
+func (s *Server) StartThread(ctx context.Context, title string) (string, error) {
+	out, err := s.cli(ctx, "thread", "start", "--base-dir", s.baseDir, "--provider", "lab", "--model", agent.Model,
+		"--title", title, "--json", "--wait", s.work, agent.WarmupPrompt)
+	if err != nil {
+		return "", err
 	}
 	var started struct {
 		ThreadID string `json:"threadId"`
 		Status   string `json:"status"`
 	}
 	if err := json.Unmarshal([]byte(lastLines(out, 1)), &started); err != nil {
-		return "", "", fmt.Errorf("parse thread start output %q: %w", out, err)
+		return "", fmt.Errorf("parse thread start output %q: %w", out, err)
 	}
 	if started.Status != "completed" {
-		return "", "", fmt.Errorf("warm-up turn ended %q", started.Status)
+		return "", fmt.Errorf("warm-up turn ended %q", started.Status)
 	}
-	out, err = s.cli(ctx, "auth", "pairing", "create", "--base-dir", s.baseDir, "--base-url", origin, "--ttl", "1h", "--label", "lab-phone")
-	if err != nil {
-		return "", "", err
-	}
-	for _, line := range strings.Split(out, "\n") {
-		if url, ok := strings.CutPrefix(line, "Pair URL: "); ok {
-			return started.ThreadID, strings.TrimSpace(url), nil
-		}
-	}
-	return "", "", fmt.Errorf("no pairing URL in %q", out)
+	return started.ThreadID, nil
 }
 
 // PairingCode mints a one-time pairing code with `t3 pair`.

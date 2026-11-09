@@ -15,7 +15,7 @@
 //! number down; `gap` counts the missing numbers between two ranges.
 
 use std::fmt;
-use std::io::{Read, Write};
+use std::io::Read;
 use std::ops::Range;
 
 /// Format version, in the high nibble of the first byte.
@@ -481,24 +481,7 @@ fn decode_chunk(r: &mut Reader) -> Result<Chunk, DecodeError> {
     })
 }
 
-/// Brotli quality and window. On 1 KB chunks of English text, quality 9
-/// output is about 1% smaller than quality 5 and 6% smaller than quality 4
-/// (measured on this repo's READMEs); in the simulator, quality 9 also gave
-/// the steadier case 50 lag.
-const BROTLI_QUALITY: u32 = 9;
-const BROTLI_WINDOW: u32 = 16;
-
-/// Compresses `raw` with Brotli's built-in dictionary only. None when that
-/// does not make it smaller.
-pub fn compress(raw: &[u8]) -> Option<Vec<u8>> {
-    let mut out = Vec::with_capacity(raw.len());
-    {
-        let mut w = brotli::CompressorWriter::new(&mut out, 4096, BROTLI_QUALITY, BROTLI_WINDOW);
-        w.write_all(raw).ok()?;
-        w.flush().ok()?;
-    }
-    (out.len() < raw.len()).then_some(out)
-}
+pub use crate::compress::compress;
 
 fn decompress(bytes: &[u8], raw_len: u64) -> Result<Vec<u8>, DecodeError> {
     let mut out = Vec::new();

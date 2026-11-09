@@ -1,4 +1,4 @@
-//! The sidecar: connects a forked t3 server to phones over the sync
+//! The sidecar: connects a t3 server to phones over the sync
 //! protocol (`sync-core`) on the WebRTC data channel (`pipe`), with a
 //! WebSocket fallback. See `crates/sidecar/README.md`.
 

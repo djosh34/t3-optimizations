@@ -1,7 +1,7 @@
-//! The sidecar against a throwaway forked t3 server, with native phones
+//! The sidecar against a throwaway stock t3 server, with native phones
 //! over the real data channel.
 //!
-//! Each test starts the forked server from `t3code/` with a fresh temp
+//! Each test starts the stock v0.1.7 server from `t3code/` with a fresh temp
 //! `--base-dir` and the lab's scripted agent as its only provider, the
 //! sidecar binary, and a UDP relay between phone and sidecar that can cut
 //! the link. They need node with t3code's dependencies installed (`make
@@ -90,7 +90,7 @@ fn free_udp_port() -> R<u16> {
     Ok(UdpSocket::bind("127.0.0.1:0")?.local_addr()?.port())
 }
 
-/// The forked t3 server with the lab's agent.
+/// The stock t3 server with the lab's agent.
 struct T3 {
     _proc: Proc,
     base: PathBuf,
@@ -473,35 +473,29 @@ fn sidecar_end_to_end() -> R {
     let (mut setup, mut phone) = Setup::start()?;
     let thread = setup.thread.clone();
 
-    // A prompt: confirmed, and the reply streams as raw partial text.
+    // A prompt: confirmed, and the reply streams as t3 releases it: whole
+    // lines, as t3 holds an unfinished one back.
     let warm: Vec<String> = assistant_texts(&phone, &thread);
     let seq = phone.command(&prompt_command(&thread, MEASURED_PROMPT)?);
     let reply = wait_reply("prompt confirmed", &mut phone, seq, Duration::from_secs(30))?;
     assert!(succeeded(&reply), "prompt failed: {reply}");
-    let mut partial = None;
+    let mut first = None;
     run_until(
-        "partial paragraph",
+        "first finished line",
         Duration::from_secs(60),
         &mut [&mut phone],
         |p| {
-            for text in assistant_texts(p[0], &thread) {
-                // The first paragraph of the reply is about 500 characters; t3
-                // stores none of it until it ends.
-                if !warm.contains(&text)
-                    && (20..400).contains(&text.len())
-                    && !text.contains("\n\n")
-                {
-                    partial = Some(text);
-                    return true;
-                }
-            }
-            false
+            first = assistant_texts(p[0], &thread)
+                .into_iter()
+                .find(|t| !t.is_empty() && !warm.contains(t));
+            first.is_some()
         },
     )?;
-    log(format!(
-        "partial text while the paragraph is open: {:?}",
-        partial
-    ));
+    let first = first.ok_or("no reply text")?;
+    assert!(
+        first.ends_with('\n'),
+        "the first text is not a finished line: {first:?}"
+    );
 
     // The approval, answered from the phone.
     let mut request = None;

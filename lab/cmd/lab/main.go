@@ -26,6 +26,8 @@ import (
 const usage = `usage:
   sudo ./bin/lab run --profile <name> --seed <n> --client <client> [flags]
   sudo ./bin/lab webapp-e2e [--outage 20s] [--seed n]   the web app end to end
+  sudo ./bin/lab story --seed <n>   both web clients side by side on a seed's network story
+  ./bin/lab story-summary [--seeds n] <reports dir>
   sudo ./bin/lab cleanup
   ./bin/lab profiles
   ./bin/lab summary <reports dir>
@@ -60,6 +62,18 @@ func dispatch(ctx context.Context, cmd string, args []string) error {
 		return runCmd(ctx, args)
 	case "webapp-e2e":
 		return webappE2ECmd(ctx, args)
+	case "story":
+		return storyCmd(ctx, args)
+	case "story-summary":
+		fs := flag.NewFlagSet("story-summary", flag.ContinueOnError)
+		seeds := fs.Int64("seeds", 0, "seeds 1 to this were run; a missing one counts as failed")
+		if err := fs.Parse(args); err != nil {
+			return err
+		}
+		if fs.NArg() != 1 {
+			return errors.New("usage: lab story-summary [--seeds n] <reports dir>")
+		}
+		return report.StorySummary(fs.Arg(0), *seeds)
 	case "cleanup":
 		return netlab.Cleanup(ctx)
 	case "profiles":
@@ -153,6 +167,42 @@ func runCmd(ctx context.Context, args []string) error {
 	return nil
 }
 
+func storyCmd(ctx context.Context, args []string) error {
+	fs := flag.NewFlagSet("story", flag.ContinueOnError)
+	seed := fs.Int64("seed", 1, "the story's seed; lab/bin/story <seed> prints the story")
+	out := fs.String("out", "", "directory for the run (default lab/reports/runs)")
+	node := fs.String("node", "", "node binary for the t3 server (default: node on root's PATH)")
+	runName := fs.String("name", "", "the run's directory under --out (default s<seed>)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	var err error
+	if *node == "" {
+		if *node, err = exec.LookPath("node"); err != nil {
+			return fmt.Errorf("no node on PATH; pass --node: %w", err)
+		}
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	labDir := filepath.Dir(filepath.Dir(exe))
+	if *out == "" {
+		*out = filepath.Join(labDir, "reports", "runs")
+	}
+	if *out, err = filepath.Abs(*out); err != nil {
+		return err
+	}
+	headline, err := run.RunStory(ctx, run.StoryOptions{
+		Seed: *seed, OutDir: *out, Name: *runName, LabDir: labDir, LabExe: exe, Node: *node,
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Println(headline)
+	return nil
+}
+
 func webappE2ECmd(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("webapp-e2e", flag.ContinueOnError)
 	seed := fs.Int64("seed", 1, "seed for netem")
@@ -219,10 +269,11 @@ func frontCmd(ctx context.Context, args []string) error {
 	listen := fs.String("listen", ":8443", "TLS address")
 	upstream := fs.String("upstream", "", "t3 server address")
 	noDeflate := fs.Bool("no-deflate", false, "remove the WebSocket compression offer")
+	clientDir := fs.String("client-dir", "", "web client build to serve")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	return front.Serve(ctx, front.Config{Listen: *listen, Upstream: *upstream, NoDeflate: *noDeflate})
+	return front.Serve(ctx, front.Config{Listen: *listen, Upstream: *upstream, NoDeflate: *noDeflate, ClientDir: *clientDir})
 }
 
 func tunnelCmd(ctx context.Context, args []string) error {

@@ -60,7 +60,7 @@ func sidecarBinaries(labDir string, webapp bool) (sidecar, native, web string, e
 	return sidecar, native, web, nil
 }
 
-// executeSidecar runs a t3 scenario through the sidecar: the forked server
+// executeSidecar runs a t3 scenario through the sidecar: the stock t3 server
 // and the sidecar in the server namespace, the native phone or the web app
 // (webDir set) in the phone container.
 func (s *scenario) executeSidecar(parent context.Context, repo, phoneDir, sidecarBin, nativeBin, webDir string) (in report.Input, err error) {

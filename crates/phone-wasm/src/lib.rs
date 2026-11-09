@@ -199,7 +199,8 @@ pub fn encode_object(phone: &Phone, id: u64) -> Option<Vec<u8>> {
 /// The stats as numbers: send rate and delivered rate (wire bytes per
 /// second), loss (0 to 1), smoothed and lowest RTT (ms), packets and wire
 /// bytes sent and received, when the server was last heard (ms), unsynced
-/// bytes, packets in flight, and bytes handed to the app twice.
+/// bytes, unacked packets (also those presumed lost), and bytes handed to
+/// the app twice.
 pub fn stats_values(phone: &Phone, duplicates: u64) -> [f64; 13] {
     let s = phone.stats();
     [

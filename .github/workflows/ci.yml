@@ -7,13 +7,30 @@ on:
       - main
   # The slow jobs, t3code's tests and lab-smoke, run only when started by
   # hand: for a change that needs their signal, and before the release.
+  # With `stories`, a dispatch runs the network stories instead (issue #58):
+  # each seed draws a few minutes of a 2G-like link
+  # (crates/sync-core/src/sim/story.rs). The lab runs its seeds on the real
+  # stack, the untouched v0.1.7 web client and the t3opt web app side by
+  # side on one stock t3 server; the simulator runs its seeds on the sync
+  # protocol alone. Each lab seed and each simulator shard is its own job.
   workflow_dispatch:
+    inputs:
+      stories:
+        description: Run the network stories instead of the slow jobs
+        type: boolean
+        default: false
+      lab-seeds:
+        description: Story lab seeds, 1 to this
+        default: "50"
+      sim-seeds:
+        description: Story simulator seeds, 1 to this
+        default: "100000"
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.sha }}
+  group: ci-${{ github.event.pull_request.number || github.sha }}-${{ inputs.stories }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -79,7 +96,7 @@ jobs:
       - run: vp run -r typecheck
 
   t3code:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && !inputs.stories
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     defaults:
@@ -97,14 +114,19 @@ jobs:
       # The web and server tests drive headless Chromium.
       - run: node apps/web/node_modules/playwright/cli.js install --with-deps --only-shell chromium
       - run: vp run --filter @t3tools/web test
-      - run: vp run --filter t3 test
+      # The server is plain v0.1.7. One of its tests fails only because the
+      # runner's git 2.56 words a broken .git file differently ("gitfile does
+      # not point to a valid repository") than the git it was written for;
+      # it is skipped by name, and the server's code stays as released.
+      - run: vp test run -t '^(?!.*compares the checked-out branch without a full status)'
+        working-directory: t3code/apps/server
 
   # Three short chaos lab runs of the baseline client, one of the pipe, one
   # of the sidecar and one of the web app, with the same setup as on the VM:
-  # netem namespaces, the forked t3 server, WebKit in docker. Then the
+  # netem namespaces, the stock t3 server, WebKit in docker. Then the
   # sidecar's tests that need node, Go and docker.
   lab-smoke:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && !inputs.stories
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -123,7 +145,7 @@ jobs:
       - name: tc from iproute2 6.14
         run: |
           sudo apt-get install -y --no-install-recommends libmnl-dev libelf-dev bison flex
-          curl -fsSL https://mirrors.edge.kernel.org/pub/linux/utils/net/iproute2/iproute2-6.14.0.tar.xz | tar -xJ -C "$RUNNER_TEMP"
+          curl -fsSL --retry 5 https://mirrors.edge.kernel.org/pub/linux/utils/net/iproute2/iproute2-6.14.0.tar.xz | tar -xJ -C "$RUNNER_TEMP"
           cd "$RUNNER_TEMP/iproute2-6.14.0"
           ./configure
           make -j4 SUBDIRS="lib tc netem"
@@ -194,3 +216,180 @@ jobs:
             lab/reports/runs/ci/*/*.jsonl
             lab/reports/runs/ci/*/phone/*.png
             crates/target/webkit-transport/*.png
+
+  story-build:
+    if: github.event_name == 'workflow_dispatch' && inputs.stories
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    outputs:
+      lab-seeds: ${{ steps.seeds.outputs.lab }}
+      sim-shards: ${{ steps.seeds.outputs.sim }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # The baseline client is built from the commit that vendored v0.1.7.
+          fetch-depth: 0
+      # 20 simulator shards.
+      - id: seeds
+        env:
+          LAB_SEEDS: ${{ inputs.lab-seeds }}
+        run: |
+          echo "lab=$(jq -cn --argjson n "$LAB_SEEDS" '[range(1; $n + 1)]')" >> "$GITHUB_OUTPUT"
+          echo "sim=$(jq -cn '[range(0; 20)]')" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: lab/go.mod
+          cache-dependency-path: lab/go.mod
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: t3code/package.json
+      - run: npm i -g vite-plus@1.4.0
+      - run: vp install
+        working-directory: t3code
+      - run: scripts/unset-hooks-path.sh
+      - run: rustup toolchain install
+        working-directory: crates
+      - run: lab/scripts/build-baseline-client.sh
+      - run: lab/scripts/build-sidecar.sh
+      - run: lab/scripts/build-webapp.sh
+      - run: go build -o bin/lab ./cmd/lab
+        working-directory: lab
+      - run: cargo build --release -p sync-core --example stories
+        working-directory: crates
+      # Ubuntu 24.04's tc (iproute2 6.1) has no netem seed; the VM has 6.14.
+      # Built once here, so the lab jobs do not each fetch it.
+      - name: tc from iproute2 6.14
+        run: |
+          sudo apt-get install -y --no-install-recommends libmnl-dev libelf-dev bison flex
+          curl -fsSL --retry 5 https://mirrors.edge.kernel.org/pub/linux/utils/net/iproute2/iproute2-6.14.0.tar.xz | tar -xJ -C "$RUNNER_TEMP"
+          cd "$RUNNER_TEMP/iproute2-6.14.0"
+          ./configure
+          make -j4 SUBDIRS="lib tc netem"
+          mkdir -p "$GITHUB_WORKSPACE/lab/bin/tc"
+          cp tc/tc netem/*.dist "$GITHUB_WORKSPACE/lab/bin/tc/"
+      # A tar keeps the binaries' modes, which artifacts drop.
+      - run: |
+          cp -r ~/.cache/t3lab/baseline-client-* lab/bin/
+          cp crates/target/release/examples/stories lab/bin/stories
+          tar -cf bin.tar lab/bin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin
+          path: bin.tar
+          retention-days: 7
+
+  story-lab:
+    needs: story-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: ${{ fromJSON(needs.story-build.outputs.lab-seeds) }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: t3code/package.json
+      # The stock server runs from t3code/ with its dependencies.
+      - run: npm i -g vite-plus@1.4.0
+      - run: vp install
+        working-directory: t3code
+      - run: scripts/unset-hooks-path.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: bin
+      - run: |
+          tar -xf bin.tar
+          mkdir -p ~/.cache/t3lab
+          mv lab/bin/baseline-client-* ~/.cache/t3lab/
+          sudo install lab/bin/tc/tc /usr/local/sbin/tc
+          sudo install -D -m 644 -t /usr/lib/tc lab/bin/tc/*.dist
+          sudo tc -V
+      - name: Story run
+        working-directory: lab
+        run: |
+          sudo ./bin/lab story --node "$(command -v node)" --seed ${{ matrix.seed }} --out reports/stories
+          cat reports/stories/s${{ matrix.seed }}/story.md
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: story-s${{ matrix.seed }}
+          path: |
+            lab/reports/stories/*/story.*
+            lab/reports/stories/*/story-input.json
+            lab/reports/stories/*/*.jsonl
+            lab/reports/stories/*/*.log
+            lab/reports/stories/*/*/report.*
+            lab/reports/stories/*/*/*.jsonl
+            lab/reports/stories/*/*/*.log
+            lab/reports/stories/*/*/phone/*.png
+
+  story-sim:
+    needs: story-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.story-build.outputs.sim-shards) }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: bin
+      # Shard k of 20 runs its share of seeds 1 to sim-seeds; a broken
+      # seed fails the job and is named in its log.
+      - env:
+          SIM_SEEDS: ${{ inputs.sim-seeds }}
+        run: |
+          tar -xf bin.tar
+          n=$SIM_SEEDS
+          per=$(( (n + 20 - 1) / 20 ))
+          from=$(( ${{ matrix.shard }} * per + 1 ))
+          to=$(( from + per - 1 < n ? from + per - 1 : n ))
+          lab/bin/stories run "$from" "$to" "sim-${{ matrix.shard }}.csv"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sim-${{ matrix.shard }}
+          path: sim-${{ matrix.shard }}.csv
+
+  story-summary:
+    needs: [story-build, story-lab, story-sim]
+    if: always() && needs.story-build.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: bin
+      - run: tar -xf bin.tar
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: story-s*
+          path: stories
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: sim-*
+          path: sim
+          merge-multiple: true
+      - env:
+          LAB_SEEDS: ${{ inputs.lab-seeds }}
+        run: |
+          {
+            echo "# Lab: both web clients on each seed's story"
+            echo
+            lab/bin/lab story-summary --seeds "$LAB_SEEDS" stories
+            echo
+            echo "# Simulator: the sync protocol alone"
+            echo
+            lab/bin/stories summary sim/*.csv
+          } | tee README.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stories-report
+          path: |
+            README.md
+            stories
+            sim

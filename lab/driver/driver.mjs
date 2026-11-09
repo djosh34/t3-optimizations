@@ -76,7 +76,13 @@ function parseFrames(text) {
   }
 }
 
+// After the switch, a page load is a reload: the client lost its state.
+let switched = false;
+
 function watchSockets(page) {
+  page.on("load", () => {
+    if (switched) emit("page-load");
+  });
   page.on("websocket", (ws) => {
     emit("ws-open");
     ws.on("close", () => emit("ws-close"));
@@ -238,6 +244,16 @@ async function watchWebapp(page) {
   }
 }
 
+// The web app's transport and connection generation, each time either
+// changes: a WebSocket here is the fallback, over TCP.
+let lastLink = "";
+async function watchTransport(page) {
+  const link = await page.evaluate(() => window.t3opt?.engine?.status().link ?? null);
+  if (link === null || `${link.transport} ${link.generation}` === lastLink) return;
+  lastLink = `${link.transport} ${link.generation}`;
+  emit("transport", { name: link.transport, n: link.generation });
+}
+
 async function webappBytes(page) {
   return page.evaluate(() => {
     const status = window.t3opt?.engine?.status();
@@ -337,6 +353,7 @@ const go = await nextCommand();
 if (go !== "go") {
   emit("note", { text: `expected go, got ${go}` });
 }
+switched = true;
 stats.rxBytes = 0;
 stats.txBytes = 0;
 const webappStart = cfg.webapp
@@ -399,6 +416,7 @@ let streamingShot = false;
 while (!stopping) {
   try {
     if (cfg.webapp) await untilStop(watchWebapp(page));
+    if (cfg.webapp) await untilStop(watchTransport(page));
     await untilStop(enterAgainIfIgnored(page));
     const n = await untilStop(sampleText(page));
     if (typeof n === "number" && n !== shown) {

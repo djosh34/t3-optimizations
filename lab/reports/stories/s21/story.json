@@ -1,0 +1,85 @@
+{
+  "seed": 21,
+  "survival": true,
+  "commit": "9c461bdca554",
+  "deadlineS": 300,
+  "load": {
+    "cpus": 4,
+    "meanLoad1": 4.1654098360655745,
+    "maxLoad1": 5.05,
+    "minMemAvailMB": 12241
+  },
+  "clients": [
+    {
+      "client": "websocket",
+      "status": "not done by deadline",
+      "runS": 300,
+      "promptConfirmationS": null,
+      "timeToFirstTextS": null,
+      "completeS": null,
+      "maxReleaseLagS": null,
+      "maxAgentLagS": null,
+      "longestFreezeS": 298.303,
+      "hangs": [
+        {
+          "atS": 0,
+          "forS": 298.303,
+          "ended": false
+        }
+      ],
+      "reloads": 0,
+      "webSocketsOpened": 1
+    },
+    {
+      "client": "webapp",
+      "status": "not done by deadline",
+      "runS": 300,
+      "promptConfirmationS": 33.882,
+      "timeToFirstTextS": 294.876,
+      "completeS": null,
+      "maxReleaseLagS": 256.775,
+      "maxAgentLagS": 265.912,
+      "longestFreezeS": 256.7,
+      "hangs": [
+        {
+          "atS": 38.2,
+          "forS": 256.7,
+          "ended": true
+        }
+      ],
+      "reloads": 0,
+      "webSocketsOpened": 0,
+      "transports": [
+        "webrtc",
+        "webrtc",
+        "webrtc"
+      ]
+    }
+  ],
+  "phases": [
+    "gap@0",
+    "survival@5",
+    "survival@11",
+    "survival@17",
+    "survival@22",
+    "survival@29",
+    "gap@33",
+    "survival@47",
+    "survival@54",
+    "gap@57",
+    "gap@64",
+    "survival@81",
+    "survival@84",
+    "survival@87",
+    "survival@95",
+    "survival@98",
+    "survival@103",
+    "survival@108",
+    "survival@113",
+    "survival@116",
+    "survival@123",
+    "survival@128",
+    "gap@132",
+    "back@185"
+  ]
+}

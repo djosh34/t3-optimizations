@@ -4,7 +4,7 @@
 //! - `GET /...`: the web app's files from `--web-dir`; paths without a file
 //!   get `index.html`.
 //! - `POST /api/pair` `{"code": "<pairing code>"}`: exchanges a code from
-//!   the forked server's `t3 pair` with that server, then answers with a new
+//!   the t3 server's `t3 pair` with that server, then answers with a new
 //!   device id and its 128-bit token (hex). Issue #30.
 //! - `POST /api/rtc/offer`, bearer token: an SDP offer in, the answer out.
 //!   Only the first connection of a phone needs it.
@@ -70,7 +70,7 @@ pub enum WsEvent {
 pub struct HttpConfig {
     pub listen: SocketAddr,
     pub web_dir: Option<PathBuf>,
-    /// The forked t3 server, for pairing codes.
+    /// The t3 server, for pairing codes.
     pub t3_url: String,
 }
 

@@ -662,7 +662,6 @@ it.layer(NodeServices.layer)("cli config resolution", (it) => {
                 env: {
                   T3CODE_NO_BROWSER: "false",
                   T3CODE_AUTO_BOOTSTRAP_PROJECT_FROM_CWD: "true",
-                  T3CODE_STATIC_DIR: "/srv/t3lab-client",
                 },
               }),
             ),
@@ -680,7 +679,7 @@ it.layer(NodeServices.layer)("cli config resolution", (it) => {
         baseDir,
         ...derivedPaths,
         host: undefined,
-        staticDir: "/srv/t3lab-client",
+        staticDir: resolved.staticDir,
         devUrl: undefined,
         noBrowser: true,
         startupPresentation: "headless",

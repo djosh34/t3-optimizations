@@ -1,4 +1,4 @@
-//! The sidecar as a client of the forked t3 server: it pairs itself with
+//! The sidecar as a client of the t3 server: it pairs itself with
 //! `t3 pair`, keeps the bearer token in its data dir, and speaks Effect RPC
 //! JSON over the server's local WebSocket. Issues #4 and #13.
 //!
@@ -24,7 +24,7 @@ use tungstenite::{Message, WebSocket};
 use crate::Msg;
 use crate::store::write_private;
 
-/// Where the forked server is and how to run its CLI.
+/// Where the t3 server is and how to run its CLI.
 #[derive(Debug, Clone)]
 pub struct T3Config {
     /// Its HTTP origin, such as `http://127.0.0.1:13773`.
@@ -67,7 +67,7 @@ pub enum In {
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
-/// The orchestration protocol this fork speaks (contracts/environment.ts).
+/// The orchestration protocol t3 v0.1.7 speaks (contracts/environment.ts).
 pub const PROTOCOL: &str = "2";
 
 const PING_EVERY: Duration = Duration::from_secs(5);
@@ -180,7 +180,7 @@ impl Auth {
     }
 }
 
-/// An HTTP request to the forked server, for a phone (`sidecar.http`).
+/// An HTTP request to the t3 server, for a phone (`sidecar.http`).
 #[derive(Debug, Clone)]
 pub struct HttpRequest {
     pub method: String,

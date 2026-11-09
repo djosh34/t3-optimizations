@@ -42,7 +42,7 @@ const e2eSteps = 18
 // e2eClean is the link between the steps that shape it: weak 4G.
 const e2eClean = "A"
 
-// RunWebappE2E runs driver/webapp-e2e.mjs against the sidecar and the forked
+// RunWebappE2E runs driver/webapp-e2e.mjs against the sidecar and the stock
 // server in the lab, and does what the driver asks: shape the link, cut it,
 // block UDP or HTTPS, swap the web app for a newer build, delete a thread
 // while the sidecar is down. Returns the headline; the run directory has
@@ -323,7 +323,7 @@ func (e *e2e) answer(ctx context.Context, ask string) (string, error) {
 	return "", fmt.Errorf("unknown ask %q", ask)
 }
 
-// deleteOffline stops the sidecar, deletes a thread through the forked
+// deleteOffline stops the sidecar, deletes a thread through the stock
 // server's own RPC, and starts the sidecar again.
 func (e *e2e) deleteOffline(ctx context.Context, thread string) error {
 	e.stopSidecar()
@@ -359,7 +359,7 @@ func e2eReport(results []stepResult, commit string, o E2EOptions, linkReports in
 	var b strings.Builder
 	fmt.Fprintf(&b, "# Web app end to end\n\nCommit %s, seed %d, outage %s. ", commit, o.Seed, o.Outage)
 	b.WriteString("WebKit (Playwright 1.64.1) at the iPhone 17 Pro's size in the lab's phone container; ")
-	b.WriteString("the sidecar and the forked t3 server in the server namespace, the lab front for HTTPS. ")
+	b.WriteString("the sidecar and the stock t3 server in the server namespace, the lab front for HTTPS. ")
 	fmt.Fprintf(&b, "Between steps that shape it, the link is profile %s.\n\n", e2eClean)
 	b.WriteString("| Step | Result |\n|---|---|\n")
 	for _, r := range results {

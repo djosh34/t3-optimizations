@@ -1,0 +1,78 @@
+{
+  "seed": 12,
+  "survival": false,
+  "commit": "9c461bdca554",
+  "deadlineS": 300,
+  "load": {
+    "cpus": 4,
+    "meanLoad1": 5.012162162162162,
+    "maxLoad1": 6.99,
+    "minMemAvailMB": 12265
+  },
+  "clients": [
+    {
+      "client": "websocket",
+      "status": "done",
+      "runS": 183.893,
+      "promptConfirmationS": 3.641,
+      "timeToFirstTextS": 14.288,
+      "completeS": 181.936,
+      "maxReleaseLagS": 117.81,
+      "maxAgentLagS": 123.085,
+      "longestFreezeS": 117.736,
+      "hangs": [
+        {
+          "atS": 64.2,
+          "forS": 117.736,
+          "ended": false
+        }
+      ],
+      "reloads": 0,
+      "webSocketsOpened": 1
+    },
+    {
+      "client": "webapp",
+      "status": "done",
+      "runS": 54.98,
+      "promptConfirmationS": 4.702,
+      "timeToFirstTextS": 16.847,
+      "completeS": 51.969,
+      "maxReleaseLagS": 2.024,
+      "maxAgentLagS": 18.095,
+      "longestFreezeS": 1.969,
+      "hangs": null,
+      "reloads": 0,
+      "webSocketsOpened": 0,
+      "transports": [
+        "webrtc"
+      ]
+    }
+  ],
+  "phases": [
+    "2G@0",
+    "2G@3",
+    "slow@10",
+    "2G@16",
+    "bursts@22",
+    "bursts@30",
+    "bursts@34",
+    "2G@39",
+    "2G@46",
+    "2G@49",
+    "bursts@53",
+    "2G@56",
+    "slow@63",
+    "gap@69",
+    "2G@111",
+    "rtt spike@119",
+    "rtt spike@123",
+    "bursts@126",
+    "2G@128",
+    "2G@132",
+    "2G@135",
+    "2G@140",
+    "slow@145",
+    "2G@148",
+    "back@151"
+  ]
+}

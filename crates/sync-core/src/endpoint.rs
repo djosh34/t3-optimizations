@@ -79,6 +79,8 @@ pub struct Stats {
     pub unsynced_bytes: u64,
     /// Bytes of the classes below `Status` (backfill) that never went out.
     pub unsent_backfill_bytes: u64,
+    /// Sent packets not acked yet, also those presumed lost: the newest
+    /// 20,000 are remembered, so a late ack still counts.
     pub inflight_packets: usize,
 }
 
@@ -186,7 +188,7 @@ impl Endpoint {
         log_low: Option<u64>,
     ) -> Option<Vec<u8>> {
         self.rate.decide(now);
-        self.out.prune(now);
+        self.out.prune();
         let unsynced = !self.out.is_synced();
         if !unsynced {
             self.rate.note_idle(now);

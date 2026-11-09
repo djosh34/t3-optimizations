@@ -25,8 +25,10 @@ go:
 	cd lab && go vet ./...
 	cd lab && go test ./...
 
+# vp check registers t3code's git hooks for the whole repo; they are removed again.
 t3code:
 	cd t3code && vp check
+	scripts/unset-hooks-path.sh
 	scripts/t3code-changed-tests.sh $(BASE)
 
 # Installs the t3code dependencies, then removes the git hooks that the

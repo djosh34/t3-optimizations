@@ -67,7 +67,6 @@ enum Job {
 enum Pending {
     Shell,
     Thread(String),
-    Live,
     ConfigStream,
     Config,
     Call {
@@ -86,6 +85,69 @@ enum Pending {
     },
 }
 
+/// One of the sidecar's subscriptions to t3.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+enum Sub {
+    Shell,
+    ConfigStream,
+    Thread(String),
+}
+
+impl Pending {
+    fn sub(&self) -> Option<Sub> {
+        match self {
+            Pending::Shell => Some(Sub::Shell),
+            Pending::ConfigStream => Some(Sub::ConfigStream),
+            Pending::Thread(t) => Some(Sub::Thread(t.clone())),
+            _ => None,
+        }
+    }
+}
+
+/// A subscription that ended starts again after this long, twice as long
+/// each time it ends again without a value, up to `RETRY_MAX`.
+const RETRY_MIN: Duration = Duration::from_secs(1);
+const RETRY_MAX: Duration = Duration::from_secs(60);
+
+/// Subscriptions that ended, failed or that t3 lacks: when each starts
+/// again. They never start again at once, so a missing call is no tight loop.
+#[derive(Default)]
+struct Retries {
+    due: HashMap<Sub, Instant>,
+    /// The wait after a subscription's next end; a value resets it.
+    wait: HashMap<Sub, Duration>,
+}
+
+impl Retries {
+    /// Returns how long the subscription waits before it starts again.
+    fn ended(&mut self, sub: Sub, now: Instant) -> Duration {
+        let wait = self.wait.get(&sub).copied().unwrap_or(RETRY_MIN);
+        self.wait.insert(sub.clone(), (wait * 2).min(RETRY_MAX));
+        self.due.insert(sub, now + wait);
+        wait
+    }
+
+    fn value(&mut self, sub: &Sub) {
+        self.wait.remove(sub);
+    }
+
+    fn waiting(&self, sub: &Sub) -> bool {
+        self.due.contains_key(sub)
+    }
+
+    fn take_due(&mut self, now: Instant) -> Vec<Sub> {
+        let due: Vec<Sub> = self
+            .due
+            .iter()
+            .filter(|(_, at)| **at <= now)
+            .map(|(s, _)| s.clone())
+            .collect();
+        for s in &due {
+            self.due.remove(s);
+        }
+        due
+    }
+}
 /// A thread snapshot is fetched this long after its last change.
 const REFETCH_DELAY: Duration = Duration::from_millis(500);
 /// Sync state is saved this often while it changes.
@@ -112,6 +174,7 @@ pub struct App {
     thread_subs: HashMap<String, u64>,
     /// Threads to fetch, and when.
     refetch: HashMap<String, Instant>,
+    retries: Retries,
     fetching: HashSet<String>,
     /// WebSocket fallback connections: where packets go, and the phone once
     /// it said hello.
@@ -126,7 +189,7 @@ pub struct App {
     /// since it went out: it is fetched once more when the reply comes.
     config_pending: bool,
     config_again: bool,
-    /// Objects phones kept from before a restart that the forked server no
+    /// Objects phones kept from before a restart that the t3 server no
     /// longer has were deleted.
     pruned: bool,
 }
@@ -174,6 +237,7 @@ pub fn run(cfg: Config) -> Result<(), Error> {
         subscribed: false,
         thread_subs: HashMap::new(),
         refetch: HashMap::new(),
+        retries: Retries::default(),
         fetching: HashSet::new(),
         ws_out: HashMap::new(),
         ws_device: HashMap::new(),
@@ -250,6 +314,7 @@ impl App {
             self.message(msg)?;
         }
         self.sync_world();
+        self.resubscribe_due();
         self.start_fetches();
         self.send_packets()?;
         self.save_due()?;
@@ -271,7 +336,7 @@ impl App {
                 _ => 0,
             };
             log(format!(
-                "device {} stats: send {:.0} B/s, delivered {:.0} B/s, loss {:.0}%, srtt {} ms, unsynced {} B, backfill unsent {} B, in flight {} packets, sent {} received {} packets, SCTP queue {queued} B, {dropped} dropped by a full SCTP buffer",
+                "device {} stats: send {:.0} B/s, delivered {:.0} B/s, loss {:.0}%, srtt {} ms, unsynced {} B, backfill unsent {} B, unacked {} packets, sent {} received {} packets, SCTP queue {queued} B, {dropped} dropped by a full SCTP buffer",
                 d.record.id,
                 s.send_rate,
                 s.delivered_rate,
@@ -761,13 +826,8 @@ impl App {
                 log("connected to t3");
                 if !self.subscribed {
                     self.subscribed = true;
-                    self.request("orchestration.subscribeShell", json!({}), Pending::Shell);
-                    self.request("orchestration.subscribeLiveText", json!({}), Pending::Live);
-                    self.request(
-                        "subscribeServerConfig",
-                        json!({"workspaceSnapshotsOnDemand": true}),
-                        Pending::ConfigStream,
-                    );
+                    self.subscribe(Sub::Shell);
+                    self.subscribe(Sub::ConfigStream);
                     let _ = self.jobs.send(Job::Descriptor);
                 }
             }
@@ -781,6 +841,9 @@ impl App {
         let Some(pending) = self.pending.get(&id).cloned() else {
             return;
         };
+        if let Some(sub) = pending.sub() {
+            self.retries.value(&sub);
+        }
         match pending {
             Pending::Shell => {
                 for v in &values {
@@ -816,11 +879,6 @@ impl App {
                         let _ = self.t3.send(Out::Interrupt(old));
                     }
                     self.update_subscriptions();
-                }
-            }
-            Pending::Live => {
-                for v in &values {
-                    self.world.apply_live(v);
                 }
             }
             Pending::Call { device, seq } => {
@@ -878,18 +936,11 @@ impl App {
                 }
             },
             Pending::Thread(t) => {
-                log(format!("thread {t}: subscription ended: {exit}"));
                 self.thread_subs.remove(&t);
-                self.update_subscriptions();
+                self.ended(Sub::Thread(t), &exit);
             }
-            Pending::Shell => {
-                log(format!("shell subscription ended: {exit}"));
-                self.request("orchestration.subscribeShell", json!({}), Pending::Shell);
-            }
-            Pending::Live => {
-                log(format!("live text subscription ended: {exit}"));
-                self.request("orchestration.subscribeLiveText", json!({}), Pending::Live);
-            }
+            Pending::Shell => self.ended(Sub::Shell, &exit),
+            Pending::ConfigStream => self.ended(Sub::ConfigStream, &exit),
             Pending::Config => {
                 self.config_pending = false;
                 if success {
@@ -901,13 +952,43 @@ impl App {
                     self.fetch_config();
                 }
             }
-            Pending::ConfigStream => {
-                log(format!("config subscription ended: {exit}"));
+        }
+    }
+
+    fn subscribe(&mut self, sub: Sub) {
+        match sub {
+            Sub::Shell => self.request("orchestration.subscribeShell", json!({}), Pending::Shell),
+            Sub::ConfigStream => self.request(
+                "subscribeServerConfig",
+                json!({"workspaceSnapshotsOnDemand": true}),
+                Pending::ConfigStream,
+            ),
+            Sub::Thread(t) => {
+                let id = self.next_request;
                 self.request(
-                    "subscribeServerConfig",
-                    json!({"workspaceSnapshotsOnDemand": true}),
-                    Pending::ConfigStream,
+                    "orchestration.subscribeThread",
+                    json!({"threadId": t}),
+                    Pending::Thread(t.clone()),
                 );
+                self.thread_subs.insert(t, id);
+            }
+        }
+    }
+
+    fn ended(&mut self, sub: Sub, exit: &Value) {
+        let wait = self.retries.ended(sub.clone(), Instant::now());
+        log(format!(
+            "{sub:?} subscription ended, again in {} s: {exit}",
+            wait.as_secs()
+        ));
+    }
+
+    fn resubscribe_due(&mut self) {
+        for sub in self.retries.take_due(Instant::now()) {
+            match sub {
+                // Only while a phone still has the thread open.
+                Sub::Thread(_) => self.update_subscriptions(),
+                sub => self.subscribe(sub),
             }
         }
     }
@@ -934,14 +1015,9 @@ impl App {
             }
         }
         for t in wanted {
-            if !self.thread_subs.contains_key(&t) {
-                let id = self.next_request;
-                self.request(
-                    "orchestration.subscribeThread",
-                    json!({"threadId": t}),
-                    Pending::Thread(t.clone()),
-                );
-                self.thread_subs.insert(t, id);
+            let sub = Sub::Thread(t.clone());
+            if !self.thread_subs.contains_key(&t) && !self.retries.waiting(&sub) {
+                self.subscribe(sub);
             }
         }
     }
@@ -1039,7 +1115,7 @@ impl App {
 }
 
 impl App {
-    /// Once the world has everything the forked server has, deletes what
+    /// Once the world has everything the t3 server has, deletes what
     /// phones kept from before a sidecar restart that is no longer there,
     /// such as a thread deleted while the sidecar was down.
     fn prune_once(&mut self) {
@@ -1082,7 +1158,7 @@ fn http_request(args: &Value) -> Result<HttpRequest, String> {
         return Err(format!("method {method} is not relayed"));
     }
     let path = args["path"].as_str().ok_or("no path")?;
-    // A path on the forked server, never another host.
+    // A path on the t3 server, never another host.
     if !path.starts_with('/') || path.starts_with("//") || path.contains("://") {
         return Err(format!("{path} is not a path on the server"));
     }
@@ -1154,4 +1230,25 @@ fn spawn_fetcher(auth: Arc<Auth>, jobs: Receiver<Job>, to_main: Sender<Msg>) {
             }
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn an_ended_subscription_waits_longer_each_time_until_a_value() {
+        let mut r = Retries::default();
+        let t0 = Instant::now();
+        let waits: Vec<u64> = (0..8).map(|_| r.ended(Sub::Shell, t0).as_secs()).collect();
+        assert_eq!(waits, [1, 2, 4, 8, 16, 32, 60, 60]);
+        assert!(r.waiting(&Sub::Shell));
+        assert!(r.take_due(t0 + Duration::from_secs(59)).is_empty());
+        assert_eq!(r.take_due(t0 + Duration::from_secs(60)), [Sub::Shell]);
+        assert!(!r.waiting(&Sub::Shell));
+        r.value(&Sub::Shell);
+        assert_eq!(r.ended(Sub::Shell, t0), RETRY_MIN);
+        // Each subscription has its own wait.
+        assert_eq!(r.ended(Sub::Thread("t1".into()), t0), RETRY_MIN);
+    }
 }

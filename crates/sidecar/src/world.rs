@@ -1,4 +1,4 @@
-//! What phones should have, as sync objects: the forked t3 server's state
+//! What phones should have, as sync objects: the t3 server's state
 //! cut into pieces that sync on their own.
 //!
 //! - Shell (`shell`, `project`, `thread` meta): the thread list, one object
@@ -9,9 +9,9 @@
 //!   update.
 //! - Text: the text of a message, from its turn item and its message alike
 //!   (keyed by message id), or of a reasoning item. Bodies carry `"text":""`
-//!   and the phone fills it in from here. While the agent writes, the raw
-//!   partial text from `orchestration.subscribeLiveText` takes the place of
-//!   the buffered text t3 stores.
+//!   and the phone fills it in from here. While the agent writes, this is the
+//!   text t3 has released so far: finished lines, and code blocks once they
+//!   close.
 //! - Frame: a thread's snapshot fields and its visible rows, with local rows'
 //!   items left out (they are bodies).
 //! - Image: an attachment's bytes.
@@ -106,8 +106,6 @@ struct ThreadState {
     entities: HashMap<(String, String), Value>,
     /// Text keys and their text as t3 stores it.
     stored_text: HashMap<String, String>,
-    /// Raw text of messages the agent is still writing.
-    live_text: HashMap<String, String>,
     /// The kind label of each text key.
     text_kind: HashMap<String, String>,
     /// Ordinal and text key of each assistant message, for the tail.
@@ -238,7 +236,7 @@ impl World {
         }
     }
 
-    /// Whether everything the forked server has is here: the thread list,
+    /// Whether everything the t3 server has is here: the thread list,
     /// a snapshot of every listed thread, the config, the descriptor and the
     /// session.
     /// Until then, an object the world lacks may just not be loaded yet.
@@ -489,14 +487,7 @@ impl World {
                 .get(thread)
                 .map(|t| {
                     t.entities
-                        .iter()
-                        // An item the agent is still writing may exist
-                        // only in live frames: t3 has not stored it, so a
-                        // snapshot lacks it.
-                        .filter(|((coll, _), e)| {
-                            !text_key(coll, e).is_some_and(|k| t.live_text.contains_key(&k))
-                        })
-                        .map(|(k, _)| k)
+                        .keys()
                         .filter(|k| !seen.contains(*k))
                         .cloned()
                         .collect()
@@ -536,56 +527,6 @@ impl World {
         }
     }
 
-    /// One `subscribeLiveText` frame: an assistant or reasoning item with
-    /// its raw text.
-    pub fn apply_live(&mut self, frame: &Value) {
-        let item = &frame["item"];
-        let (Some(thread), Some(text)) = (item["threadId"].as_str(), item["text"].as_str()) else {
-            return;
-        };
-        let Some(key) = text_key("turnItems", item) else {
-            return;
-        };
-        let streaming = item["streaming"].as_bool() == Some(true);
-        let state = self.threads.entry(thread.to_owned()).or_default();
-        if streaming {
-            state.live_text.insert(key.clone(), text.to_owned());
-        } else {
-            state.live_text.remove(&key);
-            // The finished text; t3 stores the same.
-            state.stored_text.insert(key.clone(), text.to_owned());
-        }
-        // An item t3 holds back has no stored event yet: its body comes
-        // from here until it has.
-        let known = item["id"].as_str().is_some_and(|id| {
-            state
-                .entities
-                .contains_key(&("turnItems".into(), id.to_owned()))
-        });
-        if !known {
-            // A live item carries the provider's own ordinal (201, say),
-            // not t3's (2000002), which t3 gives it when it stores it. It is
-            // the item being written now, so it goes after every stored one
-            // until then; otherwise an older message stayed the tail and the
-            // live text went out behind everything else.
-            let after = state
-                .entities
-                .iter()
-                .filter(|((coll, _), _)| coll == "turnItems")
-                .filter_map(|(_, e)| e["ordinal"].as_u64())
-                .max()
-                .map_or(0, |o| o + 1);
-            let mut item = item.clone();
-            if let Some(o) = item.as_object_mut() {
-                o.insert("ordinal".into(), after.into());
-            }
-            self.put_entity(thread, "turnItems", &item);
-        } else {
-            // Its place is t3's, from the stored item.
-            self.put_text(thread, &key);
-        }
-    }
-
     fn put_entity(&mut self, thread: &str, coll: &str, entity: &Value) {
         let id = if coll == "thread" {
             "thread".to_owned()
@@ -612,10 +553,6 @@ impl World {
             .is_some_and(|old| same_but_time_and_text(old, entity));
         state.entities.insert(entity_key, entity.clone());
         if let (Some(key), Some(text)) = (&key, text) {
-            let finished = entity["streaming"].as_bool() == Some(false);
-            if finished {
-                state.live_text.remove(key);
-            }
             state.stored_text.insert(key.clone(), text);
             state.text_kind.insert(key.clone(), text_kind(coll, entity));
             if coll == "turnItems" {
@@ -691,7 +628,6 @@ impl World {
             return;
         }
         state.stored_text.remove(&key);
-        state.live_text.remove(&key);
         state.text_kind.remove(&key);
         let old_tail = state.assistant.values().next_back().cloned();
         state.assistant.retain(|_, k| *k != key);
@@ -753,12 +689,7 @@ impl World {
         let Some(state) = self.threads.get(thread) else {
             return;
         };
-        let Some(text) = state
-            .live_text
-            .get(key)
-            .or_else(|| state.stored_text.get(key))
-            .cloned()
-        else {
+        let Some(text) = state.stored_text.get(key).cloned() else {
             return;
         };
         let kind = state.text_kind.get(key).cloned().unwrap_or_default();
@@ -956,63 +887,6 @@ mod tests {
     }
 
     #[test]
-    fn live_text_leads_until_the_message_is_finished() {
-        let mut w = World::default();
-        let text = object_id(&["text", "t1", "m-a"]);
-        // Held back by t3: only live text, and the item from it.
-        w.apply_live(&json!({"item": item("a", 5, "An open para", true, "1")}));
-        assert_eq!(content(&w, text), "An open para");
-        assert!(
-            w.get(object_id(&["body", "t1", "turnItems", "a"]))
-                .is_some()
-        );
-        // t3's buffered text is shorter; live text stays.
-        w.apply_event(
-            "t1",
-            &event("turn-item.updated", item("a", 5, "An", true, "2")),
-        );
-        w.apply_live(&json!({"item": item("a", 5, "An open paragraph", true, "3")}));
-        assert_eq!(content(&w, text), "An open paragraph");
-        // Finished: t3's text.
-        w.apply_event(
-            "t1",
-            &event(
-                "turn-item.updated",
-                item("a", 5, "An open paragraph.", false, "4"),
-            ),
-        );
-        assert_eq!(content(&w, text), "An open paragraph.");
-    }
-
-    #[test]
-    fn a_live_item_is_the_tail_before_t3_stores_it() {
-        let mut w = World::default();
-        w.apply_event(
-            "t1",
-            &event(
-                "turn-item.updated",
-                item("old", 1_000_003, "Earlier reply.", false, "1"),
-            ),
-        );
-        // The provider's own ordinal is far below t3's.
-        w.apply_live(&json!({"item": item("new", 201, "The sync loop starts", true, "2")}));
-        let new = object_id(&["text", "t1", "m-new"]);
-        assert_eq!(w.tail("t1"), Some(new));
-        // More live text, then t3 stores it with its own ordinal.
-        w.apply_live(&json!({"item": item("new", 201, "The sync loop starts from", true, "3")}));
-        assert_eq!(w.tail("t1"), Some(new));
-        w.apply_event(
-            "t1",
-            &event(
-                "turn-item.updated",
-                item("new", 2_000_002, "The sync", true, "4"),
-            ),
-        );
-        assert_eq!(w.tail("t1"), Some(new));
-        assert_eq!(content(&w, new), "The sync loop starts from");
-    }
-
-    #[test]
     fn the_current_turn_starts_at_the_newest_user_message() {
         let mut w = World::default();
         let user = |id: &str, ordinal: u64| {
@@ -1155,24 +1029,6 @@ mod tests {
         );
         assert_eq!(w.tail("t1"), Some(a));
         assert_eq!(content(&w, a), "first");
-    }
-
-    #[test]
-    fn a_snapshot_keeps_a_message_t3_has_not_stored_yet() {
-        let mut w = World::default();
-        let snap = |items: Value| {
-            json!({"snapshotSequence": 3, "projection": {
-                "thread": {"id": "t1"}, "turnItems": items, "visibleTurnItems": [], "updatedAt": "now"}})
-        };
-        w.set_thread("t1", &snap(json!([item("a", 1, "first", false, "1")])));
-        w.apply_live(&json!({"item": item("b", 201, "being written", true, "2")}));
-        let b = object_id(&["text", "t1", "m-b"]);
-        assert_eq!(w.tail("t1"), Some(b));
-        // A snapshot taken while t3 holds the message back.
-        w.set_thread("t1", &snap(json!([item("a", 1, "first", false, "1")])));
-        assert_eq!(w.tail("t1"), Some(b));
-        assert_eq!(content(&w, b), "being written");
-        assert!(!content(&w, object_id(&["body", "t1", "turnItems", "b"])).is_empty());
     }
 
     #[test]

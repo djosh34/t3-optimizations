@@ -39,7 +39,7 @@ An object is bytes with an id, a class, an order within the class, a revision, a
 - Any other change (an edit in the middle, a shorter text, new meta) is a new revision. Its chunks say how many leading bytes of an older revision stay valid (`keep`). The phone cuts its copy to those bytes and fills in the rest.
 - The phone ignores chunks of a revision older than the one it holds.
 
-The server tracks per object which bytes of the current revision the phone has stored. Those are never sent again. Bytes in flight go out again after the retransmit timeout; with spare room in a packet, unacked bytes go out again early, so the sender never idles until the phone has everything.
+The server tracks per object which bytes of the current revision the phone has stored. Those are never sent again. It remembers what each unacked packet carried for the newest 20,000 packets, not for a time: an ack that arrives after a gap of minutes still marks its bytes stored. Forgetting after 60 s sent stored bytes again after every longer gap (story seeds 18 and 69, issue #58). Bytes in flight go out again after the retransmit timeout; with spare room in a packet, unacked bytes go out again early, so the sender never idles until the phone has everything.
 
 ## Order
 
@@ -108,5 +108,17 @@ A `-webkit` case (`case70-webkit`, `case50-webkit`) sends the phone's packets th
 ```sh
 cargo run --release -p sync-core --example sim -- case70-webkit 1 30 180
 ```
+
+### Network stories
+
+`Scenario::story(seed)` runs a seed's network story (`src/sim/story.rs`, the generator the lab's `lab story` uses too; `lab/README.md` says what a story is) through the WebKit model: the 64-byte prompt as the story starts, a 2,000-character reply, the link changing as the story says, with loss in bursts as netem's `gemodel` makes it. The run ends once the reply is whole and the prompt confirmed, or 5 minutes after the story starts. The `stories` example runs many seeds on every core and checks each: nothing stored twice, no acked byte sent again, no command applied twice, no packet over 1,100 bytes, the prompt confirmed and the reply whole by the end.
+
+```sh
+cargo run --release -p sync-core --example story -- 7                    # seed 7's story as JSON
+cargo run --release -p sync-core --example stories -- run 1 1000 a.csv   # exits 1 if a seed broke
+cargo run --release -p sync-core --example stories -- summary a.csv      # the spread, as Markdown
+```
+
+CI runs 100,000 seeds in 20 jobs when dispatched with `stories` (`lab/README.md`). A seed that broke is kept in `tests/sim.rs`.
 
 What the simulator does not model: WebKit's ICE agent, which stops sending when its checks go unanswered (issue #46), the cost of a new connection after a page kill, and timers that do not run in lockstep. The WebKit model is gentler than WebKit in the lab: over 30 seeds it confirms case 70's prompt within 10 s on all but one, where the lab took longer on some seeds.
