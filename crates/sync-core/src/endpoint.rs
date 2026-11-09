@@ -187,7 +187,13 @@ impl Endpoint {
         hello: Option<Hello>,
         log_low: Option<u64>,
     ) -> Option<Vec<u8>> {
-        self.rate.decide(now);
+        // Only a large resync gets the clean-link probe. Do not scan the
+        // backlog on every packet, or perturb small-transfer warmups.
+        if now >= self.rate.next_decision() && self.out.unsynced_bytes() > 1_000_000 {
+            self.rate.decide_for_backlog(now, true);
+        } else {
+            self.rate.decide(now);
+        }
         self.out.prune();
         let unsynced = !self.out.is_synced();
         if !unsynced {
