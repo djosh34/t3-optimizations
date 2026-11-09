@@ -132,12 +132,18 @@ describe("Link", () => {
     expect(FakePeer.all).toHaveLength(2);
     await vi.advanceTimersByTimeAsync(30_000);
     expect(link.info().transport).toBe("webrtc");
-    await vi.advanceTimersByTimeAsync(160_000);
+    // WebKit stops sending unanswered checks: a fresh connection every minute.
+    await vi.advanceTimersByTimeAsync(31_000);
+    expect(FakePeer.all).toHaveLength(3);
+    expect(FakePeer.all[1]?.closed).toBe(true);
+    // The three minutes count from the first try, not the newest connection.
+    await vi.advanceTimersByTimeAsync(119_000);
     expect(link.info().transport).toBe("websocket");
     // WebRTC is tried again from the WebSocket, and given as long.
+    const before = FakePeer.all.length;
     await vi.advanceTimersByTimeAsync(60_000);
-    const retry = FakePeer.all[2];
-    expect(retry).toBeDefined();
+    expect(FakePeer.all).toHaveLength(before + 1);
+    const retry = FakePeer.all.at(-1);
     await vi.advanceTimersByTimeAsync(30_000);
     expect(retry?.closed).toBe(false);
   });

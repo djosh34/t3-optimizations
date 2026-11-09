@@ -22,6 +22,8 @@ const DEAD_ICE_UP_MS = 20_000;
 const FALLBACK_AFTER_MS = 20_000;
 /** The same for a later connection, once WebRTC worked on this page: a bad cell is likelier. */
 const FALLBACK_AFTER_WORKED_MS = 180_000;
+/** Meanwhile such a connection is replaced this often: WebKit stops sending unanswered checks. */
+const REPLACE_UNANSWERED_MS = 60_000;
 /**
  * Silent this long with ICE down for the last `PROBE_ICE_DOWN_MS`: a WebSocket
  * probe opens; open and still silent `SWITCH_AFTER_PROBE_MS` later, it takes over.
@@ -150,6 +152,8 @@ export class Link {
   private opened = false;
   /** WebRTC carried a channel on this page. */
   private rtcWorked = false;
+  /** Since when WebRTC connections are tried without a channel opening. */
+  private rtcTryingSince: number | null = null;
   private readonly startedAt = Date.now();
   private lastRtcTry = 0;
   private iceRestarts = 0;
@@ -300,6 +304,7 @@ export class Link {
     const replaces = old !== null;
     const generation = this.generation + 1;
     this.generation = generation;
+    this.rtcTryingSince ??= Date.now();
     await this.storage.save({ generation });
     if (this.transport === "webrtc") {
       this.set(this.keptAnswer ? "webrtc connecting" : "webrtc signaling");
@@ -332,6 +337,7 @@ export class Link {
       this.handshakeMs = Date.now() - rtc.createdAt;
       this.opened = true;
       this.rtcWorked = true;
+      this.rtcTryingSince = null;
       if (this.transport === "websocket") {
         // WebRTC works again: it takes over from the WebSocket.
         const ws = this.ws;
@@ -507,10 +513,11 @@ export class Link {
         ? !this.opened && now - this.startedAt > FALLBACK_AFTER_MS
         : pending.dc.readyState !== "open" &&
           !pending.iceEverUp &&
-          now - pending.createdAt > this.fallbackAfter();
+          now - (this.rtcTryingSince ?? pending.createdAt) > this.fallbackAfter();
     if (blocked) {
       this.rtc?.pc.close();
       this.rtc = null;
+      this.rtcTryingSince = null;
       this.lastRtcTry = now;
       this.openWebSocket();
       return;
@@ -525,6 +532,15 @@ export class Link {
     // an ICE restart below handles that, a new connection would need a DTLS
     // handshake that takes minutes at 70% loss.
     if (rtc.dc.readyState === "closed" || rtc.dc.readyState === "closing") {
+      this.tryRtc();
+      return;
+    }
+    if (
+      this.rtcWorked &&
+      rtc.dc.readyState !== "open" &&
+      !rtc.iceEverUp &&
+      now - rtc.createdAt >= REPLACE_UNANSWERED_MS
+    ) {
       this.tryRtc();
       return;
     }
