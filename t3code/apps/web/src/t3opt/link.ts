@@ -24,7 +24,10 @@ const FALLBACK_AFTER_MS = 20_000;
 const FALLBACK_AFTER_WORKED_MS = 180_000;
 /** A connection whose ICE got nothing back is replaced this often: WebKit stops its checks. */
 const REPLACE_UNANSWERED_MS = 60_000;
-/** A connection whose channel has not opened by then is replaced, ICE up or not. */
+/**
+ * A connection whose channel has not opened by then is replaced, ICE up or not; each
+ * replaced in a row gets twice as long, as a cold handshake at 70% loss took 234 s.
+ */
 const OPEN_WITHIN_MS = 180_000;
 /**
  * Silent this long with ICE down for the last `PROBE_ICE_DOWN_MS`: a WebSocket
@@ -154,6 +157,8 @@ export class Link {
   private opened = false;
   /** WebRTC carried a channel on this page. */
   private rtcWorked = false;
+  /** Connections replaced in a row because their channel did not open in time. */
+  private stalls = 0;
   /** Since when WebRTC connections are tried without a channel opening or ICE getting through. */
   private rtcTryingSince: number | null = null;
   private readonly startedAt = Date.now();
@@ -340,6 +345,7 @@ export class Link {
       this.opened = true;
       this.rtcWorked = true;
       this.rtcTryingSince = null;
+      this.stalls = 0;
       if (this.transport === "websocket") {
         // WebRTC works again: it takes over from the WebSocket.
         const ws = this.ws;
@@ -489,24 +495,27 @@ export class Link {
     return this.rtcWorked ? FALLBACK_AFTER_WORKED_MS : FALLBACK_AFTER_MS;
   }
 
+  /** The connection's channel has not opened in time: its handshake stalled. */
+  private stalled(rtc: Rtc, now: number): boolean {
+    return now - rtc.createdAt >= OPEN_WITHIN_MS * 2 ** this.stalls;
+  }
+
   private async step(now: number): Promise<void> {
     if (this.transport === "websocket") {
       // The WebSocket runs over TCP; a closed one is opened again.
       if (this.ws === null) this.openWebSocket();
       // A retry is replaced when its channel closed, its ICE got nothing back, or
-      // it did not open within three minutes: the WebSocket carries the packets.
+      // its handshake stalled: the WebSocket carries the packets.
       const probe = this.rtc;
-      const replaceAfter = this.rtcWorked ? REPLACE_UNANSWERED_MS : FALLBACK_AFTER_MS;
-      const age = probe === null ? 0 : now - probe.createdAt;
-      if (
-        probe !== null &&
-        probe.dc.readyState !== "open" &&
-        (probe.dc.readyState === "closed" ||
-          (!probe.iceEverUp && age > replaceAfter) ||
-          age > OPEN_WITHIN_MS)
-      ) {
-        probe.pc.close();
-        this.rtc = null;
+      if (probe !== null && probe.dc.readyState !== "open") {
+        const replaceAfter = this.rtcWorked ? REPLACE_UNANSWERED_MS : FALLBACK_AFTER_MS;
+        const unanswered = !probe.iceEverUp && now - probe.createdAt >= replaceAfter;
+        const stalled = !unanswered && this.stalled(probe, now);
+        if (probe.dc.readyState === "closed" || unanswered || stalled) {
+          if (stalled) this.stalls += 1;
+          probe.pc.close();
+          this.rtc = null;
+        }
       }
       if (!this.wsOnly && this.rtc === null && now - this.lastRtcTry >= RTC_RETRY_ON_WS_MS) {
         this.tryRtc();
@@ -546,13 +555,15 @@ export class Link {
     }
     // A new connection's handshake can take minutes at heavy loss, but in a
     // lab story one never finished after the link came back.
-    const age = now - rtc.createdAt;
-    if (
-      rtc.dc.readyState !== "open" &&
-      ((this.rtcWorked && !rtc.iceEverUp && age >= REPLACE_UNANSWERED_MS) || age >= OPEN_WITHIN_MS)
-    ) {
-      this.tryRtc();
-      return;
+    if (rtc.dc.readyState !== "open") {
+      const unanswered =
+        this.rtcWorked && !rtc.iceEverUp && now - rtc.createdAt >= REPLACE_UNANSWERED_MS;
+      const stalled = !unanswered && this.stalled(rtc, now);
+      if (unanswered || stalled) {
+        if (stalled) this.stalls += 1;
+        this.tryRtc();
+        return;
+      }
     }
     if (rtc.dc.readyState !== "open") return;
     const silentFor = now - (this.lastDataAt ?? rtc.createdAt);

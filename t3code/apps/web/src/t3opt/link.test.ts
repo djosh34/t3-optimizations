@@ -201,6 +201,12 @@ describe("Link", () => {
     await vi.advanceTimersByTimeAsync(15_000);
     expect(FakePeer.all).toHaveLength(3);
     expect(second.closed).toBe(true);
+    // The next stalls too: it gets twice as long, six minutes.
+    FakePeer.all[2]?.ice("connected");
+    await vi.advanceTimersByTimeAsync(350_000);
+    expect(FakePeer.all).toHaveLength(3);
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(FakePeer.all).toHaveLength(4);
   });
 
   it("stays on WebRTC in an outage, where the probe cannot connect", async () => {
