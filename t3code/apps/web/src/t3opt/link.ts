@@ -22,7 +22,7 @@ const DEAD_ICE_UP_MS = 20_000;
 const FALLBACK_AFTER_MS = 20_000;
 /** The same for a later connection, once WebRTC worked on this page: a bad cell is likelier. */
 const FALLBACK_AFTER_WORKED_MS = 180_000;
-/** Meanwhile such a connection is replaced this often: WebKit stops sending unanswered checks. */
+/** A connection whose ICE got nothing back is replaced this often: WebKit stops its checks. */
 const REPLACE_UNANSWERED_MS = 60_000;
 /**
  * Silent this long with ICE down for the last `PROBE_ICE_DOWN_MS`: a WebSocket
@@ -361,6 +361,8 @@ export class Link {
         rtc.iceUpSince ??= Date.now();
         rtc.iceDownSince = null;
         rtc.iceEverUp = true;
+        // UDP gets through: the wait for blocked UDP starts again.
+        this.rtcTryingSince = null;
       } else {
         rtc.iceDownSince ??= Date.now();
         if (rtc.iceUpSince !== null) rtc.iceUpInSilenceMs += Date.now() - rtc.iceUpSince;
