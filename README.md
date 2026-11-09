@@ -18,11 +18,15 @@ A Cargo workspace (Rust stable, see `crates/rust-toolchain.toml`). `sync-core` h
 
 `pipe` is the server side of the WebRTC data channel to the phone, on str0m: ICE-lite on one UDP port, DTLS server role without the cookie exchange, ICE credentials derived from the phone's token so new connections and ICE restarts need no signaling. Its SCTP layer is a patched copy of sctp-proto in `vendor/` (2 s retransmit cap, no congestion-window cut on loss), and its ICE agent a patched copy of `is` (the server keeps its path when the phone's checks are lost), both described in [crates/vendor/README.md](crates/vendor/README.md). Its `pipe-lab` binary is the server end of the lab's pipe runs.
 
-`sidecar` connects the forked t3 server to phones over the sync protocol on that data channel, with a WebSocket fallback, and serves the home-screen web app; see [crates/sidecar/README.md](crates/sidecar/README.md). `phone-wasm` is sync-core's phone side as a WebAssembly module with a plain C ABI, for the web app. `native-phone` is a phone without a browser, the sync protocol over the real data channel, for the sidecar's tests and the lab's `--client sidecar-native`.
+`sidecar` connects the stock t3 server to phones over the sync protocol on that data channel, with a WebSocket fallback, and serves the home-screen web app; see [crates/sidecar/README.md](crates/sidecar/README.md). `phone-wasm` is sync-core's phone side as a WebAssembly module with a plain C ABI, for the web app. `native-phone` is a phone without a browser, the sync protocol over the real data channel, for the sidecar's tests and the lab's `--client sidecar-native`.
 
 ### The home-screen web app
 
 The t3code web client with a sync shim in front of its RPC and HTTP, built with `lab/scripts/build-webapp.sh` and served by the sidecar; see [t3code/apps/web/src/t3opt/README.md](t3code/apps/web/src/t3opt/README.md).
+
+### `deploy/`
+
+How t3opt runs on a host beside an official t3code: user services for a second, stock t3 v0.1.7 (`t3opt-server`) and the sidecar, an install script, the live check, and the release workflow's notes. See [deploy/README.md](deploy/README.md).
 
 ### `lab/`
 

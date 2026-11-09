@@ -1,0 +1,28 @@
+# The t3opt sidecar: serves the home-screen web app on localhost (tailscale
+# serve puts it on https://<host>:12443) and syncs t3opt-server to phones over
+# WebRTC on UDP 12444 of the tailnet address. It pairs itself with
+# t3opt-server. Installed by deploy/install.sh; see deploy/README.md.
+[Unit]
+Description=t3opt sidecar: the home-screen web app and its link to t3opt-server
+Documentation=https://github.com/djosh34/t3-optimizations/tree/main/deploy
+Wants=t3opt-server.service
+After=t3opt-server.service
+StartLimitIntervalSec=0
+
+[Service]
+# T3OPT_TAILNET_IP, and PATH.
+EnvironmentFile=%h/.config/t3opt/env
+ExecStart=%h/.local/share/t3opt/sidecar \
+  --t3-url http://127.0.0.1:13773 \
+  --t3-base-dir %h/.t3opt \
+  --t3-command %h/.local/share/t3opt/t3-0.1.7/t3 \
+  --data-dir %h/.t3opt-sidecar \
+  --http 127.0.0.1:12480 \
+  --udp ${T3OPT_TAILNET_IP}:12444 \
+  --web-dir %h/.local/share/t3opt/web
+# Also when the tailnet address is not up yet after a boot.
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
