@@ -1,0 +1,305 @@
+{
+  "profile": "outage10",
+  "about": "one 10 s outage on a weak link",
+  "grade": "fault",
+  "client": "websocket-nodeflate",
+  "kind": "warm",
+  "server": "fork",
+  "seed": 2,
+  "commit": "7978c8b2e106-dirty",
+  "path": "Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's userspace stack (issue #7), so production numbers differ.",
+  "status": "done",
+  "deadline": "15m0s",
+  "runS": 44.745,
+  "promptConfirmationS": 0.458,
+  "timeToFirstTextS": 23.025,
+  "completeS": 44.267,
+  "agentGotPromptS": 0.45,
+  "maxLagS": 22.449,
+  "medianLagS": 6.449,
+  "p95LagS": 19.449,
+  "longestSilenceS": 23.025,
+  "shownChars": 1596,
+  "producedChars": 1596,
+  "replyChars": 1596,
+  "approvalShownAfterS": 1.861,
+  "wireDownBytes": 127869,
+  "wireUpBytes": 133773,
+  "appReceivedBytes": 89978,
+  "appSentBytes": 6201,
+  "replyBytesReceived": 2294,
+  "duplicateReplyBytes": 698,
+  "webSocketsOpenedAfterSwitch": 0,
+  "lag": [
+    {
+      "atS": 0,
+      "lagS": 0,
+      "shown": 0,
+      "produced": 0
+    },
+    {
+      "atS": 1,
+      "lagS": 0.449,
+      "shown": 0,
+      "produced": 21
+    },
+    {
+      "atS": 2,
+      "lagS": 1.449,
+      "shown": 0,
+      "produced": 61
+    },
+    {
+      "atS": 3,
+      "lagS": 2.449,
+      "shown": 0,
+      "produced": 101
+    },
+    {
+      "atS": 4,
+      "lagS": 3.449,
+      "shown": 0,
+      "produced": 141
+    },
+    {
+      "atS": 5,
+      "lagS": 4.449,
+      "shown": 0,
+      "produced": 181
+    },
+    {
+      "atS": 6,
+      "lagS": 5.449,
+      "shown": 0,
+      "produced": 222
+    },
+    {
+      "atS": 7,
+      "lagS": 6.449,
+      "shown": 0,
+      "produced": 262
+    },
+    {
+      "atS": 8,
+      "lagS": 7.449,
+      "shown": 0,
+      "produced": 303
+    },
+    {
+      "atS": 9,
+      "lagS": 8.449,
+      "shown": 0,
+      "produced": 341
+    },
+    {
+      "atS": 10,
+      "lagS": 9.449,
+      "shown": 0,
+      "produced": 381
+    },
+    {
+      "atS": 11,
+      "lagS": 10.449,
+      "shown": 0,
+      "produced": 419
+    },
+    {
+      "atS": 12,
+      "lagS": 11.449,
+      "shown": 0,
+      "produced": 460
+    },
+    {
+      "atS": 13,
+      "lagS": 12.449,
+      "shown": 0,
+      "produced": 502
+    },
+    {
+      "atS": 14,
+      "lagS": 13.449,
+      "shown": 0,
+      "produced": 542
+    },
+    {
+      "atS": 15,
+      "lagS": 14.449,
+      "shown": 0,
+      "produced": 581
+    },
+    {
+      "atS": 16,
+      "lagS": 15.449,
+      "shown": 0,
+      "produced": 621
+    },
+    {
+      "atS": 17,
+      "lagS": 16.449,
+      "shown": 0,
+      "produced": 659
+    },
+    {
+      "atS": 18,
+      "lagS": 17.449,
+      "shown": 0,
+      "produced": 701
+    },
+    {
+      "atS": 19,
+      "lagS": 18.449,
+      "shown": 0,
+      "produced": 742
+    },
+    {
+      "atS": 20,
+      "lagS": 19.449,
+      "shown": 0,
+      "produced": 783
+    },
+    {
+      "atS": 21,
+      "lagS": 20.449,
+      "shown": 0,
+      "produced": 824
+    },
+    {
+      "atS": 22,
+      "lagS": 21.449,
+      "shown": 0,
+      "produced": 865
+    },
+    {
+      "atS": 23,
+      "lagS": 22.449,
+      "shown": 0,
+      "produced": 905
+    },
+    {
+      "atS": 24,
+      "lagS": 13.449,
+      "shown": 397,
+      "produced": 945
+    },
+    {
+      "atS": 25,
+      "lagS": 14.449,
+      "shown": 397,
+      "produced": 984
+    },
+    {
+      "atS": 26,
+      "lagS": 15.449,
+      "shown": 397,
+      "produced": 1023
+    },
+    {
+      "atS": 27,
+      "lagS": 16.449,
+      "shown": 397,
+      "produced": 1065
+    },
+    {
+      "atS": 28,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 29,
+      "lagS": 0,
+      "shown": 1077,
+      "produced": 1077
+    },
+    {
+      "atS": 30,
+      "lagS": 0.396,
+      "shown": 1077,
+      "produced": 1097
+    },
+    {
+      "atS": 31,
+      "lagS": 1.396,
+      "shown": 1077,
+      "produced": 1136
+    },
+    {
+      "atS": 32,
+      "lagS": 2.396,
+      "shown": 1077,
+      "produced": 1173
+    },
+    {
+      "atS": 33,
+      "lagS": 3.396,
+      "shown": 1077,
+      "produced": 1212
+    },
+    {
+      "atS": 34,
+      "lagS": 4.396,
+      "shown": 1077,
+      "produced": 1254
+    },
+    {
+      "atS": 35,
+      "lagS": 5.396,
+      "shown": 1077,
+      "produced": 1292
+    },
+    {
+      "atS": 36,
+      "lagS": 6.396,
+      "shown": 1077,
+      "produced": 1331
+    },
+    {
+      "atS": 37,
+      "lagS": 7.396,
+      "shown": 1077,
+      "produced": 1371
+    },
+    {
+      "atS": 38,
+      "lagS": 0.649,
+      "shown": 1378,
+      "produced": 1406
+    },
+    {
+      "atS": 39,
+      "lagS": 1.649,
+      "shown": 1378,
+      "produced": 1440
+    },
+    {
+      "atS": 40,
+      "lagS": 2.649,
+      "shown": 1378,
+      "produced": 1473
+    },
+    {
+      "atS": 41,
+      "lagS": 3.649,
+      "shown": 1378,
+      "produced": 1507
+    },
+    {
+      "atS": 42,
+      "lagS": 4.649,
+      "shown": 1378,
+      "produced": 1542
+    },
+    {
+      "atS": 43,
+      "lagS": 5.649,
+      "shown": 1378,
+      "produced": 1575
+    },
+    {
+      "atS": 44,
+      "lagS": 6.649,
+      "shown": 1378,
+      "produced": 1596
+    }
+  ]
+}

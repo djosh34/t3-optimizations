@@ -76,7 +76,8 @@ printf '%s\n' "${runs[@]}" | xargs -P "$jobs" -L 1 bash -c 'one "$@"' _ || statu
   echo "The untouched v0.1.7 web client without WebSocket compression (\`websocket-nodeflate\`, as the"
   echo "iOS app's SocketRocket talks; issue #7), against the untouched v0.1.7 server and against the"
   echo "forked server of \`t3code/\`, on the same profiles and seeds. Warm starts. See"
-  echo "[lab/README.md](../../README.md) for the profiles and what each measure means."
+  echo "[lab/README.md](../../README.md) for the profiles and what each measure means. What the runs"
+  echo "show, the run conditions and the runs repeated alone are in [findings.md](findings.md)."
   echo
   echo "Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's"
   echo "userspace stack (issue #7), so production numbers differ."

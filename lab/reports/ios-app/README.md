@@ -3,7 +3,8 @@
 The untouched v0.1.7 web client without WebSocket compression (`websocket-nodeflate`, as the
 iOS app's SocketRocket talks; issue #7), against the untouched v0.1.7 server and against the
 forked server of `t3code/`, on the same profiles and seeds. Warm starts. See
-[lab/README.md](../../README.md) for the profiles and what each measure means.
+[lab/README.md](../../README.md) for the profiles and what each measure means. What the runs
+show, the run conditions and the runs repeated alone are in [findings.md](findings.md).
 
 Kernel TCP over a veth pair in the lab. In production the phone's TCP ends in tailscaled's
 userspace stack (issue #7), so production numbers differ.
