@@ -8,11 +8,12 @@
 //!   --t3-url http://127.0.0.1:3773 --t3-token-file <sidecar data dir>/t3-token --threads list.tsv
 //! ```
 //!
-//! `--threads` has one `label<TAB>thread id` per line. The pairing file
+//! `--threads` has one `label<TAB>thread id` per line; `--settle-ms` waits
+//! after connecting, `--dwell-ms` after each open (default 2000). The pairing file
 //! keeps the device and token; without it, `--code` pairs a new device.
-//! Before each open the tool reads the thread's newest message (its id and
-//! text length) from t3's bounded snapshot; then it times, from the focus
-//! call, until the phone stored the thread's frame and that message's text.
+//! Before each open the tool reads the thread's newest item from t3's
+//! bounded snapshot; then it times, from the focus call, until the phone
+//! stored the thread's frame and that item (its text, if it has one).
 //! stdout: one JSON line per thread with its label and the times, never an
 //! id or a title.
 
@@ -69,40 +70,40 @@ fn percent_encode(s: &str) -> String {
         .collect()
 }
 
-/// The newest user or assistant message of a thread: its text key and
-/// text length, from t3's bounded snapshot.
-fn newest(t3: &str, token: &str, thread: &str) -> Result<Option<(String, u64)>, Error> {
+/// The newest item of a thread, from t3's bounded snapshot: the sidecar's
+/// object that holds it last (its text for a message or reasoning item,
+/// else its body) and that object's length at least.
+fn newest(t3: &str, token: &str, thread: &str) -> Result<Option<(u64, u64)>, Error> {
     let url = format!(
         "{t3}/api/orchestration/threads/{}/bounded",
         percent_encode(thread)
     );
     let body = ureq::get(&url)
         .header("authorization", &format!("Bearer {token}"))
+        // As the sidecar sends it (crates/sidecar/src/t3.rs).
+        .header("x-t3-orchestration-protocol", "2")
         .call()?
         .into_body()
         .with_config()
         .limit(64 << 20)
         .read_to_string()?;
     let v: Value = serde_json::from_str(&body)?;
-    let newest = v["projection"]["turnItems"]
+    let Some(item) = v["projection"]["turnItems"]
         .as_array()
         .into_iter()
         .flatten()
-        .filter(|i| {
-            matches!(
-                i["type"].as_str(),
-                Some("user_message" | "assistant_message")
-            )
-        })
-        .filter_map(|i| {
-            Some((
-                i["ordinal"].as_u64()?,
-                i["messageId"].as_str()?.to_owned(),
-                i["text"].as_str()?.len() as u64,
-            ))
-        })
-        .max_by_key(|(o, _, _)| *o);
-    Ok(newest.map(|(_, key, len)| (key, len)))
+        .max_by_key(|i| i["ordinal"].as_u64())
+    else {
+        return Ok(None);
+    };
+    let id = item["id"].as_str().unwrap_or_default();
+    Ok(Some(match item["text"].as_str() {
+        Some(text) => {
+            let key = item["messageId"].as_str().unwrap_or(id);
+            (object_id(&["text", thread, key]), text.len() as u64)
+        }
+        None => (object_id(&["body", thread, "turnItems", id]), 1),
+    }))
 }
 
 fn run() -> Result<(), Error> {
@@ -164,15 +165,19 @@ fn run() -> Result<(), Error> {
         "{}",
         json!({"label": "connect", "ms": started.elapsed().as_millis() as u64})
     );
+    // What a phone that just connected gets first is not part of an open.
+    let settle = Duration::from_millis(a.get("settle-ms").map_or(Ok(0), |v| v.parse())?);
+    let end = Instant::now() + settle;
+    while Instant::now() < end {
+        phone.step(Duration::from_millis(5))?;
+    }
     for line in list.lines().filter(|l| !l.trim().is_empty()) {
         let (label, thread) = line
             .split_once('\t')
             .ok_or("a line is label<TAB>thread id")?;
         let expect = newest(&t3, &token, thread)?;
         let frame = object_id(&["frame", thread]);
-        let text = expect
-            .as_ref()
-            .map(|(key, len)| (object_id(&["text", thread, key]), *len));
+        let text = expect;
         let t0 = Instant::now();
         phone.call("sidecar.focus", json!({"threadId": thread}));
         let (mut frame_ms, mut newest_ms) = (None, None);

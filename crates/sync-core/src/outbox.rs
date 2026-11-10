@@ -75,7 +75,7 @@ pub(crate) struct OutObject {
     /// released (`Outbox::release`): then only `len` and `hash` are left.
     pub content: Option<Arc<[u8]>>,
     pub len: u64,
-    /// The hash of `content`, set when it is released.
+    /// The hash of the bytes of `rev`, kept up to date by `set`.
     pub hash: u64,
     /// Bytes of `rev` the peer has stored.
     pub acked: RangeSet,
@@ -116,8 +116,8 @@ impl OutObject {
     ) -> Self {
         let (content, len, hash) = match content {
             Saved::Bytes(b) => {
-                let len = b.len() as u64;
-                (Some(b.into()), len, 0)
+                let (len, h) = (b.len() as u64, hash(&b));
+                (Some(b.into()), len, h)
             }
             Saved::Released { len, hash } => (None, len, hash),
         };
@@ -394,8 +394,8 @@ impl Outbox {
                     meta,
                     rev: 1,
                     len: content.len() as u64,
+                    hash: hash(&content),
                     content: Some(content),
-                    hash: 0,
                     acked: RangeSet::new(),
                     rev_acked: false,
                     keep: 0,
@@ -415,7 +415,10 @@ impl Outbox {
         let prefix = match &o.content {
             Some(old) => {
                 if o.meta == meta && content.starts_with(old) {
-                    o.len = content.len() as u64;
+                    if content.len() as u64 > o.len {
+                        o.len = content.len() as u64;
+                        o.hash = hash(&content);
+                    }
                     o.content = Some(content);
                     return;
                 }
@@ -430,7 +433,10 @@ impl Outbox {
                     // A stored object needs its bytes again only to send
                     // what it grew by.
                     if content.len() > n || !o.done() {
-                        o.len = content.len() as u64;
+                        if content.len() > n {
+                            o.len = content.len() as u64;
+                            o.hash = hash(&content);
+                        }
                         o.content = Some(content);
                     }
                     return;
@@ -451,6 +457,7 @@ impl Outbox {
         o.ever_sent = RangeSet::new();
         o.meta = meta;
         o.len = content.len() as u64;
+        o.hash = hash(&content);
         o.content = Some(content);
     }
 
@@ -459,9 +466,8 @@ impl Outbox {
     /// `set` gives them again.
     pub fn release(&mut self, key: Key) {
         if let Some(o) = self.objects.get_mut(&key)
-            && let Some(c) = o.content.take()
+            && o.content.take().is_some()
         {
-            o.hash = hash(&c);
             o.forget_sent();
         }
     }

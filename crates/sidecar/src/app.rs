@@ -166,6 +166,9 @@ const FETCHERS: usize = 3;
 /// A phone with fewer unsynced bytes than this has an idle link, which
 /// preloads use.
 const IDLE_BYTES: u64 = 1 << 20;
+/// How often a preload may start: finding one scans every phone's sync
+/// state.
+const PRELOAD_EVERY: Duration = Duration::from_millis(250);
 /// Sync state is saved this often while it changes.
 const SAVE_EVERY: Duration = Duration::from_secs(2);
 /// The loop wakes at least this often to take messages from other threads.
@@ -212,6 +215,7 @@ pub struct App {
     start: Instant,
     last_save: Instant,
     last_stats: Instant,
+    last_preload: Instant,
     /// Packets SCTP dropped for a full send buffer since the last stats line.
     dropped: u64,
     /// A `server.getConfig` request is out, and the config changed again
@@ -343,6 +347,7 @@ impl App {
             start: Instant::now(),
             last_save: Instant::now(),
             last_stats: Instant::now(),
+            last_preload: Instant::now(),
             dropped: 0,
             config_pending: false,
             config_again: false,
@@ -1202,6 +1207,10 @@ impl App {
         if self.preload == 0 || self.preloading.is_some() {
             return;
         }
+        if self.last_preload.elapsed() < PRELOAD_EVERY {
+            return;
+        }
+        self.last_preload = Instant::now();
         let opening = self
             .thread_subs
             .keys()
@@ -1212,7 +1221,7 @@ impl App {
         let idle: Vec<String> = self
             .devices
             .iter()
-            .filter(|(_, d)| d.connected() && d.server.stats().unsynced_bytes < IDLE_BYTES)
+            .filter(|(_, d)| d.connected() && d.server.unsynced_bytes() < IDLE_BYTES)
             .map(|(id, _)| id.clone())
             .collect();
         if idle.is_empty() {
@@ -1615,6 +1624,11 @@ mod tests {
     }
 
     impl Test {
+        fn preload(&mut self) {
+            self.app.last_preload = Instant::now() - PRELOAD_EVERY;
+            self.app.preload_due();
+        }
+
         fn phone(&mut self, id: &str, focus: Option<&str>, connected: bool) {
             let n = self.app.devices.len() as u8 + 1;
             let record = DeviceRecord {
@@ -1794,21 +1808,21 @@ mod tests {
         ]);
         // The thread list alone fetches no thread.
         assert!(t.queued().is_empty());
-        t.app.preload_due();
-        t.app.preload_due();
+        t.preload();
+        t.preload();
         // The newest live one, archived ones never; one at a time.
         assert_eq!(t.take_queued(), ["2 bounded t1"]);
         t.fetched("t1", false, snapshot("t1", "one", true));
         assert!(t.app.devices["a"].wants("t1"), "the phone got t1");
         // Its older history next, then the next thread.
         assert_eq!(t.take_queued(), ["2 history t1 c1"]);
-        t.app.preload_due();
+        t.preload();
         assert!(t.queued().is_empty());
         t.fetched("t1", true, json!({"items": [], "hasMoreHistory": false}));
-        t.app.preload_due();
+        t.preload();
         assert_eq!(t.take_queued(), ["2 bounded t2"]);
         t.fetched("t2", false, snapshot("t2", "two", false));
-        t.app.preload_due();
+        t.preload();
         // Only the newest 2.
         assert!(t.queued().is_empty());
         Ok(())
@@ -1824,7 +1838,7 @@ mod tests {
             ("t2", "active", "1"),
             ("old", "archive", "0"),
         ]);
-        t.app.preload_due();
+        t.preload();
         assert_eq!(t.queued(), ["2 bounded t1"]);
         // The phone opens an archived thread while t1 preloads.
         t.call("a", "sidecar.focus", Some("old"));
@@ -1836,10 +1850,10 @@ mod tests {
         t.take_queued();
         // No new preload while the opened thread loads.
         t.fetched("t1", false, snapshot("t1", "one", false));
-        t.app.preload_due();
+        t.preload();
         assert!(t.queued().is_empty());
         t.fetched("old", true, json!({"items": [], "hasMoreHistory": false}));
-        t.app.preload_due();
+        t.preload();
         assert_eq!(t.queued(), ["2 bounded t2"]);
         Ok(())
     }
@@ -1850,16 +1864,16 @@ mod tests {
         t.take_queued();
         t.phone("a", None, true);
         t.shell(&[("t1", "active", "1")]);
-        t.app.preload_due();
+        t.preload();
         assert_eq!(t.take_queued(), ["2 bounded t1"]);
         t.fetched("t1", false, snapshot("t1", "one", false));
         // The same list again, as after a reconnect to t3: nothing.
         t.shell(&[("t1", "active", "1")]);
-        t.app.preload_due();
+        t.preload();
         assert!(t.queued().is_empty());
         // Changed: fetched again, as the phone has it.
         t.thread_updated("t1", "2");
-        t.app.preload_due();
+        t.preload();
         assert_eq!(t.take_queued(), ["2 bounded t1"]);
         Ok(())
     }
@@ -1872,7 +1886,7 @@ mod tests {
         t.app.update_subscriptions();
         t.shell(&[("t1", "active", "2"), ("t2", "active", "1")]);
         t.subscription_snapshot("t1", snapshot("t1", "one", false));
-        t.app.preload_due();
+        t.preload();
         t.fetched("t2", false, snapshot("t2", "two", false));
         let has = |t: &Test, thread: &str| {
             t.app.devices["a"]

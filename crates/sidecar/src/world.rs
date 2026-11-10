@@ -411,16 +411,14 @@ impl World {
         let Some(state) = self.threads.remove(thread) else {
             return gone;
         };
-        if let Some(ids) = self.by_thread.get_mut(thread) {
-            let objects = &self.objects;
-            ids.retain(|id| objects.get(id).is_some_and(|o| o.kind == Kind::Shell));
+        let ids = self.by_thread.remove(thread).unwrap_or_default();
+        let objects = &self.objects;
+        let (rows, ids): (BTreeSet<u64>, BTreeSet<u64>) = ids
+            .into_iter()
+            .partition(|id| objects.get(id).is_some_and(|o| o.kind == Kind::Shell));
+        if !rows.is_empty() {
+            self.by_thread.insert(thread.to_owned(), rows);
         }
-        let ids: Vec<u64> = self
-            .objects
-            .iter()
-            .filter(|(_, o)| o.kind != Kind::Shell && o.thread.as_deref() == Some(thread))
-            .map(|(id, _)| *id)
-            .collect();
         for id in ids {
             if let Some(o) = self.objects.remove(&id) {
                 self.bytes = self.bytes.saturating_sub(o.cost());

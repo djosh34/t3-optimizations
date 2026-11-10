@@ -30,8 +30,8 @@ pub enum Incoming {
     },
 }
 
-/// The version of [`Server::save`]'s format; 2 saves stored objects
-/// without their bytes.
+/// The version of [`Server::save`]'s format; 2 saves objects without
+/// their bytes.
 const VERSION: u8 = 2;
 
 /// The most meta bytes an object can have: with the chunk header and the
@@ -337,6 +337,11 @@ impl Server {
         })
     }
 
+    /// Bytes that wait to go to the phone; cheaper than [`Server::stats`].
+    pub fn unsynced_bytes(&self) -> u64 {
+        self.ep.out.unsynced_bytes()
+    }
+
     /// Whether the phone has stored everything.
     pub fn is_synced(&self) -> bool {
         self.ep.out.is_synced()
@@ -359,7 +364,9 @@ impl Server {
     /// so reach t3 twice across a sidecar crash; t3 keeps a receipt per
     /// `commandId` and applies it once.
     ///
-    /// An object the phone stored is saved without its bytes, as in memory.
+    /// Objects are saved without their bytes: their length and hash. A
+    /// restarted sidecar sets them again from the t3 server; what the phone
+    /// has not stored of one waits until then.
     pub fn save(&self) -> Vec<u8> {
         let mut out = vec![VERSION];
         out.extend_from_slice(&self.token);
@@ -389,12 +396,13 @@ impl Server {
             put_varint(&mut out, o.order);
             store::put_bytes(&mut out, &o.meta);
             put_varint(&mut out, o.rev);
-            match &o.content {
-                Some(c) => {
+            match key {
+                // A reply has no other source than this.
+                Key::Reply(_) => {
                     out.push(1);
-                    store::put_bytes(&mut out, c);
+                    store::put_bytes(&mut out, o.bytes());
                 }
-                None => {
+                _ => {
                     out.push(0);
                     put_varint(&mut out, o.len());
                     out.extend_from_slice(&o.hash.to_be_bytes());
@@ -447,10 +455,11 @@ impl Server {
             let acked = store::ranges(&mut r)?;
             let rev_acked = r.u8()? != 0;
             let keep = r.varint()?;
-            let o = OutObject::restored(class, order, meta, rev, content, acked, rev_acked, keep);
-            let done = o.done();
-            s.ep.out.restore(key, o);
-            if done && matches!(key, Key::Object(_)) {
+            s.ep.out.restore(
+                key,
+                OutObject::restored(class, order, meta, rev, content, acked, rev_acked, keep),
+            );
+            if let Key::Object(_) = key {
                 s.ep.out.release(key);
             }
         }
