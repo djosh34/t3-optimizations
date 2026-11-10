@@ -438,6 +438,11 @@ impl NativePhone {
         self.phone.stats()
     }
 
+    /// One object, by id.
+    pub fn object(&self, id: u64) -> Option<&InObject> {
+        self.phone.object(id)
+    }
+
     /// Every object with its meta.
     pub fn objects(&self) -> impl Iterator<Item = (Value, &InObject)> {
         self.phone.objects().map(|(_, o)| {
