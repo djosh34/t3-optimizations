@@ -1,3 +1,4 @@
+// @effect-diagnostics nodeBuiltinImport:off -- The test stands in for the WASM build's sync_core::hash_id with node's SHA-256.
 import * as NodeCrypto from "node:crypto";
 
 import { describe, expect, it, vi } from "vite-plus/test";
