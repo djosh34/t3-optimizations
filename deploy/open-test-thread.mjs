@@ -128,11 +128,26 @@ try {
   await step("opened", async () => {
     const t = performance.now();
     await row.click({ timeout: 30_000 });
-    await page
-      .locator(`text=/^\\s*${reply}\\.?\\s*$/i`)
-      .filter({ visible: true })
-      .first()
-      .waitFor({ timeout: 120_000 });
+    // On screen: in the viewport and not faded out. Playwright counts an
+    // element that is still fading in as visible.
+    await page.waitForFunction(
+      (word) => {
+        const shown = (e) => {
+          for (let n = e; n; n = n.parentElement) {
+            const style = getComputedStyle(n);
+            if (style.opacity !== "1" || style.visibility === "hidden") return false;
+          }
+          const r = e.getBoundingClientRect();
+          return r.width > 0 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
+        };
+        const re = new RegExp(`^\\s*${word}\\.?\\s*$`, "i");
+        return [...document.querySelectorAll("p, span, div")].some(
+          (e) => e.children.length === 0 && re.test(e.textContent ?? "") && shown(e),
+        );
+      },
+      reply,
+      { timeout: 120_000, polling: 16 },
+    );
     const ms = Math.round(performance.now() - t);
     // The shim's trace has ids and paths: for a local look only.
     if (process.env.TRACE) {
