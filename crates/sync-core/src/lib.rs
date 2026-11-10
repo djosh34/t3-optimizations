@@ -16,6 +16,7 @@
 
 mod compress;
 mod endpoint;
+mod hash;
 mod inbox;
 mod outbox;
 mod phone;
@@ -27,6 +28,7 @@ mod store;
 pub mod wire;
 
 pub use endpoint::{Config, Stats};
+pub use hash::{hash, hash_id};
 pub use inbox::{Delivered, InObject};
 pub use outbox::{Busy, Class};
 pub use phone::{EntryKind, EntryState, Phone, Received, Reply};

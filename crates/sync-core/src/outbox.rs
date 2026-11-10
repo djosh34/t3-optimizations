@@ -4,7 +4,9 @@
 use std::cmp::Reverse;
 use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Range;
+use std::sync::Arc;
 
+use crate::hash::hash;
 use crate::Millis;
 use crate::ranges::RangeSet;
 use crate::wire::{Body, Chunk, Key, MAX_RAW_CHUNK, chunk_len, compress, varint_len};
@@ -69,7 +71,12 @@ pub(crate) struct OutObject {
     pub order: u64,
     pub meta: Vec<u8>,
     pub rev: u64,
-    pub content: Vec<u8>,
+    /// The bytes of `rev`; shared with the caller, not copied. None once
+    /// released (`Outbox::release`): then only `len` and `hash` are left.
+    pub content: Option<Arc<[u8]>>,
+    pub len: u64,
+    /// The hash of `content`, set when it is released.
+    pub hash: u64,
     /// Bytes of `rev` the peer has stored.
     pub acked: RangeSet,
     /// The peer has stored a chunk of `rev`, so it has `rev` and `meta`.
@@ -102,17 +109,26 @@ impl OutObject {
         order: u64,
         meta: Vec<u8>,
         rev: u64,
-        content: Vec<u8>,
+        content: Saved,
         acked: RangeSet,
         rev_acked: bool,
         keep: u64,
     ) -> Self {
+        let (content, len, hash) = match content {
+            Saved::Bytes(b) => {
+                let len = b.len() as u64;
+                (Some(b.into()), len, 0)
+            }
+            Saved::Released { len, hash } => (None, len, hash),
+        };
         OutObject {
             class,
             order,
             meta,
             rev,
             content,
+            len,
+            hash,
             acked,
             rev_acked,
             keep,
@@ -127,8 +143,13 @@ impl OutObject {
         self.rev_sent_at.is_some()
     }
 
-    fn len(&self) -> u64 {
-        self.content.len() as u64
+    /// The bytes of `rev`, empty once released.
+    pub fn bytes(&self) -> &[u8] {
+        self.content.as_deref().unwrap_or_default()
+    }
+
+    pub fn len(&self) -> u64 {
+        self.len
     }
 
     pub fn done(&self) -> bool {
@@ -267,6 +288,13 @@ fn gaps_of(
     out
 }
 
+/// An object's content as saved: its bytes, or once released, their length
+/// and hash.
+pub(crate) enum Saved {
+    Bytes(Vec<u8>),
+    Released { len: u64, hash: u64 },
+}
+
 /// A sent packet, kept until acked.
 #[derive(Debug, Clone)]
 struct SentPacket {
@@ -343,7 +371,19 @@ impl Outbox {
     /// and the peer gets the new bytes; anything else (a change in the
     /// middle, a shorter text, other meta) is a new revision that keeps the
     /// unchanged leading bytes.
-    pub fn set(&mut self, key: Key, class: Class, order: u64, meta: Vec<u8>, content: Vec<u8>) {
+    ///
+    /// Released content is compared by its hash: the same bytes again keep
+    /// everything, bytes that start with it are growth, and other bytes are
+    /// a new revision that keeps nothing.
+    pub fn set(
+        &mut self,
+        key: Key,
+        class: Class,
+        order: u64,
+        meta: Vec<u8>,
+        content: impl Into<Arc<[u8]>>,
+    ) {
+        let content: Arc<[u8]> = content.into();
         let Some(o) = self.objects.get_mut(&key) else {
             self.index.insert((class, Reverse(order), key));
             self.objects.insert(
@@ -353,7 +393,9 @@ impl Outbox {
                     order,
                     meta,
                     rev: 1,
-                    content,
+                    len: content.len() as u64,
+                    content: Some(content),
+                    hash: 0,
                     acked: RangeSet::new(),
                     rev_acked: false,
                     keep: 0,
@@ -370,16 +412,29 @@ impl Outbox {
             o.class = class;
             o.order = order;
         }
-        if o.meta == meta && content.starts_with(&o.content) {
-            o.content = content;
-            return;
-        }
-        let prefix = o
-            .content
-            .iter()
-            .zip(&content)
-            .take_while(|(a, b)| a == b)
-            .count() as u64;
+        let prefix = match &o.content {
+            Some(old) => {
+                if o.meta == meta && content.starts_with(old) {
+                    o.len = content.len() as u64;
+                    o.content = Some(content);
+                    return;
+                }
+                old.iter().zip(content.iter()).take_while(|(a, b)| a == b).count() as u64
+            }
+            None => {
+                let n = o.len as usize;
+                if o.meta == meta && content.get(..n).is_some_and(|p| hash(p) == o.hash) {
+                    // A stored object needs its bytes again only to send
+                    // what it grew by.
+                    if content.len() > n || !o.done() {
+                        o.len = content.len() as u64;
+                        o.content = Some(content);
+                    }
+                    return;
+                }
+                0
+            }
+        };
         o.rev += 1;
         self.busy.entry(key).or_default().1 += 1;
         o.keep = if o.rev_acked {
@@ -392,7 +447,20 @@ impl Outbox {
         o.forget_sent();
         o.ever_sent = RangeSet::new();
         o.meta = meta;
-        o.content = content;
+        o.len = content.len() as u64;
+        o.content = Some(content);
+    }
+
+    /// Drops an object's bytes and keeps their length and hash. A stored
+    /// object needs them no more; one not stored yet waits, unsent, until
+    /// `set` gives them again.
+    pub fn release(&mut self, key: Key) {
+        if let Some(o) = self.objects.get_mut(&key)
+            && let Some(c) = o.content.take()
+        {
+            o.hash = hash(&c);
+            o.forget_sent();
+        }
     }
 
     /// Inserts an object as it was saved.
@@ -445,13 +513,18 @@ impl Outbox {
         busy
     }
 
+    /// Whether nothing waits to be sent: released objects that are not
+    /// stored wait for their bytes, not for the link.
     pub fn is_synced(&self) -> bool {
-        self.objects.values().all(OutObject::done)
+        self.objects
+            .values()
+            .all(|o| o.done() || o.content.is_none())
     }
 
     pub fn unsynced_bytes(&self) -> u64 {
         self.objects
             .values()
+            .filter(|o| o.content.is_some())
             .map(|o| o.len() - o.acked.len().min(o.len()))
             .sum()
     }
@@ -463,7 +536,7 @@ impl Outbox {
     pub fn unsent_backfill_bytes(&self) -> u64 {
         self.objects
             .values()
-            .filter(|o| o.class > Class::Status)
+            .filter(|o| o.class > Class::Status && o.content.is_some())
             .map(|o| {
                 let sent = o.ever_sent.ranges().iter().cloned();
                 gaps_of(o.acked.ranges(), sent, 0..o.len())
@@ -493,9 +566,19 @@ impl Outbox {
         }
     }
 
-    /// The peer lost everything it stored.
+    /// The peer lost everything it stored. Released objects cannot go out
+    /// again and are dropped; the caller sets them anew.
     pub fn forget_peer(&mut self) {
         self.inflight.clear();
+        let released: Vec<Key> = self
+            .objects
+            .iter()
+            .filter(|(_, o)| o.content.is_none())
+            .map(|(k, _)| *k)
+            .collect();
+        for k in released {
+            self.remove(k);
+        }
         for o in self.objects.values_mut() {
             o.forget_peer();
         }
@@ -571,7 +654,7 @@ impl Outbox {
                 let Some(o) = self.objects.get(&key) else {
                     continue;
                 };
-                if o.done() || (pass == 0 && o.len() > RIDE_MAX) {
+                if o.done() || o.content.is_none() || (pass == 0 && o.len() > RIDE_MAX) {
                     continue;
                 }
                 let mut ranges = if pass == 1 {
@@ -771,14 +854,14 @@ fn make_chunk(
     let cut = |len: usize| -> Range<u64> {
         let len = len.min(n) as u64;
         if from_end {
-            let start = char_start(&o.content, range.end - len, range.end);
+            let start = char_start(o.bytes(), range.end - len, range.end);
             start..range.end
         } else {
-            let end = char_end(&o.content, range.start + len, range.start);
+            let end = char_end(o.bytes(), range.start + len, range.start);
             range.start..end
         }
     };
-    let slice = |r: &Range<u64>| o.content.get(r.start as usize..r.end as usize);
+    let slice = |r: &Range<u64>| o.bytes().get(r.start as usize..r.end as usize);
     let mut len = n.min(avail.saturating_mul(3));
     for _ in 0..4 {
         let r = cut(len);

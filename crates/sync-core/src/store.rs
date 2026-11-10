@@ -6,6 +6,7 @@ use std::ops::Range;
 use crate::ranges::RangeSet;
 use crate::wire::{DecodeError, Reader, put_varint};
 
+/// The phone's saved state; the server's has its own (`server.rs`).
 pub const VERSION: u8 = 1;
 
 pub fn put_bytes(out: &mut Vec<u8>, b: &[u8]) {
@@ -40,9 +41,9 @@ pub fn ranges(r: &mut Reader) -> Result<RangeSet, DecodeError> {
     Ok(s)
 }
 
-pub fn version(r: &mut Reader) -> Result<(), DecodeError> {
+pub fn version(r: &mut Reader, want: u8) -> Result<(), DecodeError> {
     match r.u8()? {
-        VERSION => Ok(()),
+        v if v == want => Ok(()),
         v => Err(DecodeError::Version(v)),
     }
 }

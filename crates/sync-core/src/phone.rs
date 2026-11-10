@@ -299,7 +299,7 @@ impl Phone {
                 .ep
                 .out
                 .get(Key::Entry(seq))
-                .map(|o| o.content.as_slice())
+                .map(|o| o.bytes())
                 .unwrap_or_default();
             store::put_bytes(&mut out, payload);
         }
@@ -331,7 +331,7 @@ impl Phone {
         now: Millis,
     ) -> Result<Phone, DecodeError> {
         let mut r = Reader::new(state);
-        store::version(&mut r)?;
+        store::version(&mut r, store::VERSION)?;
         let token = store::token(&mut r)?;
         let epoch = r.varint()?;
         let mut phone = Phone::new(token, epoch, cfg, now);
@@ -350,7 +350,7 @@ impl Phone {
         }
         for bytes in objects {
             let mut r = Reader::new(bytes);
-            store::version(&mut r)?;
+            store::version(&mut r, store::VERSION)?;
             let key = Key::decode(r.varint()?)?;
             let rev = r.varint()?;
             let meta = store::bytes(&mut r)?;

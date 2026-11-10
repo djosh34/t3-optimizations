@@ -9,3 +9,5 @@ publish = false
 # Pure Rust, so it builds for wasm32-unknown-unknown too. Only its built-in
 # dictionary is used, so every chunk decodes on its own.
 brotli = "8.0.2"
+# Pure Rust too: the one hash of ids in meta and of stored bytes (src/hash.rs).
+sha2 = "0.11.1"
