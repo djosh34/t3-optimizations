@@ -1269,7 +1269,7 @@ impl App {
             let fresh = self.fresh.get(t) == Some(updated);
             let lacking: Vec<String> = idle
                 .iter()
-                .filter(|d| self.devices.get(*d).is_some_and(|d| !d.wants(t)))
+                .filter(|d| self.devices.get(*d).is_some_and(|d| !d.has_thread(t)))
                 .cloned()
                 .collect();
             let stale = !fresh
@@ -1319,11 +1319,13 @@ impl App {
             return;
         }
         for d in self.devices.values_mut() {
-            d.release(&gone);
+            for (thread, ids) in &gone {
+                d.release(thread, ids);
+            }
             d.dirty = true;
         }
         log(format!(
-            "evicted {} objects, the world holds {} MB",
+            "evicted {} threads, the world holds {} MB",
             gone.len(),
             self.world.bytes() >> 20
         ));
@@ -1388,9 +1390,10 @@ impl App {
             Ok(_) if self.thread_subs.contains_key(thread) => {}
             Ok(v) => {
                 self.thread_snapshot(thread, &v);
-                // Phones it was preloaded for get all of it from now on.
+                // Phones it was preloaded for get all of it from now on,
+                // also those whose copy an eviction left unfinished.
                 for d in self.devices.values_mut() {
-                    if d.connected() && !d.wants(thread) {
+                    if d.connected() && !d.has_thread(thread) {
                         d.give(&self.world, thread);
                     }
                 }
@@ -1959,6 +1962,13 @@ mod tests {
         assert!(unsynced(&t) < before);
         t.shell(&[("t1", "active", "2"), ("t2", "active", "1")]);
         assert!(has(&t, "t2"), "an evicted thread is not deleted");
+        // The phone never stored t2 whole: with room again, the preload
+        // sends it once more.
+        t.app.cache_limit = 256 << 20;
+        t.take_queued();
+        t.preload();
+        assert_eq!(t.take_queued(), ["2 bounded t2"]);
+        t.fetched("t2", false, snapshot("t2", "two", false));
         // t2 leaves the list: deleted on the phone, though the world does
         // not hold it.
         t.shell(&[("t1", "active", "2")]);

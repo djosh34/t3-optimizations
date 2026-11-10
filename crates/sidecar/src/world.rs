@@ -373,10 +373,14 @@ impl World {
     }
 
     /// Evicts the threads used least recently, never one `keep` names,
-    /// until the world holds at most `limit` bytes. Returns the ids of the
-    /// objects that went: phones keep their copies, the sidecar fetches the
-    /// thread again when it is needed.
-    pub fn evict_over(&mut self, limit: usize, keep: impl Fn(&str) -> bool) -> Vec<u64> {
+    /// until the world holds at most `limit` bytes. Returns each evicted
+    /// thread with the ids of its objects that went: phones keep their
+    /// copies, the sidecar fetches the thread again when it is needed.
+    pub fn evict_over(
+        &mut self,
+        limit: usize,
+        keep: impl Fn(&str) -> bool,
+    ) -> Vec<(String, Vec<u64>)> {
         let mut gone = Vec::new();
         while self.bytes > limit {
             let Some(t) = self
@@ -388,7 +392,8 @@ impl World {
             else {
                 break;
             };
-            gone.extend(self.evict(&t));
+            let ids = self.evict(&t);
+            gone.push((t, ids));
         }
         gone
     }
@@ -1370,14 +1375,22 @@ mod tests {
         // t1 is used again: t2 is the least recently used now.
         w.touch("t1");
         let before = w.bytes();
-        let gone = w.evict_over(before - 1, |t| t == "t3");
+        let gone: Vec<u64> = w
+            .evict_over(before - 1, |t| t == "t3")
+            .into_iter()
+            .flat_map(|(_, ids)| ids)
+            .collect();
         assert!(gone.contains(&object_id(&["text", "t2", "m-b"])));
         assert!(!w.resident("t2") && w.resident("t1") && w.resident("t3"));
         // The shared image stays for t3; the thread's row in the list too.
         assert!(w.get(object_id(&["image", "shared"])).is_some());
         assert!(w.bytes() < before);
         // Next t1, and its own image with it; t3 is kept.
-        let gone = w.evict_over(0, |t| t == "t3");
+        let gone: Vec<u64> = w
+            .evict_over(0, |t| t == "t3")
+            .into_iter()
+            .flat_map(|(_, ids)| ids)
+            .collect();
         assert!(gone.contains(&object_id(&["image", "only1"])));
         assert!(!gone.contains(&object_id(&["image", "shared"])));
         assert!(w.resident("t3") && !w.resident("t1"));

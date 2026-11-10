@@ -324,6 +324,14 @@ impl Server {
         self.ep.out.get(Key::Object(id)).is_some()
     }
 
+    /// Whether this object has bytes waiting to go to the phone.
+    pub fn sending(&self, id: u64) -> bool {
+        self.ep
+            .out
+            .get(Key::Object(id))
+            .is_some_and(|o| o.content.is_some() && !o.done())
+    }
+
     /// Whether the phone stored this object's current revision whole.
     pub fn stored(&self, id: u64) -> bool {
         self.ep.out.get(Key::Object(id)).is_some_and(|o| o.done())
