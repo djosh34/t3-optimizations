@@ -1911,22 +1911,27 @@ mod tests {
         }
         t.app.resubscribe_due();
         assert_eq!(t.take_queued(), ["0 history old c1"]);
-        // It fails again, and the phone closes and reopens the thread before
-        // the retry: the new load's pages replace it, and nothing is
-        // fetched twice.
-        t.app.fetched(Fetched::Thread {
-            thread: "old".into(),
-            page: Some("c1".into()),
-            result: Err("t3 was busy".into()),
-        });
+        // A retry that a newer load or a close supersedes is dropped, so no
+        // page is fetched twice.
+        let fail = |t: &mut Test| {
+            t.app.fetched(Fetched::Thread {
+                thread: "old".into(),
+                page: Some("c1".into()),
+                result: Err("t3 was busy".into()),
+            });
+            assert!(t.app.page_retries.contains_key("old"));
+        };
+        fail(&mut t);
+        t.subscription_snapshot("old", snapshot("old", "old text", true));
+        assert!(t.app.page_retries.is_empty(), "a new load's pages");
+        assert_eq!(t.take_queued(), ["0 history old c1"]);
+        fail(&mut t);
         t.call("a", "sidecar.close", Some("old"));
-        assert!(t.app.page_retries.is_empty());
+        assert!(t.app.page_retries.is_empty(), "a close");
         t.call("a", "sidecar.focus", Some("old"));
         t.subscription_snapshot("old", snapshot("old", "old text", true));
         assert_eq!(t.take_queued(), ["0 history old c1"]);
         t.fetched("old", true, json!({"items": [], "hasMoreHistory": false}));
-        t.app.resubscribe_due();
-        assert!(t.queued().is_empty());
         t.preload();
         assert_eq!(t.queued(), ["2 bounded t2"]);
         Ok(())
