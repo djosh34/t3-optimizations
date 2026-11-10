@@ -17,7 +17,7 @@ use std::time::{Duration, Instant};
 use pipe::client::{Client, ClientEvent, Identity};
 use serde_json::{Value, json};
 use str0m::config::DtlsCert;
-use sync_core::{Config, InObject, Key, Millis, Phone, Stats};
+use sync_core::{Config, InObject, Key, Millis, Phone, Stats, hash_id};
 use tungstenite::{Message, WebSocket};
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -446,19 +446,24 @@ impl NativePhone {
         })
     }
 
-    /// The bodies of a collection of a thread, complete ones only.
+    /// The bodies of a collection of a thread, complete ones only. Ids in
+    /// meta are hashed (`sync_core::hash_id`).
     pub fn bodies(&self, thread: &str, collection: &str) -> Vec<Value> {
+        let t = hash_id(thread);
         self.objects()
-            .filter(|(m, o)| m["t"] == thread && m["c"] == collection && o.complete() && o.len > 0)
+            .filter(|(m, o)| {
+                m["t"] == t.as_str() && m["c"] == collection && o.complete() && o.len > 0
+            })
             .filter_map(|(_, o)| serde_json::from_slice(&o.data).ok())
             .collect()
     }
 
-    /// Texts of a thread by kind (`assistant`, `user`, ...): message key
-    /// and every run of bytes the phone has, decoded.
+    /// Texts of a thread by kind (`assistant`, `user`, ...): the hash of
+    /// the message key and every run of bytes the phone has, decoded.
     pub fn texts(&self, thread: &str, kind: &str) -> Vec<(String, Vec<String>)> {
+        let t = hash_id(thread);
         self.objects()
-            .filter(|(m, _)| m["t"] == thread && m["k"] == kind && m["m"].is_string())
+            .filter(|(m, _)| m["t"] == t.as_str() && m["k"] == kind && m["m"].is_string())
             .map(|(m, o)| {
                 let runs = o
                     .have
@@ -474,8 +479,9 @@ impl NativePhone {
 
     /// The whole text of one message, if the phone has all of it.
     pub fn full_text(&self, thread: &str, message: &str) -> Option<String> {
+        let (t, k) = (hash_id(thread), hash_id(message));
         self.objects()
-            .find(|(m, _)| m["t"] == thread && m["m"] == message)
+            .find(|(m, _)| m["t"] == t.as_str() && m["m"] == k.as_str())
             .and_then(|(_, o)| {
                 o.complete()
                     .then(|| String::from_utf8_lossy(&o.data).into_owned())

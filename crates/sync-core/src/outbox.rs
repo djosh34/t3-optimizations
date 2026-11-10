@@ -6,8 +6,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Range;
 use std::sync::Arc;
 
-use crate::hash::hash;
 use crate::Millis;
+use crate::hash::hash;
 use crate::ranges::RangeSet;
 use crate::wire::{Body, Chunk, Key, MAX_RAW_CHUNK, chunk_len, compress, varint_len};
 
@@ -419,7 +419,10 @@ impl Outbox {
                     o.content = Some(content);
                     return;
                 }
-                old.iter().zip(content.iter()).take_while(|(a, b)| a == b).count() as u64
+                old.iter()
+                    .zip(content.iter())
+                    .take_while(|(a, b)| a == b)
+                    .count() as u64
             }
             None => {
                 let n = o.len as usize;

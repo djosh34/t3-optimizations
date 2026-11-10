@@ -19,13 +19,19 @@
 //!   descriptor and the sidecar's auth session on it, which the web app
 //!   needs before it shows anything.
 //!
-//! Every object has a `meta` JSON that says what it is; see `crates/sidecar/README.md`.
+//! Every object has a `meta` JSON that says what it is; every id in it is
+//! hashed with `sync_core::hash_id`. See `crates/sidecar/README.md`.
+//!
+//! The world holds only the threads phones opened or were sent ahead of
+//! time, as encoded bytes, up to a byte limit: past it, the thread used
+//! least recently goes, with the images only it showed (`World::evict_over`).
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::sync::Arc;
 
 use serde_json::{Map, Value, json};
 use sha2::{Digest, Sha256};
-use sync_core::MAX_META;
+use sync_core::{MAX_META, hash, hash_id};
 
 /// An object's kind decides its class (see `crate::device`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -48,9 +54,19 @@ pub struct Obj {
     /// Higher goes first within its class.
     pub order: u64,
     pub meta: Vec<u8>,
-    /// Empty for a deleted object.
-    pub content: Vec<u8>,
+    /// Empty for a deleted object. Shared with every phone's sync state.
+    pub content: Arc<[u8]>,
 }
+
+impl Obj {
+    /// What the object costs the cache: its bytes and about what its map
+    /// entries and its entity take.
+    fn cost(&self) -> usize {
+        self.content.len() + self.meta.len() + OBJECT_OVERHEAD
+    }
+}
+
+const OBJECT_OVERHEAD: usize = 256;
 
 const CONFIG: &str = "config";
 const DESCRIPTOR: &str = "descriptor";
@@ -100,14 +116,18 @@ pub enum After {
     Refetch,
 }
 
+/// An entity as the world remembers it once it is cut into objects.
+#[derive(Debug)]
+struct Entity {
+    /// The hash of its JSON without `updatedAt` and text: a change of those
+    /// alone is no new body.
+    shape: u64,
+    text_key: Option<String>,
+}
+
 #[derive(Debug, Default)]
 struct ThreadState {
-    /// Entities as t3 has them, by collection and id, with their text.
-    entities: HashMap<(String, String), Value>,
-    /// Text keys and their text as t3 stores it.
-    stored_text: HashMap<String, String>,
-    /// The kind label of each text key.
-    text_kind: HashMap<String, String>,
+    entities: HashMap<(String, String), Entity>,
     /// Ordinal and text key of each assistant message, for the tail.
     assistant: BTreeMap<u64, String>,
     /// The ordinal of the newest user message: the current turn starts
@@ -116,25 +136,49 @@ struct ThreadState {
     /// The ordinal of the turn item behind each turn item body and text
     /// object, by object id.
     turn_ordinals: HashMap<u64, u64>,
+    /// The newest snapshot's frame fields and rows, encoded.
+    frame_fields: Map<String, Value>,
+    frame_rows: Vec<Box<[u8]>>,
+    /// Rows of history pages that come from other threads (a fork's
+    /// inherited rows), oldest first; they go before the snapshot's rows.
+    older_rows: Vec<Box<[u8]>>,
+    /// Every page of the thread's history is here.
+    history_complete: bool,
+    /// Attachments its turn items show.
+    images: BTreeSet<String>,
+    /// Bytes of its objects in the cache.
+    bytes: usize,
+    /// When it was last used, on the world's clock.
+    used: u64,
+}
+
+/// A listed thread.
+#[derive(Debug, Clone)]
+pub struct Listed {
+    /// `active` or `archive`.
+    pub location: String,
+    pub updated_at: String,
 }
 
 #[derive(Debug, Default)]
 pub struct World {
     objects: HashMap<u64, Obj>,
     by_thread: HashMap<String, BTreeSet<u64>>,
+    /// Threads with content in the cache.
     threads: HashMap<String, ThreadState>,
-    /// Listed threads and where: thread id to location.
-    shell_threads: HashMap<String, String>,
+    shell_threads: HashMap<String, Listed>,
     shell_projects: HashSet<String>,
     changed: BTreeSet<u64>,
     /// The order of things with no better one: later is newer.
     seq: u64,
-    images: HashSet<String>,
+    /// Attachments asked for or here, and the threads that show them.
+    images: HashMap<String, BTreeSet<String>>,
+    /// The attachment of each image object.
+    image_ids: HashMap<u64, String>,
     wanted_images: Vec<(String, String)>,
-    /// What a sidecar that just started has rebuilt: the thread list, the
-    /// threads that had a snapshot, the config and the descriptor.
     shell_loaded: bool,
-    loaded_threads: HashSet<String>,
+    /// Bytes of all objects, as `Obj::cost` counts them.
+    bytes: usize,
     /// Ids whose meta did not fit, reported once.
     pub skipped: Vec<String>,
 }
@@ -152,6 +196,11 @@ pub fn object_id(parts: &[&str]) -> u64 {
     u64::from_be_bytes(first) & sync_core::wire::MAX_ID
 }
 
+/// The id of a thread's frame: a phone that has it has the thread.
+pub fn frame_id(thread: &str) -> u64 {
+    object_id(&["frame", thread])
+}
+
 fn compact(v: &Value) -> Vec<u8> {
     serde_json::to_vec(v).unwrap_or_default()
 }
@@ -165,8 +214,31 @@ impl World {
         self.objects.keys().copied()
     }
 
+    /// The objects of a thread in the cache, its row in the list and its
+    /// images among them.
     pub fn thread_ids(&self, thread: &str) -> impl Iterator<Item = u64> + '_ {
-        self.by_thread.get(thread).into_iter().flatten().copied()
+        let images = self
+            .threads
+            .get(thread)
+            .into_iter()
+            .flat_map(|s| s.images.iter())
+            .map(|a| object_id(&["image", a]))
+            .filter(|id| self.objects.contains_key(id));
+        self.by_thread
+            .get(thread)
+            .into_iter()
+            .flatten()
+            .copied()
+            .chain(images)
+    }
+
+    /// The threads that show an image object.
+    pub fn image_threads(&self, id: u64) -> impl Iterator<Item = &String> {
+        self.image_ids
+            .get(&id)
+            .and_then(|a| self.images.get(a))
+            .into_iter()
+            .flatten()
     }
 
     /// Objects changed since the last call.
@@ -195,13 +267,77 @@ impl World {
     }
 
     /// The listed threads.
-    pub fn listed_threads(&self) -> impl Iterator<Item = &String> {
-        self.shell_threads.keys()
+    pub fn listed(&self) -> impl Iterator<Item = (&String, &Listed)> {
+        self.shell_threads.iter()
+    }
+
+    pub fn listed_thread(&self, thread: &str) -> Option<&Listed> {
+        self.shell_threads.get(thread)
+    }
+
+    /// Whether the thread list is here.
+    pub fn shell_loaded(&self) -> bool {
+        self.shell_loaded
+    }
+
+    /// Whether the config, descriptor and session are here.
+    pub fn config_loaded(&self) -> bool {
+        [CONFIG, DESCRIPTOR, SESSION]
+            .iter()
+            .all(|c| self.objects.contains_key(&object_id(&[c])))
+    }
+
+    /// Whether the thread has content in the cache.
+    pub fn resident(&self, thread: &str) -> bool {
+        self.threads.contains_key(thread)
+    }
+
+    /// Whether every page of the thread's history is in the cache.
+    pub fn history_complete(&self, thread: &str) -> bool {
+        self.threads.get(thread).is_some_and(|s| s.history_complete)
+    }
+
+    /// Bytes of all objects in the world.
+    pub fn bytes(&self) -> usize {
+        self.bytes
+    }
+
+    /// Marks a thread as just used, so it is evicted last.
+    pub fn touch(&mut self, thread: &str) {
+        self.seq += 1;
+        let seq = self.seq;
+        self.threads.entry(thread.to_owned()).or_default().used = seq;
     }
 
     fn next_seq(&mut self) -> u64 {
         self.seq += 1;
         self.seq
+    }
+
+    /// The thread whose bytes an object counts to.
+    fn owner(obj: &Obj) -> Option<&str> {
+        match obj.kind {
+            Kind::Body | Kind::Text | Kind::Frame => obj.thread.as_deref(),
+            _ => None,
+        }
+    }
+
+    fn count(&mut self, obj: &Obj, add: bool) {
+        let cost = obj.cost();
+        if add {
+            self.bytes += cost;
+        } else {
+            self.bytes = self.bytes.saturating_sub(cost);
+        }
+        if let Some(t) = Self::owner(obj)
+            && let Some(s) = self.threads.get_mut(t)
+        {
+            s.bytes = if add {
+                s.bytes + cost
+            } else {
+                s.bytes.saturating_sub(cost)
+            };
+        }
     }
 
     /// Sets an object; marks it changed when it is new or differs.
@@ -222,45 +358,94 @@ impl World {
         if let Some(t) = &obj.thread {
             self.by_thread.entry(t.clone()).or_default().insert(id);
         }
-        self.objects.insert(id, obj);
+        if let Some(t) = Self::owner(&obj) {
+            self.threads.entry(t.to_owned()).or_default();
+        }
+        self.count(&obj, true);
+        if let Some(old) = self.objects.insert(id, obj) {
+            self.count(&old, false);
+        }
         self.changed.insert(id);
     }
 
     /// Empties an object: the phone deletes what it had.
     fn delete(&mut self, id: u64) {
-        if let Some(obj) = self.objects.get_mut(&id)
-            && !obj.content.is_empty()
-        {
-            obj.content.clear();
-            self.changed.insert(id);
+        let Some(obj) = self.objects.get(&id) else {
+            return;
+        };
+        if obj.content.is_empty() {
+            return;
         }
+        let emptied = Obj {
+            content: Arc::from([]),
+            ..obj.clone()
+        };
+        self.put(id, emptied);
     }
 
-    /// Whether everything the t3 server has is here: the thread list,
-    /// a snapshot of every listed thread, the config, the descriptor and the
-    /// session.
-    /// Until then, an object the world lacks may just not be loaded yet.
-    pub fn complete(&self) -> bool {
-        self.shell_loaded
-            && self
-                .shell_threads
-                .keys()
-                .all(|t| self.loaded_threads.contains(t))
-            && [CONFIG, DESCRIPTOR, SESSION]
+    /// Evicts the threads used least recently, never one `keep` names,
+    /// until the world holds at most `limit` bytes. Returns the ids of the
+    /// objects that went: phones keep their copies, the sidecar fetches the
+    /// thread again when it is needed.
+    pub fn evict_over(&mut self, limit: usize, keep: impl Fn(&str) -> bool) -> Vec<u64> {
+        let mut gone = Vec::new();
+        while self.bytes > limit {
+            let Some(t) = self
+                .threads
                 .iter()
-                .all(|c| self.objects.contains_key(&object_id(&[c])))
+                .filter(|(t, _)| !keep(t))
+                .min_by_key(|(_, s)| s.used)
+                .map(|(t, _)| t.clone())
+            else {
+                break;
+            };
+            gone.extend(self.evict(&t));
+        }
+        gone
     }
 
-    /// The objects the world has or will have: images it asked for count.
-    /// Objects a phone has beyond these were deleted.
-    pub fn known_ids(&self) -> HashSet<u64> {
-        let images = self.images.iter().map(|a| object_id(&["image", a]));
-        self.objects
+    /// Drops a thread's content and the images no other thread in the
+    /// cache shows. Its row in the thread list stays.
+    fn evict(&mut self, thread: &str) -> Vec<u64> {
+        let mut gone = Vec::new();
+        let Some(state) = self.threads.remove(thread) else {
+            return gone;
+        };
+        if let Some(ids) = self.by_thread.get_mut(thread) {
+            let objects = &self.objects;
+            ids.retain(|id| objects.get(id).is_some_and(|o| o.kind == Kind::Shell));
+        }
+        let ids: Vec<u64> = self
+            .objects
             .iter()
-            .filter(|(_, o)| !o.content.is_empty())
+            .filter(|(_, o)| o.kind != Kind::Shell && o.thread.as_deref() == Some(thread))
             .map(|(id, _)| *id)
-            .chain(images)
-            .collect()
+            .collect();
+        for id in ids {
+            if let Some(o) = self.objects.remove(&id) {
+                self.bytes = self.bytes.saturating_sub(o.cost());
+                self.changed.remove(&id);
+                gone.push(id);
+            }
+        }
+        for a in &state.images {
+            let Some(threads) = self.images.get_mut(a) else {
+                continue;
+            };
+            threads.remove(thread);
+            if !threads.is_empty() {
+                continue;
+            }
+            self.images.remove(a);
+            let id = object_id(&["image", a]);
+            self.image_ids.remove(&id);
+            if let Some(o) = self.objects.remove(&id) {
+                self.bytes = self.bytes.saturating_sub(o.cost());
+                self.changed.remove(&id);
+                gone.push(id);
+            }
+        }
+        gone
     }
 
     // The config.
@@ -290,7 +475,7 @@ impl World {
                 status: false,
                 order: u64::MAX,
                 meta: compact(&json!({ "c": c })),
-                content,
+                content: content.into(),
             },
         );
     }
@@ -328,14 +513,14 @@ impl World {
                 status: false,
                 order: u64::MAX,
                 meta: compact(&json!({"c": "shell"})),
-                content: compact(&header),
+                content: compact(&header).into(),
             },
         );
         let mut threads = HashMap::new();
         for (location, key) in [("active", "threads"), ("archive", "archivedThreads")] {
             for t in snap[key].as_array().into_iter().flatten() {
                 if let Some(id) = t["id"].as_str() {
-                    threads.insert(id.to_owned(), (location.to_owned(), t.clone()));
+                    threads.insert(id.to_owned(), (location, t));
                 }
             }
         }
@@ -349,13 +534,13 @@ impl World {
             self.remove_shell_thread(&id);
         }
         for (id, (location, t)) in threads {
-            self.put_shell_thread(&id, &location, &t);
+            self.put_shell_thread(&id, location, t);
         }
-        let projects: HashMap<String, Value> = snap["projects"]
+        let projects: HashMap<String, &Value> = snap["projects"]
             .as_array()
             .into_iter()
             .flatten()
-            .filter_map(|p| Some((p["id"].as_str()?.to_owned(), p.clone())))
+            .filter_map(|p| Some((p["id"].as_str()?.to_owned(), p)))
             .collect();
         let gone: Vec<String> = self
             .shell_projects
@@ -368,7 +553,7 @@ impl World {
             self.delete(object_id(&["project", &id]));
         }
         for (id, p) in projects {
-            self.put_project(&id, &p);
+            self.put_project(&id, p);
         }
     }
 
@@ -412,20 +597,26 @@ impl World {
                 kind: Kind::Config,
                 status: false,
                 order: u64::MAX,
-                meta: compact(&json!({"c": "project", "i": id})),
-                content: compact(project),
+                meta: compact(&json!({"c": "project", "i": hash_id(id)})),
+                content: compact(project).into(),
             },
         );
     }
 
     fn put_shell_thread(&mut self, id: &str, location: &str, thread: &Value) {
         if let Some(old) = self.shell_threads.get(id)
-            && old != location
+            && old.location != location
         {
-            self.delete(object_id(&["thread", old, id]));
+            let old = object_id(&["thread", &old.location, id]);
+            self.delete(old);
         }
-        self.shell_threads
-            .insert(id.to_owned(), location.to_owned());
+        self.shell_threads.insert(
+            id.to_owned(),
+            Listed {
+                location: location.to_owned(),
+                updated_at: thread["updatedAt"].as_str().unwrap_or_default().to_owned(),
+            },
+        );
         let order = self.next_seq();
         self.put(
             object_id(&["thread", location, id]),
@@ -435,33 +626,32 @@ impl World {
                 kind: Kind::Shell,
                 status: false,
                 order,
-                meta: compact(&json!({"c": "thread", "i": id, "l": location})),
-                content: compact(thread),
+                meta: compact(&json!({"c": "thread", "i": hash_id(id), "l": location})),
+                content: compact(thread).into(),
             },
         );
     }
 
     fn remove_shell_thread(&mut self, id: &str) {
-        if let Some(location) = self.shell_threads.remove(id) {
-            self.delete(object_id(&["thread", &location, id]));
+        if let Some(listed) = self.shell_threads.remove(id) {
+            self.delete(object_id(&["thread", &listed.location, id]));
         }
-        // A thread that is gone from the list is gone: delete its content.
-        let ids: Vec<u64> = self.thread_ids(id).collect();
-        for oid in ids {
-            self.delete(oid);
-        }
-        self.threads.remove(id);
+        // Phones delete its content by the thread list (`App::prune`).
+        self.evict(id);
     }
 
     // A thread's content.
 
-    /// A thread's snapshot: a `subscribeThread` snapshot item or t3's HTTP
-    /// thread snapshot. Entities it does not have any more are deleted.
+    /// A thread's snapshot: a `subscribeThread` snapshot item or t3's
+    /// bounded HTTP snapshot. When it holds the whole history, entities it
+    /// does not have any more are deleted; a bounded window keeps the older
+    /// ones.
     pub fn set_thread(&mut self, thread: &str, snapshot: &Value) {
         let projection = &snapshot["projection"];
         let Some(fields) = projection.as_object() else {
             return;
         };
+        self.touch(thread);
         let mut seen: HashSet<(String, String)> = HashSet::new();
         for (coll, value) in fields {
             if coll == "visibleTurnItems" {
@@ -479,7 +669,6 @@ impl World {
                 }
             }
         }
-        self.loaded_threads.insert(thread.to_owned());
         let complete = snapshot["hasMoreHistory"].as_bool() != Some(true);
         if complete {
             let gone: Vec<(String, String)> = self
@@ -496,8 +685,33 @@ impl World {
             for (coll, id) in gone {
                 self.remove_entity(thread, &coll, &id);
             }
+            let state = self.threads.entry(thread.to_owned()).or_default();
+            state.history_complete = true;
+            state.older_rows.clear();
         }
-        self.put_frame(thread, snapshot);
+        self.set_frame(thread, snapshot);
+    }
+
+    /// A page of `GET /api/orchestration/threads/:id/history`, older than
+    /// what the world has of the thread. Returns whether more pages follow.
+    pub fn add_history(&mut self, thread: &str, page: &Value) -> bool {
+        let mut inherited: Vec<Box<[u8]>> = Vec::new();
+        for row in page["items"].as_array().into_iter().flatten() {
+            if row["visibility"].as_str() == Some("local") {
+                self.put_entity(thread, "turnItems", &row["item"]);
+            } else {
+                inherited.push(compact(row).into());
+            }
+        }
+        let more = page["hasMoreHistory"].as_bool() == Some(true);
+        let state = self.threads.entry(thread.to_owned()).or_default();
+        state.history_complete = !more;
+        if !inherited.is_empty() {
+            inherited.append(&mut state.older_rows);
+            state.older_rows = inherited;
+            self.put_frame(thread);
+        }
+        more
     }
 
     /// One `subscribeThread` event item.
@@ -545,26 +759,32 @@ impl World {
         {
             text = Some(std::mem::take(t));
         }
+        let shape = shape_of(&body);
         let state = self.threads.entry(thread.to_owned()).or_default();
         let entity_key = (coll.to_owned(), id.clone());
         let unchanged = state
             .entities
             .get(&entity_key)
-            .is_some_and(|old| same_but_time_and_text(old, entity));
-        state.entities.insert(entity_key, entity.clone());
+            .is_some_and(|old| old.shape == shape);
+        state.entities.insert(
+            entity_key,
+            Entity {
+                shape,
+                text_key: key.clone(),
+            },
+        );
         if let (Some(key), Some(text)) = (&key, text) {
-            state.stored_text.insert(key.clone(), text);
-            state.text_kind.insert(key.clone(), text_kind(coll, entity));
             if coll == "turnItems" {
                 self.note_assistant(thread, entity, key);
                 self.note_turn(thread, entity, object_id(&["text", thread, key]));
             }
-            self.put_text(thread, key);
+            self.put_text(thread, key, &text_kind(coll, entity), text);
         }
         if coll == "turnItems" {
             self.note_turn(thread, entity, object_id(&["body", thread, coll, &id]));
         }
-        if unchanged {
+        let body_id = object_id(&["body", thread, coll, &id]);
+        if unchanged && self.objects.contains_key(&body_id) {
             return;
         }
         let order = match entity["ordinal"].as_u64() {
@@ -578,7 +798,7 @@ impl World {
                 && (entity["status"].as_str() == Some("pending")
                     || self
                         .objects
-                        .get(&object_id(&["body", thread, coll, &id]))
+                        .get(&body_id)
                         .is_some_and(|o| o.order == u64::MAX)) =>
             {
                 u64::MAX
@@ -592,18 +812,18 @@ impl World {
                     Some("pending" | "running" | "waiting")
                 ));
         self.put(
-            object_id(&["body", thread, coll, &id]),
+            body_id,
             Obj {
                 thread: Some(thread.to_owned()),
                 kind: Kind::Body,
                 status,
                 order,
-                meta: compact(&json!({"t": thread, "c": coll, "i": id})),
-                content: compact(&body),
+                meta: compact(&json!({"t": hash_id(thread), "c": coll, "i": hash_id(&id)})),
+                content: compact(&body).into(),
             },
         );
         if coll == "turnItems" {
-            self.want_images(entity);
+            self.want_images(thread, entity);
         }
     }
 
@@ -617,18 +837,16 @@ impl World {
         };
         // Its text goes too once no other entity shows it (a message and
         // its turn item share one), and a deleted message is no tail.
-        let Some(key) = text_key(coll, &entity) else {
+        let Some(key) = entity.text_key else {
             return;
         };
         let shown = state
             .entities
-            .iter()
-            .any(|((c, _), e)| text_key(c, e).as_deref() == Some(key.as_str()));
+            .values()
+            .any(|e| e.text_key.as_deref() == Some(key.as_str()));
         if shown {
             return;
         }
-        state.stored_text.remove(&key);
-        state.text_kind.remove(&key);
         let old_tail = state.assistant.values().next_back().cloned();
         state.assistant.retain(|_, k| *k != key);
         let new_tail = state.assistant.values().next_back().cloned();
@@ -685,24 +903,17 @@ impl World {
         }
     }
 
-    fn put_text(&mut self, thread: &str, key: &str) {
-        let Some(state) = self.threads.get(thread) else {
-            return;
-        };
-        let Some(text) = state.stored_text.get(key).cloned() else {
-            return;
-        };
-        let kind = state.text_kind.get(key).cloned().unwrap_or_default();
-        let order = state
-            .assistant
-            .iter()
-            .find(|(_, k)| *k == key)
+    fn put_text(&mut self, thread: &str, key: &str, kind: &str, text: String) {
+        let id = object_id(&["text", thread, key]);
+        let order = self
+            .threads
+            .get(thread)
+            .and_then(|s| s.assistant.iter().find(|(_, k)| *k == key))
             .map(|(o, _)| *o);
         let order = match order {
             Some(o) => o,
             None => self.next_seq(),
         };
-        let id = object_id(&["text", thread, key]);
         // The order of a text the phone already has stays, so it is not
         // sent again for a new order.
         let order = self.objects.get(&id).map_or(order, |o| o.order);
@@ -713,28 +924,29 @@ impl World {
                 kind: Kind::Text,
                 status: false,
                 order,
-                meta: compact(&json!({"t": thread, "m": key, "k": kind})),
-                content: text.into_bytes(),
+                meta: compact(&json!({"t": hash_id(thread), "m": hash_id(key), "k": kind})),
+                content: text.into_bytes().into(),
             },
         );
     }
 
-    fn put_frame(&mut self, thread: &str, snapshot: &Value) {
-        let rows: Vec<Value> = snapshot["projection"]["visibleTurnItems"]
+    fn set_frame(&mut self, thread: &str, snapshot: &Value) {
+        let rows: Vec<Box<[u8]>> = snapshot["projection"]["visibleTurnItems"]
             .as_array()
             .into_iter()
             .flatten()
             .map(|row| {
-                let mut row = row.clone();
                 if row["visibility"].as_str() == Some("local")
-                    && let Some(obj) = row.as_object_mut()
+                    && let Some(obj) = row.as_object()
                 {
+                    let mut obj = obj.clone();
                     obj.remove("item");
+                    return compact(&Value::Object(obj)).into();
                 }
-                row
+                compact(row).into()
             })
             .collect();
-        let mut frame = Map::new();
+        let mut fields = Map::new();
         for key in [
             "snapshotSequence",
             "historyCursor",
@@ -742,30 +954,55 @@ impl World {
             "latestLocalTurnOrdinal",
         ] {
             if let Some(v) = snapshot.get(key) {
-                frame.insert(key.into(), v.clone());
+                fields.insert(key.into(), v.clone());
             }
         }
-        frame.insert(
+        fields.insert(
             "updatedAt".into(),
             snapshot["projection"]["updatedAt"].clone(),
         );
-        frame.insert("visibleTurnItems".into(), Value::Array(rows));
+        let state = self.threads.entry(thread.to_owned()).or_default();
+        state.frame_fields = fields;
+        state.frame_rows = rows;
+        self.put_frame(thread);
+    }
+
+    /// The frame: the snapshot's fields, then `visibleTurnItems`, the
+    /// older inherited rows before the snapshot's rows.
+    fn put_frame(&mut self, thread: &str) {
+        let Some(state) = self.threads.get(thread) else {
+            return;
+        };
+        let mut content = compact(&Value::Object(state.frame_fields.clone()));
+        // `{...}` becomes `{...,"visibleTurnItems":[...]}`.
+        content.pop();
+        if content.len() > 1 {
+            content.push(b',');
+        }
+        content.extend_from_slice(br#""visibleTurnItems":["#);
+        for (i, row) in state.older_rows.iter().chain(&state.frame_rows).enumerate() {
+            if i > 0 {
+                content.push(b',');
+            }
+            content.extend_from_slice(row);
+        }
+        content.extend_from_slice(b"]}");
         self.put(
-            object_id(&["frame", thread]),
+            frame_id(thread),
             Obj {
                 thread: Some(thread.to_owned()),
                 kind: Kind::Frame,
                 status: true,
                 order: u64::MAX,
-                meta: compact(&json!({"t": thread, "c": "frame"})),
-                content: compact(&Value::Object(frame)),
+                meta: compact(&json!({"t": hash_id(thread), "c": "frame"})),
+                content: content.into(),
             },
         );
     }
 
     // Images.
 
-    fn want_images(&mut self, item: &Value) {
+    fn want_images(&mut self, thread: &str, item: &Value) {
         for a in item["attachments"].as_array().into_iter().flatten() {
             if a["type"].as_str() != Some("image") {
                 continue;
@@ -773,13 +1010,30 @@ impl World {
             let (Some(id), Some(mime)) = (a["id"].as_str(), a["mimeType"].as_str()) else {
                 continue;
             };
-            if self.images.insert(id.to_owned()) {
+            self.threads
+                .entry(thread.to_owned())
+                .or_default()
+                .images
+                .insert(id.to_owned());
+            let threads = self.images.entry(id.to_owned()).or_default();
+            let new = threads.is_empty();
+            threads.insert(thread.to_owned());
+            if new {
+                self.image_ids
+                    .insert(object_id(&["image", id]), id.to_owned());
                 self.wanted_images.push((id.to_owned(), mime.to_owned()));
             }
         }
     }
 
+    /// An image's bytes. One no thread in the cache shows any more is
+    /// dropped.
     pub fn set_image(&mut self, id: &str, mime: &str, bytes: Vec<u8>) {
+        let Some(threads) = self.images.get(id) else {
+            return;
+        };
+        // Phones delete images of threads that left the list by this.
+        let owner = threads.iter().next().map(|t| hash_id(t));
         let order = self.next_seq();
         self.put(
             object_id(&["image", id]),
@@ -788,8 +1042,8 @@ impl World {
                 kind: Kind::Image,
                 status: false,
                 order,
-                meta: compact(&json!({"c": "image", "i": id, "y": mime})),
-                content: bytes,
+                meta: compact(&json!({"c": "image", "i": hash_id(id), "y": mime, "o": owner})),
+                content: bytes.into(),
             },
         );
     }
@@ -797,6 +1051,20 @@ impl World {
     /// Forgets that an image was asked for, so it is asked for again.
     pub fn image_failed(&mut self, id: &str) {
         self.images.remove(id);
+        self.image_ids.remove(&object_id(&["image", id]));
+    }
+}
+
+/// The hash of an entity's JSON without `updatedAt` and `text`.
+fn shape_of(body: &Value) -> u64 {
+    match body.as_object() {
+        Some(o) => {
+            let mut o = o.clone();
+            o.remove("updatedAt");
+            o.remove("text");
+            hash(&compact(&Value::Object(o)))
+        }
+        None => hash(&compact(body)),
     }
 }
 
@@ -829,19 +1097,6 @@ fn text_kind(coll: &str, entity: &Value) -> String {
     label.unwrap_or("text").to_owned()
 }
 
-/// Whether two versions of an entity differ only in `updatedAt` and text.
-fn same_but_time_and_text(a: &Value, b: &Value) -> bool {
-    let strip = |v: &Value| {
-        let mut v = v.clone();
-        if let Some(o) = v.as_object_mut() {
-            o.remove("updatedAt");
-            o.remove("text");
-        }
-        v
-    };
-    strip(a) == strip(b)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -859,8 +1114,19 @@ mod tests {
     }
 
     fn content(w: &World, id: u64) -> String {
-        String::from_utf8(w.get(id).map(|o| o.content.clone()).unwrap_or_default())
+        w.get(id)
+            .map(|o| String::from_utf8_lossy(&o.content).into_owned())
             .unwrap_or_default()
+    }
+
+    fn snap(thread: &str, items: Value, more: bool) -> Value {
+        json!({"snapshotSequence": 3, "hasMoreHistory": more, "historyCursor": if more { json!("c1") } else { Value::Null },
+            "projection": {"thread": {"id": thread}, "turnItems": items, "visibleTurnItems": [], "updatedAt": "now"}})
+    }
+
+    fn image_item(id: &str, ordinal: u64, attachment: &str) -> Value {
+        json!({"id": id, "type": "user_message", "messageId": format!("m-{id}"), "ordinal": ordinal,
+            "text": "look", "attachments": [{"type": "image", "id": attachment, "mimeType": "image/png"}]})
     }
 
     #[test]
@@ -1058,29 +1324,175 @@ mod tests {
     }
 
     #[test]
-    fn complete_once_every_listed_thread_and_the_config_are_here() {
+    fn the_least_recently_used_thread_goes_with_the_images_only_it_shows() {
         let mut w = World::default();
-        let shell = |threads: Value| {
-            json!({"kind": "snapshot", "snapshot": {"schemaVersion": 2, "snapshotSequence": 1,
-                "projects": [], "threads": threads, "archivedThreads": []}})
-        };
-        let snap = json!({"snapshotSequence": 3, "projection": {
-            "thread": {"id": "t1"}, "turnItems": [item("a", 1, "x", false, "1")],
-            "visibleTurnItems": [], "updatedAt": "now"}});
-        assert!(!w.complete());
-        w.set_shell(&shell(json!([{"id": "t1"}, {"id": "t2"}])));
-        w.set_config(&json!({"environment": {}}));
-        w.set_descriptor(&json!({"environmentId": "e"}));
-        w.set_session(&json!({"authenticated": true}));
-        w.set_thread("t1", &snap);
-        assert!(!w.complete(), "t2 has no snapshot yet");
-        w.set_thread("t2", &snap);
-        assert!(w.complete());
-        // A thread that went away takes its objects out of the known ones.
-        let text = object_id(&["text", "t2", "m-a"]);
-        assert!(w.known_ids().contains(&text));
-        w.set_shell(&shell(json!([{"id": "t1"}])));
-        assert!(!w.known_ids().contains(&text));
-        assert!(w.known_ids().contains(&object_id(&["text", "t1", "m-a"])));
+        let big = "x".repeat(10_000);
+        w.set_thread(
+            "t1",
+            &snap(
+                "t1",
+                json!([item("a", 1, &big, false, "1"), image_item("u1", 2, "only1")]),
+                false,
+            ),
+        );
+        w.set_thread(
+            "t2",
+            &snap(
+                "t2",
+                json!([
+                    item("b", 1, &big, false, "1"),
+                    image_item("u2", 2, "shared")
+                ]),
+                false,
+            ),
+        );
+        w.set_thread(
+            "t3",
+            &snap(
+                "t3",
+                json!([
+                    item("c", 1, &big, false, "1"),
+                    image_item("u3", 2, "shared")
+                ]),
+                false,
+            ),
+        );
+        w.take_wanted_images();
+        for a in ["only1", "shared"] {
+            w.set_image(a, "image/png", vec![7; 5_000]);
+        }
+        w.take_changed();
+        // t1 is used again: t2 is the least recently used now.
+        w.touch("t1");
+        let before = w.bytes();
+        let gone = w.evict_over(before - 1, |t| t == "t3");
+        assert!(gone.contains(&object_id(&["text", "t2", "m-b"])));
+        assert!(!w.resident("t2") && w.resident("t1") && w.resident("t3"));
+        // The shared image stays for t3; the thread's row in the list too.
+        assert!(w.get(object_id(&["image", "shared"])).is_some());
+        assert!(w.bytes() < before);
+        // Next t1, and its own image with it; t3 is kept.
+        let gone = w.evict_over(0, |t| t == "t3");
+        assert!(gone.contains(&object_id(&["image", "only1"])));
+        assert!(!gone.contains(&object_id(&["image", "shared"])));
+        assert!(w.resident("t3") && !w.resident("t1"));
+        assert!(
+            w.take_changed().is_empty(),
+            "eviction changes nothing on phones"
+        );
+        // An evicted image is asked for again when a thread shows it.
+        w.set_thread(
+            "t1",
+            &snap("t1", json!([image_item("u1", 2, "only1")]), false),
+        );
+        assert_eq!(
+            w.take_wanted_images(),
+            vec![("only1".to_owned(), "image/png".to_owned())]
+        );
+    }
+
+    #[test]
+    fn a_thread_loaded_again_after_eviction_is_the_same_objects() {
+        let mut w = World::default();
+        let s = snap(
+            "t1",
+            json!([
+                item("a", 1, "first", false, "1"),
+                item("b", 2, "second", false, "1")
+            ]),
+            false,
+        );
+        w.set_thread("t1", &s);
+        let before: BTreeMap<u64, Vec<u8>> = w
+            .thread_ids("t1")
+            .map(|id| (id, w.get(id).unwrap().content.to_vec()))
+            .collect();
+        w.evict_over(0, |_| false);
+        assert_eq!(w.thread_ids("t1").count(), 0);
+        w.set_thread("t1", &s);
+        let after: BTreeMap<u64, Vec<u8>> = w
+            .thread_ids("t1")
+            .map(|id| (id, w.get(id).unwrap().content.to_vec()))
+            .collect();
+        assert_eq!(before, after);
+    }
+
+    #[test]
+    fn history_pages_add_older_items_and_inherited_rows() {
+        let mut w = World::default();
+        w.set_thread(
+            "t1",
+            &snap("t1", json!([item("c", 3, "newest", false, "1")]), true),
+        );
+        assert!(!w.history_complete("t1"));
+        let page = |items: Value, more: bool| json!({"snapshotSequence": 3, "items": items, "nextCursor": if more { json!("c2") } else { Value::Null }, "hasMoreHistory": more});
+        let local = |i: Value| json!({"position": 0, "visibility": "local", "sourceThreadId": "t1", "sourceItemId": i["id"], "item": i});
+        assert!(w.add_history(
+            "t1",
+            &page(json!([local(item("b", 2, "older", false, "1"))]), true)
+        ));
+        let inherited = json!({"position": 0, "visibility": "inherited", "sourceThreadId": "p", "sourceItemId": "x", "item": {"id": "x"}});
+        assert!(!w.add_history(
+            "t1",
+            &page(
+                json!([inherited, local(item("a", 1, "oldest", false, "1"))]),
+                false
+            )
+        ));
+        assert!(w.history_complete("t1"));
+        for (id, text) in [("a", "oldest"), ("b", "older"), ("c", "newest")] {
+            assert_eq!(
+                content(&w, object_id(&["text", "t1", &format!("m-{id}")])),
+                text
+            );
+        }
+        let frame: Value = serde_json::from_str(&content(&w, frame_id("t1"))).unwrap();
+        assert_eq!(frame["visibleTurnItems"][0]["sourceItemId"], "x");
+        assert_eq!(frame["hasMoreHistory"], true);
+        // A newer window keeps the older items.
+        w.set_thread(
+            "t1",
+            &snap("t1", json!([item("d", 4, "newer", false, "1")]), true),
+        );
+        assert_eq!(content(&w, object_id(&["text", "t1", "m-a"])), "oldest");
+        assert!(w.history_complete("t1"));
+    }
+
+    #[test]
+    fn long_ids_are_hashed_in_meta_and_nothing_is_left_out() {
+        let mut w = World::default();
+        // Twice the longest id in the main history.
+        let thread = "thread:delegated-task:".to_owned() + &"%2525".repeat(280);
+        let message = "message:".to_owned() + &"%25".repeat(470);
+        assert!(thread.len() >= 1_400 && message.len() >= 1_400);
+        w.set_shell(
+            &json!({"kind": "snapshot", "snapshot": {"schemaVersion": 2, "snapshotSequence": 1,
+            "projects": [{"id": thread}], "threads": [{"id": thread}], "archivedThreads": []}}),
+        );
+        let mut it = item("a", 1, "text", false, "1");
+        it["id"] = json!(message);
+        it["messageId"] = json!(message);
+        w.set_thread(
+            &thread,
+            &snap(&thread, json!([it, image_item("u", 2, &message)]), false),
+        );
+        w.set_image(&message, "image/png", vec![1, 2, 3]);
+        assert!(w.skipped.is_empty(), "{:?}", w.skipped);
+        let text = w.get(object_id(&["text", &thread, &message])).unwrap();
+        let meta: Value = serde_json::from_slice(&text.meta).unwrap();
+        assert_eq!(meta["t"], hash_id(&thread));
+        assert_eq!(meta["m"], hash_id(&message));
+        let image = w.get(object_id(&["image", &message])).unwrap();
+        assert_eq!(
+            serde_json::from_slice::<Value>(&image.meta).unwrap()["i"],
+            hash_id(&message)
+        );
+        for id in w.ids() {
+            assert!(
+                w.get(id).unwrap().meta.len() <= 100,
+                "{}",
+                String::from_utf8_lossy(&w.get(id).unwrap().meta)
+            );
+        }
     }
 }

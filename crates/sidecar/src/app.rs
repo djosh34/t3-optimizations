@@ -2,9 +2,9 @@
 //! and every phone's sync state. Other threads (t3 WebSocket, fetches,
 //! HTTP, WebSocket fallback connections) talk to it through `Msg`.
 
-use std::collections::{BTreeSet, HashMap, HashSet};
-use std::sync::Arc;
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::sync::mpsc::{self, Receiver, Sender};
+use std::sync::{Arc, Condvar, Mutex, MutexGuard};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
@@ -13,7 +13,7 @@ use base64::engine::general_purpose::STANDARD;
 use pipe::creds::{self, Side, Ufrag};
 use pipe::{Direct, Pipe, PipeEvent};
 use serde_json::{Value, json};
-use sync_core::{Incoming, Millis, Server};
+use sync_core::{Incoming, Millis, Server, hash_id};
 
 use crate::Msg;
 use crate::config::Config;
@@ -25,11 +25,13 @@ use crate::world::{After, World};
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
-/// A result from the fetch thread.
+/// A result from the fetch threads.
 #[derive(Debug)]
 pub enum Fetched {
+    /// A thread's bounded snapshot, or with `page`, a page of its history.
     Thread {
         thread: String,
+        page: bool,
         result: Result<Value, String>,
     },
     Image {
@@ -48,7 +50,13 @@ pub enum Fetched {
 }
 
 enum Job {
-    Thread(String),
+    /// `GET /api/orchestration/threads/:id/bounded`: the newest part.
+    Bounded(String),
+    /// `GET /api/orchestration/threads/:id/history`: the page at `cursor`.
+    History {
+        thread: String,
+        cursor: String,
+    },
     Image {
         id: String,
         mime: String,
@@ -148,8 +156,16 @@ impl Retries {
         due
     }
 }
-/// A thread snapshot is fetched this long after its last change.
-const REFETCH_DELAY: Duration = Duration::from_millis(500);
+/// Fetch priorities, lowest first: a thread a phone has open (and the
+/// descriptor), images, then threads sent ahead of time.
+const OPEN: u8 = 0;
+const IMAGES: u8 = 1;
+const PRELOAD: u8 = 2;
+/// Fetches that run at once: an open thread never waits behind a preload.
+const FETCHERS: usize = 3;
+/// A phone with fewer unsynced bytes than this has an idle link, which
+/// preloads use.
+const IDLE_BYTES: u64 = 1 << 20;
 /// Sync state is saved this often while it changes.
 const SAVE_EVERY: Duration = Duration::from_secs(2);
 /// The loop wakes at least this often to take messages from other threads.
@@ -166,16 +182,29 @@ pub struct App {
     devices: HashMap<String, Device>,
     rx: Receiver<Msg>,
     t3: Sender<Out>,
-    jobs: Sender<Job>,
     next_request: u64,
     pending: HashMap<u64, Pending>,
     subscribed: bool,
     /// Threads with a live subscription, by request.
     thread_subs: HashMap<String, u64>,
-    /// Threads to fetch, and when.
-    refetch: HashMap<String, Instant>,
+    /// Subscribed threads whose snapshot has not come yet.
+    snapshot_pending: HashSet<String>,
+    /// Threads with a history page being fetched.
+    paging: HashSet<String>,
+    /// The thread being preloaded: one at a time.
+    preloading: Option<String>,
+    /// The thread list's `updatedAt` of each thread when the world last had
+    /// it current; one that differs is fetched again before a preload.
+    fresh: HashMap<String, String>,
+    /// Threads whose preload failed, with their `updatedAt` then; tried
+    /// again once it changes.
+    failed: HashMap<String, String>,
     retries: Retries,
-    fetching: HashSet<String>,
+    /// The world's byte limit: past it, threads are evicted.
+    cache_limit: usize,
+    /// How many of the newest threads are preloaded.
+    preload: usize,
+    queue: Arc<Queue>,
     /// WebSocket fallback connections: where packets go, and the phone once
     /// it said hello.
     ws_out: HashMap<u64, Sender<Vec<u8>>>,
@@ -189,9 +218,49 @@ pub struct App {
     /// since it went out: it is fetched once more when the reply comes.
     config_pending: bool,
     config_again: bool,
-    /// Objects phones kept from before a restart that the t3 server no
-    /// longer has were deleted.
+    /// Phones' objects the world no longer has were deleted once the
+    /// thread list and the config were here.
     pruned: bool,
+}
+
+/// Fetch jobs for the fetch threads, most urgent first, in order within a
+/// priority.
+#[derive(Default)]
+struct Queue {
+    jobs: Mutex<Jobs>,
+    ready: Condvar,
+}
+
+/// The jobs by priority and number, and the last number given.
+#[derive(Default)]
+struct Jobs {
+    last: u64,
+    waiting: BTreeMap<(u8, u64), Job>,
+}
+
+impl Queue {
+    /// A poisoned lock only means a fetch thread died; the queue is fine.
+    fn lock(&self) -> MutexGuard<'_, Jobs> {
+        self.jobs.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+    fn push(&self, priority: u8, job: Job) {
+        let mut q = self.lock();
+        q.last += 1;
+        let n = q.last;
+        q.waiting.insert((priority, n), job);
+        self.ready.notify_one();
+    }
+
+    fn pop(&self) -> Job {
+        let mut q = self.lock();
+        loop {
+            if let Some((_, job)) = q.waiting.pop_first() {
+                return job;
+            }
+            q = self.ready.wait(q).unwrap_or_else(|e| e.into_inner());
+        }
+    }
 }
 
 /// Runs the sidecar until a fatal error.
@@ -212,8 +281,10 @@ pub fn run(cfg: Config) -> Result<(), Error> {
     });
     let (t3_tx, t3_rx) = mpsc::channel();
     t3::spawn(auth.clone(), t3_rx, tx.clone());
-    let (job_tx, job_rx) = mpsc::channel();
-    spawn_fetcher(auth, job_rx, tx.clone());
+    let queue = Arc::new(Queue::default());
+    for _ in 0..FETCHERS {
+        spawn_fetcher(auth.clone(), queue.clone(), tx.clone());
+    }
     let http = http::spawn(
         HttpConfig {
             listen: cfg.http,
@@ -224,31 +295,7 @@ pub fn run(cfg: Config) -> Result<(), Error> {
     )?;
     // Tests and the lab read the bound addresses from this line.
     println!("sidecar ready http={http} udp={}", pipe.host());
-    let mut app = App {
-        data,
-        pipe,
-        world: World::default(),
-        devices: HashMap::new(),
-        rx,
-        t3: t3_tx,
-        jobs: job_tx,
-        next_request: 1,
-        pending: HashMap::new(),
-        subscribed: false,
-        thread_subs: HashMap::new(),
-        refetch: HashMap::new(),
-        retries: Retries::default(),
-        fetching: HashSet::new(),
-        ws_out: HashMap::new(),
-        ws_device: HashMap::new(),
-        start: Instant::now(),
-        last_save: Instant::now(),
-        last_stats: Instant::now(),
-        dropped: 0,
-        config_pending: false,
-        config_again: false,
-        pruned: false,
-    };
+    let mut app = App::new(data, pipe, rx, t3_tx, queue, &cfg);
     app.load_devices()?;
     app.update_subscriptions();
     loop {
@@ -263,6 +310,46 @@ pub(crate) fn log(msg: impl std::fmt::Display) {
 }
 
 impl App {
+    fn new(
+        data: DataDir,
+        pipe: Pipe,
+        rx: Receiver<Msg>,
+        t3: Sender<Out>,
+        queue: Arc<Queue>,
+        cfg: &Config,
+    ) -> App {
+        App {
+            data,
+            pipe,
+            world: World::default(),
+            devices: HashMap::new(),
+            rx,
+            t3,
+            next_request: 1,
+            pending: HashMap::new(),
+            subscribed: false,
+            thread_subs: HashMap::new(),
+            snapshot_pending: HashSet::new(),
+            paging: HashSet::new(),
+            preloading: None,
+            fresh: HashMap::new(),
+            failed: HashMap::new(),
+            retries: Retries::default(),
+            cache_limit: cfg.cache_mb << 20,
+            preload: cfg.preload,
+            queue,
+            ws_out: HashMap::new(),
+            ws_device: HashMap::new(),
+            start: Instant::now(),
+            last_save: Instant::now(),
+            last_stats: Instant::now(),
+            dropped: 0,
+            config_pending: false,
+            config_again: false,
+            pruned: false,
+        }
+    }
+
     fn now(&self) -> Millis {
         self.start.elapsed().as_millis() as Millis
     }
@@ -314,8 +401,9 @@ impl App {
             self.message(msg)?;
         }
         self.sync_world();
+        self.evict_due();
         self.resubscribe_due();
-        self.start_fetches();
+        self.preload_due();
         self.send_packets()?;
         self.save_due()?;
         self.log_stats();
@@ -397,6 +485,7 @@ impl App {
                         d.link = None;
                     }
                 }
+                self.update_subscriptions();
             }
         }
         Ok(())
@@ -554,6 +643,7 @@ impl App {
         let Some(d) = self.devices.get_mut(&device) else {
             return;
         };
+        let mut came_up = false;
         if d.link != Some(link) {
             match Server::hello(data) {
                 Some(h) if h.token == d.token => {}
@@ -596,8 +686,10 @@ impl App {
                 }
             }
             log(format!("device {}: now on {link:?}", d.record.id));
+            let was_connected = d.link.is_some();
             d.link = Some(link);
             d.server.connected();
+            came_up = !was_connected;
         }
         let incoming = match d.server.receive(now, data) {
             Ok(i) => i,
@@ -610,13 +702,25 @@ impl App {
         for inc in incoming {
             self.incoming(&device, inc);
         }
+        // Its open thread gets a live subscription again.
+        if came_up {
+            self.update_subscriptions();
+        }
     }
 
     fn incoming(&mut self, device: &str, inc: Incoming) {
         match inc {
-            Incoming::Reset => log(format!(
-                "device {device}: lost its cache, syncing everything"
-            )),
+            Incoming::Reset => {
+                log(format!(
+                    "device {device}: lost its cache, syncing everything"
+                ));
+                // The server dropped what the phone had stored; the thread
+                // list, the config and the open thread go again, and the
+                // preload refills the rest.
+                if let Some(d) = self.devices.get_mut(device) {
+                    d.sync(&self.world, self.world.ids().collect::<Vec<_>>());
+                }
+            }
             Incoming::Command { seq, payload } => match serde_json::from_slice::<Value>(&payload) {
                 Ok(p) => {
                     let kind = p["type"].as_str().unwrap_or_default().to_owned();
@@ -644,21 +748,32 @@ impl App {
                 };
                 if tag == "sidecar.http" {
                     match http_request(&args) {
-                        Ok(req) => {
-                            let _ = self.jobs.send(Job::Http {
+                        Ok(req) => self.queue.push(
+                            OPEN,
+                            Job::Http {
                                 device: device.to_owned(),
                                 seq,
                                 req,
-                            });
-                        }
+                            },
+                        ),
                         Err(e) => self.reply(device, seq, &json!({ "error": e })),
                     }
                     return;
                 }
-                if tag == "sidecar.focus" {
+                if tag == "sidecar.focus" || tag == "sidecar.close" {
                     let thread = args["threadId"].as_str().map(str::to_owned);
                     if let Some(d) = self.devices.get_mut(device) {
-                        d.set_focus(&self.world, thread);
+                        // Closing a thread that is no longer the open one
+                        // changes nothing.
+                        let focus = match tag {
+                            "sidecar.focus" => thread,
+                            _ if d.focus == thread => None,
+                            _ => d.focus.clone(),
+                        };
+                        if let Some(t) = &focus {
+                            self.world.touch(t);
+                        }
+                        d.set_focus(&self.world, focus);
                         if let Err(e) = self.data.save_device(&d.record) {
                             log(format!("device {device}: could not save: {e}"));
                         }
@@ -751,6 +866,7 @@ impl App {
                         d.link = None;
                     }
                 }
+                self.update_subscriptions();
             }
         }
         Ok(())
@@ -828,7 +944,7 @@ impl App {
                     self.subscribed = true;
                     self.subscribe(Sub::Shell);
                     self.subscribe(Sub::ConfigStream);
-                    let _ = self.jobs.send(Job::Descriptor);
+                    self.queue.push(OPEN, Job::Descriptor);
                 }
             }
             In::Down(why) => log(format!("t3 connection down: {why}")),
@@ -846,28 +962,35 @@ impl App {
         }
         match pending {
             Pending::Shell => {
+                let mut prune = false;
                 for v in &values {
-                    if v["kind"].as_str() == Some("snapshot") {
-                        self.world.set_shell(v);
-                        let listed: Vec<String> = self.world.listed_threads().cloned().collect();
-                        for t in listed {
-                            self.mark_refetch(&t);
+                    self.world.apply_shell(v);
+                    match v["kind"].as_str() {
+                        Some("snapshot") | Some("thread.removed") => prune = true,
+                        // A subscribed thread is current through its events.
+                        Some("thread.updated") => {
+                            if let Some(t) = v["thread"]["id"].as_str()
+                                && self.thread_subs.contains_key(t)
+                                && let Some(l) = self.world.listed_thread(t)
+                            {
+                                self.fresh.insert(t.to_owned(), l.updated_at.clone());
+                            }
                         }
-                    } else {
-                        self.world.apply_shell(v);
-                        if v["kind"].as_str() == Some("thread.updated")
-                            && let Some(t) = v["thread"]["id"].as_str()
-                        {
-                            self.mark_refetch(t);
-                        }
+                        _ => {}
                     }
+                }
+                if prune {
+                    self.prune();
                 }
             }
             Pending::Thread(t) => {
                 let mut stale = false;
                 for v in &values {
                     match v["kind"].as_str() {
-                        Some("snapshot") => self.world.set_thread(&t, v),
+                        Some("snapshot") => {
+                            self.snapshot_pending.remove(&t);
+                            self.thread_snapshot(&t, v);
+                        }
                         Some("event") => stale |= self.world.apply_event(&t, v) == After::Refetch,
                         _ => {}
                     }
@@ -923,13 +1046,14 @@ impl App {
                 }
             }
             Pending::AssetUrl { id, mime } => match exit["value"]["relativeUrl"].as_str() {
-                Some(url) if success => {
-                    let _ = self.jobs.send(Job::Image {
+                Some(url) if success => self.queue.push(
+                    IMAGES,
+                    Job::Image {
                         id,
                         mime,
                         url: url.to_owned(),
-                    });
-                }
+                    },
+                ),
                 _ => {
                     log(format!("image {id}: no URL: {exit}"));
                     self.world.image_failed(&id);
@@ -937,6 +1061,7 @@ impl App {
             },
             Pending::Thread(t) => {
                 self.thread_subs.remove(&t);
+                self.snapshot_pending.remove(&t);
                 self.ended(Sub::Thread(t), &exit);
             }
             Pending::Shell => self.ended(Sub::Shell, &exit),
@@ -963,13 +1088,16 @@ impl App {
                 json!({"workspaceSnapshotsOnDemand": true}),
                 Pending::ConfigStream,
             ),
+            // The snapshot is t3's bounded window, the newest part; the
+            // history pages follow (`thread_snapshot`).
             Sub::Thread(t) => {
                 let id = self.next_request;
                 self.request(
                     "orchestration.subscribeThread",
-                    json!({"threadId": t}),
+                    json!({"threadId": t, "acceptBoundedSnapshot": true}),
                     Pending::Thread(t.clone()),
                 );
+                self.snapshot_pending.insert(t.clone());
                 self.thread_subs.insert(t, id);
             }
         }
@@ -993,12 +1121,14 @@ impl App {
         }
     }
 
-    /// Subscribes to the threads phones have open, and only those; the
-    /// others are fetched when the thread list says they changed.
+    /// Subscribes to the threads connected phones have open, and only
+    /// those. A thread a phone left is current as far as the subscription
+    /// brought it; it is not fetched again for that.
     fn update_subscriptions(&mut self) {
         let wanted: BTreeSet<String> = self
             .devices
             .values()
+            .filter(|d| d.connected())
             .filter_map(|d| d.focus.clone())
             .collect();
         let gone: Vec<String> = self
@@ -1010,8 +1140,8 @@ impl App {
         for t in gone {
             if let Some(id) = self.thread_subs.remove(&t) {
                 self.pending.remove(&id);
+                self.snapshot_pending.remove(&t);
                 let _ = self.t3.send(Out::Interrupt(id));
-                self.mark_refetch(&t);
             }
         }
         for t in wanted {
@@ -1022,43 +1152,154 @@ impl App {
         }
     }
 
-    fn mark_refetch(&mut self, thread: &str) {
-        if self.thread_subs.contains_key(thread) {
-            return;
+    /// A thread's newest part, from its subscription or a preload: then
+    /// its history pages, newest to oldest, unless the world has them all.
+    fn thread_snapshot(&mut self, thread: &str, snapshot: &Value) {
+        self.world.set_thread(thread, snapshot);
+        if let Some(l) = self.world.listed_thread(thread) {
+            self.fresh.insert(thread.to_owned(), l.updated_at.clone());
         }
-        self.refetch
-            .entry(thread.to_owned())
-            .or_insert_with(|| Instant::now() + REFETCH_DELAY);
+        let cursor = snapshot["historyCursor"].as_str();
+        if snapshot["hasMoreHistory"].as_bool() == Some(true)
+            && !self.world.history_complete(thread)
+            && let Some(cursor) = cursor
+        {
+            self.fetch_page(thread, cursor);
+        }
+        self.preload_done(thread);
     }
 
-    fn start_fetches(&mut self) {
-        let now = Instant::now();
-        let due: Vec<String> = self
-            .refetch
-            .iter()
-            .filter(|(t, at)| **at <= now && !self.fetching.contains(*t))
-            .map(|(t, _)| t.clone())
-            .collect();
-        for t in due {
-            self.refetch.remove(&t);
-            self.fetching.insert(t.clone());
-            let _ = self.jobs.send(Job::Thread(t));
+    fn fetch_page(&mut self, thread: &str, cursor: &str) {
+        if !self.paging.insert(thread.to_owned()) {
+            return;
         }
+        let priority = if self.thread_subs.contains_key(thread) {
+            OPEN
+        } else {
+            PRELOAD
+        };
+        self.queue.push(
+            priority,
+            Job::History {
+                thread: thread.to_owned(),
+                cursor: cursor.to_owned(),
+            },
+        );
+    }
+
+    /// Ends a preload once the thread's pages are all here.
+    fn preload_done(&mut self, thread: &str) {
+        if self.preloading.as_deref() == Some(thread) && !self.paging.contains(thread) {
+            self.preloading = None;
+        }
+    }
+
+    /// Preloads one thread when no open thread is loading: the newest
+    /// listed threads that are not archived, newest first, for connected
+    /// phones whose link is idle and that lack them. A thread changed since
+    /// the world had it is fetched again first.
+    fn preload_due(&mut self) {
+        if self.preload == 0 || self.preloading.is_some() {
+            return;
+        }
+        let opening = self
+            .thread_subs
+            .keys()
+            .any(|t| self.snapshot_pending.contains(t) || self.paging.contains(t));
+        if opening {
+            return;
+        }
+        let idle: Vec<String> = self
+            .devices
+            .iter()
+            .filter(|(_, d)| d.connected() && d.server.stats().unsynced_bytes < IDLE_BYTES)
+            .map(|(id, _)| id.clone())
+            .collect();
+        if idle.is_empty() {
+            return;
+        }
+        let mut newest: Vec<(&String, &String)> = self
+            .world
+            .listed()
+            .filter(|(_, l)| l.location == "active")
+            .map(|(t, l)| (t, &l.updated_at))
+            .collect();
+        newest.sort_by(|a, b| b.1.cmp(a.1).then(a.0.cmp(b.0)));
+        let mut pick = None;
+        for (t, updated) in newest.into_iter().take(self.preload) {
+            if self.thread_subs.contains_key(t) || self.failed.get(t) == Some(updated) {
+                continue;
+            }
+            let fresh = self.fresh.get(t) == Some(updated);
+            let lacking: Vec<String> = idle
+                .iter()
+                .filter(|d| self.devices.get(*d).is_some_and(|d| !d.wants(t)))
+                .cloned()
+                .collect();
+            let stale = !fresh
+                && idle
+                    .iter()
+                    .any(|d| self.devices.get(d).is_some_and(|d| d.wants(t)));
+            if lacking.is_empty() && !stale {
+                continue;
+            }
+            pick = Some((t.clone(), fresh, lacking));
+            break;
+        }
+        let Some((t, fresh, lacking)) = pick else {
+            return;
+        };
+        if fresh && self.world.resident(&t) && self.world.history_complete(&t) {
+            self.world.touch(&t);
+            for id in lacking {
+                if let Some(d) = self.devices.get_mut(&id) {
+                    d.give(&self.world, &t);
+                }
+            }
+            return;
+        }
+        self.preloading = Some(t.clone());
+        self.queue.push(PRELOAD, Job::Bounded(t));
+    }
+
+    /// Past the byte limit, evicts the threads used least recently, never
+    /// one that is open or loading. Phones keep what they have; what they
+    /// have not stored of it waits until the thread comes back.
+    fn evict_due(&mut self) {
+        if self.world.bytes() <= self.cache_limit {
+            return;
+        }
+        let keep: HashSet<&String> = self
+            .thread_subs
+            .keys()
+            .chain(&self.paging)
+            .chain(&self.snapshot_pending)
+            .chain(&self.preloading)
+            .collect();
+        let gone = self
+            .world
+            .evict_over(self.cache_limit, |t| keep.contains(&t.to_owned()));
+        if gone.is_empty() {
+            return;
+        }
+        for d in self.devices.values_mut() {
+            d.release(&gone);
+            d.dirty = true;
+        }
+        log(format!(
+            "evicted {} objects, the world holds {} MB",
+            gone.len(),
+            self.world.bytes() >> 20
+        ));
     }
 
     fn fetched(&mut self, f: Fetched) {
         match f {
-            Fetched::Thread { thread, result } => {
-                self.fetching.remove(&thread);
-                match result {
-                    // A live subscription is fresher than a fetch.
-                    Ok(v) if !self.thread_subs.contains_key(&thread) => {
-                        self.world.set_thread(&thread, &v)
-                    }
-                    Ok(_) => {}
-                    Err(e) => log(format!("thread {thread}: fetch failed: {e}")),
-                }
-            }
+            Fetched::Thread {
+                thread,
+                page,
+                result,
+            } => self.fetched_thread(&thread, page, result),
             Fetched::Descriptor(result) => match result {
                 Ok((descriptor, session)) => {
                     self.world.set_descriptor(&descriptor);
@@ -1091,6 +1332,44 @@ impl App {
         }
     }
 
+    fn fetched_thread(&mut self, thread: &str, page: bool, result: Result<Value, String>) {
+        if page {
+            self.paging.remove(thread);
+        }
+        match result {
+            Ok(v) if page => {
+                let more = self.world.add_history(thread, &v);
+                if more && let Some(cursor) = v["nextCursor"].as_str() {
+                    self.fetch_page(thread, cursor);
+                }
+            }
+            // A live subscription is fresher than a fetch.
+            Ok(_) if self.thread_subs.contains_key(thread) => {}
+            Ok(v) => {
+                self.thread_snapshot(thread, &v);
+                // Phones it was preloaded for get all of it from now on.
+                for d in self.devices.values_mut() {
+                    if d.connected() && !d.wants(thread) {
+                        d.give(&self.world, thread);
+                    }
+                }
+            }
+            Err(e) => {
+                log(format!("thread {thread}: fetch failed: {e}"));
+                if self.preloading.as_deref() == Some(thread)
+                    && let Some(l) = self.world.listed_thread(thread)
+                {
+                    self.failed.insert(thread.to_owned(), l.updated_at.clone());
+                }
+                self.paging.remove(thread);
+                if self.preloading.as_deref() == Some(thread) {
+                    self.preloading = None;
+                }
+            }
+        }
+        self.preload_done(thread);
+    }
+
     /// Puts what changed in the world into every phone's sync state.
     fn sync_world(&mut self) {
         for (id, mime) in self.world.take_wanted_images() {
@@ -1103,7 +1382,9 @@ impl App {
         for meta in std::mem::take(&mut self.world.skipped) {
             log(format!("object left out, its meta is too long: {meta}"));
         }
-        self.prune_once();
+        if !self.pruned && self.world.config_loaded() {
+            self.prune();
+        }
         let changed = self.world.take_changed();
         if changed.is_empty() {
             return;
@@ -1115,34 +1396,49 @@ impl App {
 }
 
 impl App {
-    /// Once the world has everything the t3 server has, deletes what
-    /// phones kept from before a sidecar restart that is no longer there,
-    /// such as a thread deleted while the sidecar was down.
-    fn prune_once(&mut self) {
-        if self.pruned || !self.world.complete() {
+    /// Deletes on phones the objects of threads that left the thread list,
+    /// and, once the config is here, other objects the world no longer has
+    /// (a project removed while the sidecar was down). Evicted threads stay
+    /// on phones: they are still listed. Images go with the thread that
+    /// first showed them.
+    fn prune(&mut self) {
+        if !self.world.shell_loaded() {
             return;
         }
-        self.pruned = true;
-        let known = self.world.known_ids();
+        self.pruned |= self.world.config_loaded();
+        let listed: HashSet<String> = self.world.listed().map(|(t, _)| hash_id(t)).collect();
         for d in self.devices.values_mut() {
             let gone: Vec<u64> = d
                 .server
-                .object_ids()
-                .into_iter()
-                .filter(|id| !known.contains(id))
+                .metas()
+                .filter(|&(id, meta)| {
+                    let Ok(m) = serde_json::from_slice::<Value>(meta) else {
+                        return false;
+                    };
+                    let thread = match m["c"].as_str() {
+                        Some("thread") => m["i"].as_str(),
+                        Some("image") => m["o"].as_str(),
+                        _ => m["t"].as_str(),
+                    };
+                    match thread {
+                        Some(h) => !listed.contains(h),
+                        None => self.pruned && m["c"] != "image" && self.world.get(id).is_none(),
+                    }
+                })
+                .map(|(id, _)| id)
                 .collect();
-            if gone.is_empty() {
-                continue;
-            }
-            log(format!(
-                "device {}: {} objects the server no longer has, deleted",
-                d.record.id,
-                gone.len()
-            ));
+            let before = d.server.object_ids().len();
             for id in gone {
                 d.server.delete(id);
             }
-            d.dirty = true;
+            let deleted = before - d.server.object_ids().len();
+            if deleted > 0 {
+                log(format!(
+                    "device {}: {deleted} objects the server no longer has, deleted",
+                    d.record.id
+                ));
+                d.dirty = true;
+            }
         }
     }
 }
@@ -1182,33 +1478,46 @@ fn unix_ms() -> u64 {
         .map_or(0, |d| d.as_millis() as u64)
 }
 
-fn spawn_fetcher(auth: Arc<Auth>, jobs: Receiver<Job>, to_main: Sender<Msg>) {
+fn spawn_fetcher(auth: Arc<Auth>, queue: Arc<Queue>, to_main: Sender<Msg>) {
     thread::spawn(move || {
-        for job in jobs {
-            let msg = match job {
-                Job::Thread(thread) => {
-                    let path = format!("/api/orchestration/threads/{}", percent_encode(&thread));
-                    let result = auth
-                        .get(&path)
-                        .and_then(|b| Ok(serde_json::from_slice::<Value>(&b)?))
-                        .map_err(|e| e.to_string());
-                    Fetched::Thread { thread, result }
+        loop {
+            let get_json = |path: &str| {
+                auth.get(path)
+                    .and_then(|b| Ok(serde_json::from_slice::<Value>(&b)?))
+                    .map_err(|e| e.to_string())
+            };
+            let msg = match queue.pop() {
+                Job::Bounded(thread) => {
+                    let path = format!(
+                        "/api/orchestration/threads/{}/bounded",
+                        percent_encode(&thread)
+                    );
+                    Fetched::Thread {
+                        result: get_json(&path),
+                        thread,
+                        page: false,
+                    }
+                }
+                Job::History { thread, cursor } => {
+                    let path = format!(
+                        "/api/orchestration/threads/{}/history?cursor={}",
+                        percent_encode(&thread),
+                        percent_encode(&cursor)
+                    );
+                    Fetched::Thread {
+                        result: get_json(&path),
+                        thread,
+                        page: true,
+                    }
                 }
                 Job::Image { id, mime, url } => {
                     let result = auth.get(&url).map_err(|e| e.to_string());
                     Fetched::Image { id, mime, result }
                 }
-                Job::Descriptor => {
-                    let get = |path: &str| {
-                        auth.get(path)
-                            .and_then(|b| Ok(serde_json::from_slice::<Value>(&b)?))
-                    };
-                    Fetched::Descriptor(
-                        get("/.well-known/t3/environment")
-                            .and_then(|d| Ok((d, get("/api/auth/session")?)))
-                            .map_err(|e| e.to_string()),
-                    )
-                }
+                Job::Descriptor => Fetched::Descriptor(
+                    get_json("/.well-known/t3/environment")
+                        .and_then(|d| Ok((d, get_json("/api/auth/session")?))),
+                ),
                 // A phone's request may be slow (an upload on a bad link
                 // took long to arrive, the reply takes long too); it gets
                 // its own thread, so fetches do not wait for it.
@@ -1250,5 +1559,359 @@ mod tests {
         assert_eq!(r.ended(Sub::Shell, t0), RETRY_MIN);
         // Each subscription has its own wait.
         assert_eq!(r.ended(Sub::Thread("t1".into()), t0), RETRY_MIN);
+    }
+
+    // The main loop's decisions, with phones on WebSocket links that carry
+    // nothing and a t3 server that is only a channel.
+
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    use crate::world::frame_id;
+
+    struct Test {
+        app: App,
+        out: Receiver<Out>,
+        dir: std::path::PathBuf,
+    }
+
+    impl Drop for Test {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.dir);
+        }
+    }
+
+    fn start(preload: usize) -> Result<Test, Error> {
+        static N: AtomicU32 = AtomicU32::new(0);
+        let dir = std::env::temp_dir().join(format!(
+            "sidecar-app-{}-{}",
+            std::process::id(),
+            N.fetch_add(1, Ordering::Relaxed)
+        ));
+        let data = DataDir::new(dir.clone())?;
+        let pipe = Pipe::bind(pipe::Config {
+            bind: "127.0.0.1:0".parse()?,
+            advertise: None,
+            cert: Some(data.cert()?),
+        })?;
+        let (_, rx) = mpsc::channel();
+        let (t3, out) = mpsc::channel();
+        let cfg = Config {
+            t3_url: "http://127.0.0.1:1".into(),
+            t3_base_dir: dir.clone(),
+            t3_command: vec!["t3".into()],
+            data_dir: dir.clone(),
+            http: "127.0.0.1:0".parse()?,
+            udp: "127.0.0.1:0".parse()?,
+            udp_advertise: None,
+            web_dir: None,
+            cache_mb: 256,
+            preload,
+        };
+        let mut app = App::new(data, pipe, rx, t3, Arc::new(Queue::default()), &cfg);
+        app.t3_in(In::Up);
+        let mut t = Test { app, out, dir };
+        t.requests();
+        Ok(t)
+    }
+
+    impl Test {
+        fn phone(&mut self, id: &str, focus: Option<&str>, connected: bool) {
+            let n = self.app.devices.len() as u8 + 1;
+            let record = DeviceRecord {
+                id: id.to_owned(),
+                token: hex(&[n; 16]),
+                fingerprint: None,
+                generation: 0,
+                focus: focus.map(str::to_owned),
+            };
+            let mut d = Device::new(record, [n; 16], Device::fresh_server([n; 16], 0));
+            if connected {
+                d.link = Some(Link::Ws(n.into()));
+            }
+            self.app.devices.insert(id.to_owned(), d);
+        }
+
+        fn link(&mut self, id: &str, up: bool) {
+            if let Some(d) = self.app.devices.get_mut(id) {
+                d.link = up.then_some(Link::Ws(99));
+            }
+            self.app.update_subscriptions();
+        }
+
+        fn call(&mut self, device: &str, tag: &str, thread: Option<&str>) {
+            let payload = json!({"tag": tag, "payload": {"threadId": thread}});
+            self.app.incoming(
+                device,
+                Incoming::Call {
+                    seq: 1,
+                    payload: payload.to_string().into_bytes(),
+                    background: false,
+                },
+            );
+        }
+
+        /// The thread list, as `(id, location, updatedAt)`.
+        fn shell(&mut self, threads: &[(&str, &str, &str)]) {
+            let row = |t: &(&str, &str, &str)| json!({"id": t.0, "updatedAt": t.2});
+            let active: Vec<Value> = threads
+                .iter()
+                .filter(|t| t.1 == "active")
+                .map(row)
+                .collect();
+            let archive: Vec<Value> = threads
+                .iter()
+                .filter(|t| t.1 != "active")
+                .map(row)
+                .collect();
+            let id = self.pending_id(|p| matches!(p, Pending::Shell));
+            self.app.chunk(
+                id,
+                vec![json!({"kind": "snapshot", "snapshot": {"schemaVersion": 2, "snapshotSequence": 1,
+                    "projects": [], "threads": active, "archivedThreads": archive}})],
+            );
+            self.app.sync_world();
+        }
+
+        fn thread_updated(&mut self, id: &str, updated: &str) {
+            let sub = self.pending_id(|p| matches!(p, Pending::Shell));
+            self.app.chunk(
+                sub,
+                vec![json!({"kind": "thread.updated", "location": "active",
+                    "thread": {"id": id, "updatedAt": updated}})],
+            );
+        }
+
+        fn pending_id(&self, f: impl Fn(&Pending) -> bool) -> u64 {
+            self.app
+                .pending
+                .iter()
+                .find(|(_, p)| f(p))
+                .map_or(0, |(id, _)| *id)
+        }
+
+        /// A thread's snapshot from its subscription.
+        fn subscription_snapshot(&mut self, thread: &str, mut snapshot: Value) {
+            snapshot["kind"] = json!("snapshot");
+            let id = self.pending_id(|p| matches!(p, Pending::Thread(t) if t == thread));
+            assert!(id > 0, "no subscription to {thread}");
+            self.app.chunk(id, vec![snapshot]);
+            self.app.sync_world();
+        }
+
+        fn fetched(&mut self, thread: &str, page: bool, v: Value) {
+            self.app.fetched(Fetched::Thread {
+                thread: thread.to_owned(),
+                page,
+                result: Ok(v),
+            });
+            self.app.sync_world();
+        }
+
+        /// Jobs waiting, most urgent first, without taking them.
+        fn queued(&self) -> Vec<String> {
+            self.app
+                .queue
+                .lock()
+                .waiting
+                .iter()
+                .map(|((p, _), j)| match j {
+                    Job::Bounded(t) => format!("{p} bounded {t}"),
+                    Job::History { thread, cursor } => format!("{p} history {thread} {cursor}"),
+                    Job::Image { id, .. } => format!("{p} image {id}"),
+                    Job::Descriptor => format!("{p} descriptor"),
+                    Job::Http { .. } => format!("{p} http"),
+                })
+                .collect()
+        }
+
+        fn take_queued(&mut self) -> Vec<String> {
+            let q = self.queued();
+            self.app.queue.lock().waiting.clear();
+            q
+        }
+
+        /// Requests sent to t3 since the last call: subscriptions with their
+        /// payload, and interrupts.
+        fn requests(&mut self) -> Vec<String> {
+            self.out
+                .try_iter()
+                .map(|o| match o {
+                    Out::Request { tag, payload, .. } => format!("{tag} {payload}"),
+                    Out::Interrupt(_) => "interrupt".to_owned(),
+                })
+                .collect()
+        }
+    }
+
+    fn snapshot(thread: &str, text: &str, more: bool) -> Value {
+        json!({"snapshotSequence": 1, "hasMoreHistory": more, "historyCursor": if more { json!("c1") } else { Value::Null },
+            "projection": {"thread": {"id": thread}, "visibleTurnItems": [], "updatedAt": "1",
+                "turnItems": [{"id": "i1", "type": "assistant_message", "messageId": "m1", "ordinal": 1, "text": text}]}})
+    }
+
+    #[test]
+    fn subscriptions_follow_connected_phones_and_their_open_threads() -> Result<(), Error> {
+        let mut t = start(0)?;
+        t.phone("a", Some("t1"), true);
+        t.phone("b", Some("t2"), false);
+        t.app.update_subscriptions();
+        assert_eq!(
+            t.requests(),
+            [r#"orchestration.subscribeThread {"acceptBoundedSnapshot":true,"threadId":"t1"}"#]
+        );
+        t.link("b", true);
+        assert_eq!(
+            t.requests(),
+            [r#"orchestration.subscribeThread {"acceptBoundedSnapshot":true,"threadId":"t2"}"#]
+        );
+        // A closes its thread, B goes away: both subscriptions end, and
+        // neither thread is fetched again for that.
+        t.call("a", "sidecar.close", Some("t1"));
+        t.link("b", false);
+        assert_eq!(t.requests(), ["interrupt", "interrupt"]);
+        assert!(t.app.thread_subs.is_empty());
+        assert_eq!(t.queued(), ["0 descriptor"]);
+        // Closing a thread that is not the open one changes nothing.
+        t.call("a", "sidecar.focus", Some("t3"));
+        t.call("a", "sidecar.close", Some("t1"));
+        assert_eq!(t.app.devices["a"].focus.as_deref(), Some("t3"));
+        // B is back: its thread is subscribed again.
+        t.link("b", true);
+        assert_eq!(t.app.thread_subs.len(), 2);
+        Ok(())
+    }
+
+    #[test]
+    fn the_newest_live_threads_are_preloaded_one_at_a_time() -> Result<(), Error> {
+        let mut t = start(2)?;
+        t.take_queued();
+        t.phone("a", None, true);
+        t.shell(&[
+            ("t1", "active", "2026-11-10T03"),
+            ("t2", "active", "2026-11-10T02"),
+            ("t3", "archive", "2026-11-10T04"),
+            ("t4", "active", "2026-11-10T01"),
+        ]);
+        // The thread list alone fetches no thread.
+        assert!(t.queued().is_empty());
+        t.app.preload_due();
+        t.app.preload_due();
+        // The newest live one, archived ones never; one at a time.
+        assert_eq!(t.take_queued(), ["2 bounded t1"]);
+        t.fetched("t1", false, snapshot("t1", "one", true));
+        assert!(t.app.devices["a"].wants("t1"), "the phone got t1");
+        // Its older history next, then the next thread.
+        assert_eq!(t.take_queued(), ["2 history t1 c1"]);
+        t.app.preload_due();
+        assert!(t.queued().is_empty());
+        t.fetched("t1", true, json!({"items": [], "hasMoreHistory": false}));
+        t.app.preload_due();
+        assert_eq!(t.take_queued(), ["2 bounded t2"]);
+        t.fetched("t2", false, snapshot("t2", "two", false));
+        t.app.preload_due();
+        // Only the newest 2.
+        assert!(t.queued().is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn an_opened_thread_overtakes_a_preload() -> Result<(), Error> {
+        let mut t = start(2)?;
+        t.take_queued();
+        t.phone("a", None, true);
+        t.shell(&[
+            ("t1", "active", "2"),
+            ("t2", "active", "1"),
+            ("old", "archive", "0"),
+        ]);
+        t.app.preload_due();
+        assert_eq!(t.queued(), ["2 bounded t1"]);
+        // The phone opens an archived thread while t1 preloads.
+        t.call("a", "sidecar.focus", Some("old"));
+        t.requests();
+        t.subscription_snapshot("old", snapshot("old", "old text", true));
+        // Its history goes before the preload.
+        assert_eq!(t.queued(), ["0 history old c1", "2 bounded t1"]);
+        assert!(matches!(t.app.queue.pop(), Job::History { thread, .. } if thread == "old"));
+        t.take_queued();
+        // No new preload while the opened thread loads.
+        t.fetched("t1", false, snapshot("t1", "one", false));
+        t.app.preload_due();
+        assert!(t.queued().is_empty());
+        t.fetched("old", true, json!({"items": [], "hasMoreHistory": false}));
+        t.app.preload_due();
+        assert_eq!(t.queued(), ["2 bounded t2"]);
+        Ok(())
+    }
+
+    #[test]
+    fn a_thread_is_fetched_again_only_when_it_changed() -> Result<(), Error> {
+        let mut t = start(1)?;
+        t.take_queued();
+        t.phone("a", None, true);
+        t.shell(&[("t1", "active", "1")]);
+        t.app.preload_due();
+        assert_eq!(t.take_queued(), ["2 bounded t1"]);
+        t.fetched("t1", false, snapshot("t1", "one", false));
+        // The same list again, as after a reconnect to t3: nothing.
+        t.shell(&[("t1", "active", "1")]);
+        t.app.preload_due();
+        assert!(t.queued().is_empty());
+        // Changed: fetched again, as the phone has it.
+        t.thread_updated("t1", "2");
+        t.app.preload_due();
+        assert_eq!(t.take_queued(), ["2 bounded t1"]);
+        Ok(())
+    }
+
+    #[test]
+    fn eviction_keeps_threads_on_phones_and_cleanup_follows_the_thread_list() -> Result<(), Error> {
+        let mut t = start(2)?;
+        t.take_queued();
+        t.phone("a", Some("t1"), true);
+        t.app.update_subscriptions();
+        t.shell(&[("t1", "active", "2"), ("t2", "active", "1")]);
+        t.subscription_snapshot("t1", snapshot("t1", "one", false));
+        t.app.preload_due();
+        t.fetched("t2", false, snapshot("t2", "two", false));
+        let has = |t: &Test, thread: &str| {
+            t.app.devices["a"]
+                .server
+                .object_ids()
+                .contains(&frame_id(thread))
+        };
+        assert!(has(&t, "t1") && has(&t, "t2"));
+        // Over the limit: t2 goes, t1 is open and stays.
+        let unsynced = |t: &Test| t.app.devices["a"].server.stats().unsynced_bytes;
+        let before = unsynced(&t);
+        t.app.cache_limit = 0;
+        t.app.evict_due();
+        assert!(t.app.world.resident("t1") && !t.app.world.resident("t2"));
+        // The phone keeps t2, and what it has not stored of it waits.
+        assert!(has(&t, "t2"));
+        assert!(unsynced(&t) < before);
+        t.shell(&[("t1", "active", "2"), ("t2", "active", "1")]);
+        assert!(has(&t, "t2"), "an evicted thread is not deleted");
+        // t2 leaves the list: deleted on the phone, though the world does
+        // not hold it.
+        t.shell(&[("t1", "active", "2")]);
+        assert!(!has(&t, "t2") && has(&t, "t1"));
+        Ok(())
+    }
+
+    #[test]
+    fn fetch_jobs_go_most_urgent_first_in_order() {
+        let q = Queue::default();
+        q.push(PRELOAD, Job::Bounded("p".into()));
+        q.push(IMAGES, Job::Descriptor);
+        q.push(OPEN, Job::Bounded("o1".into()));
+        q.push(OPEN, Job::Bounded("o2".into()));
+        let order: Vec<String> = (0..4)
+            .map(|_| match q.pop() {
+                Job::Bounded(t) => t,
+                _ => "image".into(),
+            })
+            .collect();
+        assert_eq!(order, ["o1", "o2", "image", "p"]);
     }
 }

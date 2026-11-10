@@ -409,7 +409,11 @@ impl Server {
 
     pub fn load(bytes: &[u8], cfg: Config, now: Millis) -> Result<Server, DecodeError> {
         let mut r = Reader::new(bytes);
-        store::version(&mut r, VERSION)?;
+        // Version 1 saved every object's bytes.
+        let version = r.u8()?;
+        if version != 1 && version != VERSION {
+            return Err(DecodeError::Version(version));
+        }
         let token = store::token(&mut r)?;
         let mut s = Server::new(token, cfg, now);
         s.epoch = match r.u8()? {
@@ -428,7 +432,8 @@ impl Server {
             let order = r.varint()?;
             let meta = store::bytes(&mut r)?;
             let rev = r.varint()?;
-            let content = match r.u8()? {
+            let tag = if version == 1 { 1 } else { r.u8()? };
+            let content = match tag {
                 0 => {
                     let len = r.varint()?;
                     let hash = r.bytes(8)?.try_into().map_err(|_| DecodeError::Truncated)?;
@@ -442,10 +447,12 @@ impl Server {
             let acked = store::ranges(&mut r)?;
             let rev_acked = r.u8()? != 0;
             let keep = r.varint()?;
-            s.ep.out.restore(
-                key,
-                OutObject::restored(class, order, meta, rev, content, acked, rev_acked, keep),
-            );
+            let o = OutObject::restored(class, order, meta, rev, content, acked, rev_acked, keep);
+            let done = o.done();
+            s.ep.out.restore(key, o);
+            if done && matches!(key, Key::Object(_)) {
+                s.ep.out.release(key);
+            }
         }
         Ok(s)
     }

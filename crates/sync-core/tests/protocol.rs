@@ -171,11 +171,7 @@ fn a_change_in_the_middle_sends_only_the_bytes_after_it() {
         .set(5, Class::Background, 0, Vec::new(), content.clone())
         .expect("set");
     // Part of it stored: the server still has the bytes to compare.
-    while !p
-        .phone
-        .object(5)
-        .is_some_and(|o| o.have.covers(0..20_000))
-    {
+    while !p.phone.object(5).is_some_and(|o| o.have.covers(0..20_000)) {
         p.run(1);
     }
     assert!(!p.server.stored(5));
@@ -192,7 +188,9 @@ fn a_change_in_the_middle_sends_only_the_bytes_after_it() {
     let ranges = chunk_ranges(&sent);
     assert!(!ranges.is_empty());
     assert!(
-        ranges.iter().all(|(_, r)| r.start >= 10_000 || r.is_empty()),
+        ranges
+            .iter()
+            .all(|(_, r)| r.start >= 10_000 || r.is_empty()),
         "{ranges:?}"
     );
 
@@ -220,7 +218,11 @@ fn a_stored_object_is_compared_by_its_hash() {
         .set(TAIL, Class::Tail, 0, Vec::new(), content.clone())
         .expect("set");
     let sent = p.run(1_000);
-    assert!(chunk_ranges(&sent).iter().all(|(k, _)| *k != Key::Object(TAIL)));
+    assert!(
+        chunk_ranges(&sent)
+            .iter()
+            .all(|(k, _)| *k != Key::Object(TAIL))
+    );
     // Growth keeps the revision and sends only the new bytes.
     content.extend_from_slice(b" and more.");
     p.server
@@ -230,7 +232,10 @@ fn a_stored_object_is_compared_by_its_hash() {
     let ranges = chunk_ranges(&sent);
     assert!(!ranges.is_empty());
     assert!(ranges.iter().all(|(_, r)| r.start >= 3_000), "{ranges:?}");
-    assert_eq!(p.phone.object(TAIL).map(|o| (o.rev, o.data == content)), Some((1, true)));
+    assert_eq!(
+        p.phone.object(TAIL).map(|o| (o.rev, o.data == content)),
+        Some((1, true))
+    );
     // A change in the middle: the bytes before it are gone from the server,
     // so the new revision goes whole.
     content[10] = b'X';
@@ -238,7 +243,10 @@ fn a_stored_object_is_compared_by_its_hash() {
         .set(TAIL, Class::Tail, 0, Vec::new(), content.clone())
         .expect("set");
     p.run(3_000);
-    assert_eq!(p.phone.object(TAIL).map(|o| (o.rev, o.data == content)), Some((2, true)));
+    assert_eq!(
+        p.phone.object(TAIL).map(|o| (o.rev, o.data == content)),
+        Some((2, true))
+    );
 }
 
 #[test]
@@ -272,7 +280,11 @@ fn a_released_object_waits_for_its_bytes_and_keeps_its_revision() {
         .set(5, Class::Background, 0, Vec::new(), changed.clone())
         .expect("set");
     let sent = p.run(1_000);
-    assert!(chunk_ranges(&sent).iter().all(|(k, _)| *k != Key::Object(5)));
+    assert!(
+        chunk_ranges(&sent)
+            .iter()
+            .all(|(k, _)| *k != Key::Object(5))
+    );
     assert_eq!(p.phone.object(5).map(|o| o.rev), Some(2));
 }
 

@@ -7,7 +7,7 @@ use sync_core::{Class, Config, Millis, Server};
 
 use crate::app::log;
 use crate::store::DeviceRecord;
-use crate::world::{Kind, Obj, World};
+use crate::world::{Kind, Obj, World, frame_id};
 
 /// A connection to a phone.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -49,9 +49,56 @@ impl Device {
         Server::new(token, Config::server(), now)
     }
 
+    pub fn connected(&self) -> bool {
+        self.link.is_some()
+    }
+
+    /// Whether the phone gets a thread's changes: it has the thread open,
+    /// or has it from before (its frame).
+    pub fn wants(&self, thread: &str) -> bool {
+        self.focus.as_deref() == Some(thread) || self.server.has(frame_id(thread))
+    }
+
+    fn wants_object(&self, world: &World, id: u64, obj: &Obj) -> bool {
+        match obj.kind {
+            Kind::Config | Kind::Shell => true,
+            Kind::Image => world.image_threads(id).any(|t| self.wants(t)),
+            Kind::Body | Kind::Text | Kind::Frame => {
+                obj.thread.as_deref().is_some_and(|t| self.wants(t))
+            }
+        }
+    }
+
+    /// Puts what changed in the world into this phone's sync state: the
+    /// thread list and config, and the threads it wants.
+    pub fn sync(&mut self, world: &World, ids: impl IntoIterator<Item = u64>) {
+        let ids: Vec<u64> = ids
+            .into_iter()
+            .filter(|&id| {
+                world
+                    .get(id)
+                    .is_some_and(|o| self.wants_object(world, id, o))
+            })
+            .collect();
+        self.set(world, ids);
+    }
+
+    /// Gives the phone a thread it did not want before.
+    pub fn give(&mut self, world: &World, thread: &str) {
+        self.set(world, world.thread_ids(thread).collect::<Vec<_>>());
+    }
+
+    /// The world evicted these objects: what the phone has not stored of
+    /// them waits until they come back.
+    pub fn release(&mut self, ids: &[u64]) {
+        for &id in ids {
+            self.server.release(id);
+        }
+    }
+
     /// Puts objects of the world into this phone's sync state, in the
     /// class they have for this phone.
-    pub fn sync(&mut self, world: &World, ids: impl IntoIterator<Item = u64>) {
+    fn set(&mut self, world: &World, ids: Vec<u64>) {
         for id in ids {
             let Some(obj) = world.get(id) else { continue };
             let class = class_of(world, id, obj, self.focus.as_deref());
@@ -94,7 +141,7 @@ impl Device {
         {
             ids.extend(world.thread_ids(t));
         }
-        self.sync(world, ids);
+        self.set(world, ids);
     }
 }
 

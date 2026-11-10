@@ -540,8 +540,9 @@ fn sidecar_end_to_end() -> R {
     // A new thread, created from the phone.
     let project = phone
         .objects()
-        .find(|(m, _)| m["c"] == "project")
-        .and_then(|(m, _)| m["i"].as_str().map(str::to_owned))
+        .find(|(m, o)| m["c"] == "project" && o.complete())
+        .and_then(|(_, o)| serde_json::from_slice::<Value>(&o.data).ok())
+        .and_then(|p| p["id"].as_str().map(str::to_owned))
         .ok_or("no project in the thread list")?;
     let new_thread = new_id("thread")?;
     let create = json!({
@@ -559,8 +560,9 @@ fn sidecar_end_to_end() -> R {
         Duration::from_secs(30),
         &mut [&mut phone],
         |p| {
+            let listed = sync_core::hash_id(&new_thread);
             p[0].objects()
-                .any(|(m, o)| m["c"] == "thread" && m["i"] == new_thread.as_str() && o.complete())
+                .any(|(m, o)| m["c"] == "thread" && m["i"] == listed.as_str() && o.complete())
         },
     )?;
 
