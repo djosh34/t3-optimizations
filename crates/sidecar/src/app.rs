@@ -1173,6 +1173,7 @@ impl App {
             if let Some(id) = self.thread_subs.remove(&t) {
                 self.pending.remove(&id);
                 self.snapshot_pending.remove(&t);
+                self.page_retries.remove(&t);
                 let _ = self.t3.send(Out::Interrupt(id));
             }
         }
@@ -1205,6 +1206,8 @@ impl App {
         if !self.paging.insert(thread.to_owned()) {
             return;
         }
+        // A retry of an older load's page would add its rows twice.
+        self.page_retries.remove(thread);
         let priority = if self.thread_subs.contains_key(thread) {
             OPEN
         } else {
@@ -1908,7 +1911,22 @@ mod tests {
         }
         t.app.resubscribe_due();
         assert_eq!(t.take_queued(), ["0 history old c1"]);
+        // It fails again, and the phone closes and reopens the thread before
+        // the retry: the new load's pages replace it, and nothing is
+        // fetched twice.
+        t.app.fetched(Fetched::Thread {
+            thread: "old".into(),
+            page: Some("c1".into()),
+            result: Err("t3 was busy".into()),
+        });
+        t.call("a", "sidecar.close", Some("old"));
+        assert!(t.app.page_retries.is_empty());
+        t.call("a", "sidecar.focus", Some("old"));
+        t.subscription_snapshot("old", snapshot("old", "old text", true));
+        assert_eq!(t.take_queued(), ["0 history old c1"]);
         t.fetched("old", true, json!({"items": [], "hasMoreHistory": false}));
+        t.app.resubscribe_due();
+        assert!(t.queued().is_empty());
         t.preload();
         assert_eq!(t.queued(), ["2 bounded t2"]);
         Ok(())
