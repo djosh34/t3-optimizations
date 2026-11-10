@@ -334,7 +334,9 @@ impl Fill {
 #[derive(Debug, Clone, Default)]
 pub(crate) struct Outbox {
     objects: BTreeMap<Key, OutObject>,
-    /// Send order: class, then highest order first.
+    /// The objects with bytes to send, in send order: class, then highest
+    /// order first. Stored and released objects are not in it, so a
+    /// packet costs what is pending, not everything the peer has.
     index: BTreeSet<(Class, Reverse<u64>, Key)>,
     inflight: BTreeMap<u64, SentPacket>,
     /// Since the last `take_busiest`: content bytes put in packets and new
@@ -367,6 +369,20 @@ impl Outbox {
         self.objects.iter()
     }
 
+    /// Puts an object in the send index, or takes it out, by whether it has
+    /// bytes to send.
+    fn reindex(&mut self, key: Key) {
+        let Some(o) = self.objects.get(&key) else {
+            return;
+        };
+        let entry = (o.class, Reverse(o.order), key);
+        if o.content.is_some() && !o.done() {
+            self.index.insert(entry);
+        } else {
+            self.index.remove(&entry);
+        }
+    }
+
     /// Sets an object's content. Content that only grows keeps its revision
     /// and the peer gets the new bytes; anything else (a change in the
     /// middle, a shorter text, other meta) is a new revision that keeps the
@@ -383,9 +399,19 @@ impl Outbox {
         meta: Vec<u8>,
         content: impl Into<Arc<[u8]>>,
     ) {
-        let content: Arc<[u8]> = content.into();
+        self.set_content(key, class, order, meta, content.into());
+        self.reindex(key);
+    }
+
+    fn set_content(
+        &mut self,
+        key: Key,
+        class: Class,
+        order: u64,
+        meta: Vec<u8>,
+        content: Arc<[u8]>,
+    ) {
         let Some(o) = self.objects.get_mut(&key) else {
-            self.index.insert((class, Reverse(order), key));
             self.objects.insert(
                 key,
                 OutObject {
@@ -408,7 +434,6 @@ impl Outbox {
         };
         if (o.class, o.order) != (class, order) {
             self.index.remove(&(o.class, Reverse(o.order), key));
-            self.index.insert((class, Reverse(order), key));
             o.class = class;
             o.order = order;
         }
@@ -470,12 +495,13 @@ impl Outbox {
         {
             o.forget_sent();
         }
+        self.reindex(key);
     }
 
     /// Inserts an object as it was saved.
     pub fn restore(&mut self, key: Key, o: OutObject) {
-        self.index.insert((o.class, Reverse(o.order), key));
         self.objects.insert(key, o);
+        self.reindex(key);
     }
 
     pub fn remove(&mut self, key: Key) {
@@ -525,15 +551,13 @@ impl Outbox {
     /// Whether nothing waits to be sent: released objects that are not
     /// stored wait for their bytes, not for the link.
     pub fn is_synced(&self) -> bool {
-        self.objects
-            .values()
-            .all(|o| o.done() || o.content.is_none())
+        self.index.is_empty()
     }
 
     pub fn unsynced_bytes(&self) -> u64 {
-        self.objects
-            .values()
-            .filter(|o| o.content.is_some())
+        self.index
+            .iter()
+            .filter_map(|(_, _, k)| self.objects.get(k))
             .map(|o| o.len() - o.acked.len().min(o.len()))
             .sum()
     }
@@ -573,6 +597,7 @@ impl Outbox {
         if let Some(o) = self.objects.get_mut(&key) {
             o.forget_peer();
         }
+        self.reindex(key);
     }
 
     /// The peer lost everything it stored. Released objects cannot go out
@@ -590,6 +615,10 @@ impl Outbox {
         }
         for o in self.objects.values_mut() {
             o.forget_peer();
+        }
+        let keys: Vec<Key> = self.objects.keys().copied().collect();
+        for k in keys {
+            self.reindex(k);
         }
     }
 
@@ -621,6 +650,7 @@ impl Outbox {
                     o.on_acked(range);
                     if !was_done && o.done() {
                         acked.done.push(key);
+                        self.reindex(key);
                     }
                 }
             }
@@ -653,11 +683,14 @@ impl Outbox {
         let mut announced: BTreeSet<Key> = BTreeSet::new();
         let mut record: Vec<(Key, u64, Range<u64>)> = Vec::new();
         let mut timed: Vec<(Key, Range<u64>)> = Vec::new();
-        let keys: Vec<(Class, Key)> = self.index.iter().map(|&(c, _, k)| (c, k)).collect();
-
+        // The index is walked in place and only as far as the packet fills:
+        // with a large backlog pending, copying it cost more than the packet.
         for pass in 0..3 {
-            for &(class, key) in &keys {
+            for &(class, _, key) in &self.index {
                 if pass == 0 && class != Class::Urgent {
+                    if class > Class::Urgent {
+                        break;
+                    }
                     continue;
                 }
                 let Some(o) = self.objects.get(&key) else {
