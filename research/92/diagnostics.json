@@ -1,0 +1,576 @@
+{
+  "normal": {
+    "load": [
+      4.05,
+      5.56,
+      6.74
+    ],
+    "html_ttfb_ms": 50,
+    "config_field_json_string_lengths": {
+      "environment": 1834,
+      "auth": 247,
+      "cwd": 27,
+      "keybindingsConfigPath": 57,
+      "keybindings": 18203,
+      "issues": 2,
+      "providers": 193596,
+      "availableEditors": 2,
+      "remoteOpenTargets": 168,
+      "directEndpoints": 2,
+      "observability": 171,
+      "settings": 19917,
+      "managedPolicy": 150,
+      "shellResumeCompletionMarker": 4,
+      "shellThreadFamilies": 4,
+      "shellOlderSettled": 4,
+      "threadResumeCompletionMarker": 4,
+      "threadSnapshotPagination": 4,
+      "threadFind": 4,
+      "threadFindProgressive": 4,
+      "secretProviderSettings": 4,
+      "secretReferences": 4,
+      "scratchWorkspaceRoot": 39,
+      "newProjectsRoot": 40
+    },
+    "config_options": {
+      "environmentThemes": true,
+      "usageLimitSources": true,
+      "usageLimitsCommand": true,
+      "workspaceSnapshotsOnDemand": true
+    },
+    "shell_rpc_json_string_lengths": [
+      8919,
+      65,
+      4191
+    ],
+    "opens": [
+      {
+        "phase": "missing",
+        "tap_to_cache_transaction_ms": 307,
+        "cache_transaction_complete_ms": 434,
+        "tap_to_fetch_ms": 360,
+        "fetch_ms": 74
+      },
+      {
+        "phase": "has",
+        "tap_to_cache_transaction_ms": 283,
+        "cache_transaction_complete_ms": 403,
+        "tap_to_fetch_ms": 379,
+        "fetch_ms": 24
+      }
+    ],
+    "list_cpu_probe": {
+      "load": [
+        4.37,
+        4.44,
+        5.79
+      ],
+      "wall_ms": 1131,
+      "container_cpu_ms": 1925.582
+    }
+  },
+  "opt": {
+    "load": [
+      3.72,
+      5.41,
+      6.67
+    ],
+    "html_ttfb_ms": 27,
+    "config_field_json_string_lengths": {
+      "auth": 247,
+      "availableEditors": 2,
+      "cwd": 27,
+      "directEndpoints": 2,
+      "environment": 1834,
+      "issues": 2,
+      "keybindings": 18203,
+      "keybindingsConfigPath": 57,
+      "managedPolicy": 150,
+      "newProjectsRoot": 40,
+      "observability": 171,
+      "providers": 520963,
+      "remoteOpenTargets": 168,
+      "scratchWorkspaceRoot": 39,
+      "secretProviderSettings": 4,
+      "secretReferences": 4,
+      "settings": 19917,
+      "shellOlderSettled": 4,
+      "shellResumeCompletionMarker": 4,
+      "shellThreadFamilies": 4,
+      "threadFind": 4,
+      "threadFindProgressive": 4,
+      "threadResumeCompletionMarker": 4,
+      "threadSnapshotPagination": 4
+    },
+    "config_options": {
+      "environmentThemes": true,
+      "usageLimitSources": true,
+      "usageLimitsCommand": true,
+      "workspaceSnapshotsOnDemand": true
+    },
+    "shell_rpc_json_string_lengths": [
+      64233,
+      324423,
+      424825,
+      567920,
+      699012,
+      856509,
+      866840
+    ],
+    "receive_progress": [
+      {
+        "ms": 196,
+        "content_bytes": 0,
+        "config": []
+      },
+      {
+        "ms": 310,
+        "content_bytes": 0,
+        "config": []
+      },
+      {
+        "ms": 487,
+        "content_bytes": 0,
+        "config": []
+      },
+      {
+        "ms": 1060,
+        "content_bytes": 0,
+        "config": []
+      },
+      {
+        "ms": 1289,
+        "content_bytes": 0,
+        "config": []
+      },
+      {
+        "ms": 1394,
+        "content_bytes": 0,
+        "config": []
+      },
+      {
+        "ms": 1509,
+        "content_bytes": 897,
+        "config": []
+      },
+      {
+        "ms": 1612,
+        "content_bytes": 1073,
+        "config": []
+      },
+      {
+        "ms": 1728,
+        "content_bytes": 1214,
+        "config": []
+      },
+      {
+        "ms": 1842,
+        "content_bytes": 1214,
+        "config": []
+      },
+      {
+        "ms": 1957,
+        "content_bytes": 1450,
+        "config": []
+      },
+      {
+        "ms": 2073,
+        "content_bytes": 2036,
+        "config": []
+      },
+      {
+        "ms": 2189,
+        "content_bytes": 2262,
+        "config": []
+      },
+      {
+        "ms": 2302,
+        "content_bytes": 2800,
+        "config": []
+      },
+      {
+        "ms": 2416,
+        "content_bytes": 3441,
+        "config": []
+      },
+      {
+        "ms": 2529,
+        "content_bytes": 4113,
+        "config": []
+      },
+      {
+        "ms": 2642,
+        "content_bytes": 4991,
+        "config": []
+      },
+      {
+        "ms": 2755,
+        "content_bytes": 5725,
+        "config": []
+      },
+      {
+        "ms": 2856,
+        "content_bytes": 6435,
+        "config": []
+      },
+      {
+        "ms": 2969,
+        "content_bytes": 7203,
+        "config": []
+      },
+      {
+        "ms": 3078,
+        "content_bytes": 8425,
+        "config": []
+      },
+      {
+        "ms": 3215,
+        "content_bytes": 9437,
+        "config": []
+      },
+      {
+        "ms": 3328,
+        "content_bytes": 11782,
+        "config": [
+          {
+            "len": 563109,
+            "have": 2032
+          }
+        ]
+      },
+      {
+        "ms": 3441,
+        "content_bytes": 13391,
+        "config": [
+          {
+            "len": 563109,
+            "have": 3641
+          }
+        ]
+      },
+      {
+        "ms": 3557,
+        "content_bytes": 18761,
+        "config": [
+          {
+            "len": 563109,
+            "have": 9011
+          }
+        ]
+      },
+      {
+        "ms": 3673,
+        "content_bytes": 30341,
+        "config": [
+          {
+            "len": 563109,
+            "have": 20591
+          }
+        ]
+      },
+      {
+        "ms": 3787,
+        "content_bytes": 34787,
+        "config": [
+          {
+            "len": 563109,
+            "have": 25037
+          }
+        ]
+      },
+      {
+        "ms": 3903,
+        "content_bytes": 42046,
+        "config": [
+          {
+            "len": 563109,
+            "have": 32296
+          }
+        ]
+      },
+      {
+        "ms": 4019,
+        "content_bytes": 48688,
+        "config": [
+          {
+            "len": 563109,
+            "have": 38938
+          }
+        ]
+      },
+      {
+        "ms": 4134,
+        "content_bytes": 53975,
+        "config": [
+          {
+            "len": 563109,
+            "have": 44225
+          }
+        ]
+      },
+      {
+        "ms": 4250,
+        "content_bytes": 62847,
+        "config": [
+          {
+            "len": 563109,
+            "have": 53097
+          }
+        ]
+      },
+      {
+        "ms": 4366,
+        "content_bytes": 72208,
+        "config": [
+          {
+            "len": 563109,
+            "have": 62458
+          }
+        ]
+      },
+      {
+        "ms": 4480,
+        "content_bytes": 85477,
+        "config": [
+          {
+            "len": 563109,
+            "have": 75727
+          }
+        ]
+      },
+      {
+        "ms": 4596,
+        "content_bytes": 102772,
+        "config": [
+          {
+            "len": 563109,
+            "have": 93022
+          }
+        ]
+      },
+      {
+        "ms": 4710,
+        "content_bytes": 111258,
+        "config": [
+          {
+            "len": 563109,
+            "have": 101508
+          }
+        ]
+      },
+      {
+        "ms": 4825,
+        "content_bytes": 133446,
+        "config": [
+          {
+            "len": 563109,
+            "have": 123696
+          }
+        ]
+      },
+      {
+        "ms": 4940,
+        "content_bytes": 156249,
+        "config": [
+          {
+            "len": 563109,
+            "have": 146499
+          }
+        ]
+      },
+      {
+        "ms": 5055,
+        "content_bytes": 172528,
+        "config": [
+          {
+            "len": 563109,
+            "have": 162778
+          }
+        ]
+      },
+      {
+        "ms": 5169,
+        "content_bytes": 192031,
+        "config": [
+          {
+            "len": 563109,
+            "have": 182281
+          }
+        ]
+      },
+      {
+        "ms": 5283,
+        "content_bytes": 222697,
+        "config": [
+          {
+            "len": 563109,
+            "have": 212947
+          }
+        ]
+      },
+      {
+        "ms": 5396,
+        "content_bytes": 246462,
+        "config": [
+          {
+            "len": 563109,
+            "have": 236712
+          }
+        ]
+      },
+      {
+        "ms": 5511,
+        "content_bytes": 271010,
+        "config": [
+          {
+            "len": 563109,
+            "have": 261260
+          }
+        ]
+      },
+      {
+        "ms": 5613,
+        "content_bytes": 296364,
+        "config": [
+          {
+            "len": 563109,
+            "have": 286614
+          }
+        ]
+      },
+      {
+        "ms": 5727,
+        "content_bytes": 319996,
+        "config": [
+          {
+            "len": 563109,
+            "have": 310246
+          }
+        ]
+      },
+      {
+        "ms": 5843,
+        "content_bytes": 343669,
+        "config": [
+          {
+            "len": 563109,
+            "have": 333919
+          }
+        ]
+      },
+      {
+        "ms": 5957,
+        "content_bytes": 387603,
+        "config": [
+          {
+            "len": 563109,
+            "have": 377853
+          }
+        ]
+      },
+      {
+        "ms": 6071,
+        "content_bytes": 451308,
+        "config": [
+          {
+            "len": 563109,
+            "have": 441558
+          }
+        ]
+      },
+      {
+        "ms": 6186,
+        "content_bytes": 511476,
+        "config": [
+          {
+            "len": 563109,
+            "have": 501726
+          }
+        ]
+      },
+      {
+        "ms": 6300,
+        "content_bytes": 546212,
+        "config": [
+          {
+            "len": 563109,
+            "have": 536462
+          }
+        ]
+      },
+      {
+        "ms": 6414,
+        "content_bytes": 575224,
+        "config": [
+          {
+            "len": 563109,
+            "have": 563109
+          }
+        ]
+      },
+      {
+        "ms": 6527,
+        "content_bytes": 615742,
+        "config": [
+          {
+            "len": 563109,
+            "have": 563109
+          }
+        ]
+      },
+      {
+        "ms": 6737,
+        "content_bytes": 630417,
+        "config": [
+          {
+            "len": 563109,
+            "have": 563109
+          }
+        ]
+      }
+    ],
+    "opens": [
+      {
+        "phase": "missing",
+        "tap_to_cache_transaction_ms": 389,
+        "cache_transaction_complete_ms": 603,
+        "tap_to_fetch_ms": 594,
+        "fetch_ms": 37
+      },
+      {
+        "phase": "has",
+        "tap_to_cache_transaction_ms": 369,
+        "cache_transaction_complete_ms": 612,
+        "tap_to_fetch_ms": 520,
+        "fetch_ms": 5
+      }
+    ],
+    "list_cpu_probe": {
+      "load": [
+        4.28,
+        4.42,
+        5.76
+      ],
+      "wall_ms": 1669,
+      "container_cpu_ms": 4116.765
+    }
+  },
+  "sidecar_counters": {
+    "drop_counter_scope": "service-wide",
+    "phone_send_bytes_per_second": [
+      51258,
+      4000000,
+      977
+    ],
+    "phone_srtt_ms": [
+      3,
+      58,
+      122
+    ],
+    "local_sctp_full_drop_count": [
+      0,
+      43,
+      662
+    ]
+  }
+}
