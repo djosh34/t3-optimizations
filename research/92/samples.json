@@ -1,0 +1,1503 @@
+{
+  "commit": "504223a2af7ee5aecbbfccbfbeee9b5e22099600",
+  "width": 402,
+  "scale": 3,
+  "main_high_load_timings_excluded": 64,
+  "main": [
+    {
+      "route": "normal",
+      "height": 681,
+      "phase": "cold-list",
+      "run": 12,
+      "load": [
+        6.44,
+        5.93,
+        6.37
+      ],
+      "blocked_requests": 0,
+      "list_ms": 6725,
+      "controls_ms": 2801,
+      "session_wait_ms": 24,
+      "shell_wait_ms": 949,
+      "config_wait_ms": 72
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "phase": "cold-list",
+      "run": 13,
+      "load": [
+        7.02,
+        6.18,
+        6.42
+      ],
+      "blocked_requests": 0,
+      "list_ms": 5692,
+      "controls_ms": 1873,
+      "session_wait_ms": 27,
+      "shell_wait_ms": 111,
+      "config_wait_ms": 43
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "phase": "cold-list",
+      "run": 14,
+      "load": [
+        7.42,
+        6.43,
+        6.49
+      ],
+      "blocked_requests": 0,
+      "list_ms": 5825,
+      "controls_ms": 2009,
+      "session_wait_ms": 34,
+      "shell_wait_ms": 180,
+      "config_wait_ms": 53
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "phase": "missing",
+      "run": 1,
+      "load": [
+        7.15,
+        6.07,
+        6.14
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 1086,
+      "automation_before_tap_ms": 332,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 621,
+      "fetch_ms": 28,
+      "fetch_to_screen_ms": 437
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "phase": "missing",
+      "run": 4,
+      "load": [
+        7.66,
+        7.23,
+        6.62
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 791,
+      "automation_before_tap_ms": 86,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 418,
+      "fetch_ms": 21,
+      "fetch_to_screen_ms": 352
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "phase": "missing",
+      "run": 5,
+      "load": [
+        7.31,
+        7.28,
+        6.68
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 845,
+      "automation_before_tap_ms": 48,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 398,
+      "fetch_ms": 23,
+      "fetch_to_screen_ms": 424
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "phase": "missing",
+      "run": 6,
+      "load": [
+        4.47,
+        6.05,
+        6.32
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 875,
+      "automation_before_tap_ms": 58,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 432,
+      "fetch_ms": 25,
+      "fetch_to_screen_ms": 418
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "phase": "missing",
+      "run": 9,
+      "load": [
+        6.83,
+        6.84,
+        7.04
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 877,
+      "automation_before_tap_ms": 49,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 439,
+      "fetch_ms": 33,
+      "fetch_to_screen_ms": 405
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "phase": "has",
+      "run": 1,
+      "load": [
+        7.37,
+        6.14,
+        6.16
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 2144,
+      "automation_before_tap_ms": 46,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 1190,
+      "fetch_ms": 18,
+      "fetch_to_screen_ms": 936
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "phase": "has",
+      "run": 5,
+      "load": [
+        7.13,
+        7.24,
+        6.67
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 672,
+      "automation_before_tap_ms": 69,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 483,
+      "fetch_ms": 31,
+      "fetch_to_screen_ms": 158
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "phase": "has",
+      "run": 6,
+      "load": [
+        4.6,
+        6.05,
+        6.32
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 1008,
+      "automation_before_tap_ms": 116,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 605,
+      "fetch_ms": 49,
+      "fetch_to_screen_ms": 354
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "phase": "has",
+      "run": 9,
+      "load": [
+        6.83,
+        6.84,
+        7.04
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 588,
+      "automation_before_tap_ms": 53,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 412,
+      "fetch_ms": 32,
+      "fetch_to_screen_ms": 144
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "phase": "has",
+      "run": 10,
+      "load": [
+        5.5,
+        6.47,
+        6.9
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 666,
+      "automation_before_tap_ms": 51,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 486,
+      "fetch_ms": 33,
+      "fetch_to_screen_ms": 146
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "phase": "cold-list",
+      "run": 12,
+      "load": [
+        6.74,
+        6.04,
+        6.39
+      ],
+      "blocked_requests": 0,
+      "list_ms": 5085,
+      "controls_ms": 1566,
+      "session_wait_ms": 33,
+      "shell_wait_ms": 93,
+      "config_wait_ms": 29
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "phase": "cold-list",
+      "run": 13,
+      "load": [
+        7.37,
+        6.34,
+        6.47
+      ],
+      "blocked_requests": 0,
+      "list_ms": 5470,
+      "controls_ms": 1900,
+      "session_wait_ms": 27,
+      "shell_wait_ms": 169,
+      "config_wait_ms": 30
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "phase": "cold-list",
+      "run": 17,
+      "load": [
+        5.01,
+        5.9,
+        6.58
+      ],
+      "blocked_requests": 0,
+      "list_ms": 9390,
+      "controls_ms": 4872,
+      "session_wait_ms": 51,
+      "shell_wait_ms": 2417,
+      "config_wait_ms": 85
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "phase": "missing",
+      "run": 3,
+      "load": [
+        7.3,
+        7.13,
+        6.57
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 914,
+      "automation_before_tap_ms": 504,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 510,
+      "fetch_ms": 31,
+      "fetch_to_screen_ms": 373
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "phase": "missing",
+      "run": 4,
+      "load": [
+        7.25,
+        7.22,
+        6.64
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 930,
+      "automation_before_tap_ms": 938,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 509,
+      "fetch_ms": 37,
+      "fetch_to_screen_ms": 384
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "phase": "missing",
+      "run": 5,
+      "load": [
+        6.02,
+        6.97,
+        6.6
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 2124,
+      "automation_before_tap_ms": 66,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 1133,
+      "fetch_ms": 62,
+      "fetch_to_screen_ms": 929
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "phase": "missing",
+      "run": 9,
+      "load": [
+        6.56,
+        6.77,
+        7.01
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 915,
+      "automation_before_tap_ms": 77,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 500,
+      "fetch_ms": 26,
+      "fetch_to_screen_ms": 389
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "phase": "missing",
+      "run": 10,
+      "load": [
+        5.97,
+        6.53,
+        6.9
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 2093,
+      "automation_before_tap_ms": 53,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 1101,
+      "fetch_ms": 58,
+      "fetch_to_screen_ms": 934
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "phase": "has",
+      "run": 3,
+      "load": [
+        7.59,
+        7.2,
+        6.6
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 618,
+      "automation_before_tap_ms": 47,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 446,
+      "fetch_ms": 25,
+      "fetch_to_screen_ms": 147
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "phase": "has",
+      "run": 5,
+      "load": [
+        6.33,
+        7.03,
+        6.62
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 594,
+      "automation_before_tap_ms": 55,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "phase": "has",
+      "run": 9,
+      "load": [
+        6.11,
+        6.68,
+        6.98
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 751,
+      "automation_before_tap_ms": 62,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 411,
+      "fetch_ms": 72,
+      "fetch_to_screen_ms": 268
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "phase": "has",
+      "run": 10,
+      "load": [
+        5.65,
+        6.46,
+        6.88
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 613,
+      "automation_before_tap_ms": 48,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "phase": "has",
+      "run": 11,
+      "load": [
+        6.23,
+        6.56,
+        6.89
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 634,
+      "automation_before_tap_ms": 53,
+      "has_frame_before_tap": null,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 429,
+      "fetch_ms": 28,
+      "fetch_to_screen_ms": 177
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "phase": "cold-list",
+      "run": 12,
+      "load": [
+        6.89,
+        6.04,
+        6.4
+      ],
+      "blocked_requests": 0,
+      "list_ms": 10682,
+      "controls_ms": 6679,
+      "session_wait_ms": 1743,
+      "shell_wait_ms": 8,
+      "config_wait_ms": 3804,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 94,
+        "srtt": 11.247798919677734,
+        "loss": 0,
+        "bytes": 5661564,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "phase": "cold-list",
+      "run": 13,
+      "load": [
+        7.04,
+        6.22,
+        6.43
+      ],
+      "blocked_requests": 0,
+      "list_ms": 8776,
+      "controls_ms": 6615,
+      "session_wait_ms": 1747,
+      "shell_wait_ms": 11,
+      "config_wait_ms": 3796,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 88,
+        "srtt": 13.50252914428711,
+        "loss": 0,
+        "bytes": 1435677,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "phase": "cold-list",
+      "run": 14,
+      "load": [
+        7.16,
+        6.42,
+        6.48
+      ],
+      "blocked_requests": 0,
+      "list_ms": 11152,
+      "controls_ms": 7079,
+      "session_wait_ms": 1816,
+      "shell_wait_ms": 16,
+      "config_wait_ms": 3813,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 150,
+        "srtt": 21.009910583496094,
+        "loss": 0,
+        "bytes": 4669650,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "phase": "missing",
+      "run": 5,
+      "load": [
+        6.79,
+        7.16,
+        6.66
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 963,
+      "automation_before_tap_ms": 300,
+      "has_frame_before_tap": 0,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 484,
+      "fetch_ms": 127,
+      "fetch_to_screen_ms": 352,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 1398,
+        "srtt": 8.322664657063115,
+        "loss": 0,
+        "bytes": 1743690,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "phase": "missing",
+      "run": 9,
+      "load": [
+        6.8,
+        6.83,
+        7.04
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 945,
+      "automation_before_tap_ms": 399,
+      "has_frame_before_tap": 0,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 590,
+      "fetch_ms": 18,
+      "fetch_to_screen_ms": 337,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 309,
+        "srtt": 28.437565529629126,
+        "loss": 0,
+        "bytes": 7566750,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "phase": "missing",
+      "run": 10,
+      "load": [
+        6.45,
+        6.64,
+        6.95
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 1174,
+      "automation_before_tap_ms": 924,
+      "has_frame_before_tap": 0,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 750,
+      "fetch_ms": 313,
+      "fetch_to_screen_ms": 111,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 1226,
+        "srtt": 303.85407921042554,
+        "loss": 0,
+        "bytes": 7867002,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "phase": "missing",
+      "run": 11,
+      "load": [
+        7.23,
+        6.75,
+        6.96
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 1734,
+      "automation_before_tap_ms": 433,
+      "has_frame_before_tap": 0,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 1392,
+      "fetch_ms": 107,
+      "fetch_to_screen_ms": 235,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 381,
+        "srtt": 19.43256254354797,
+        "loss": 0,
+        "bytes": 7177078,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "phase": "missing",
+      "run": 12,
+      "load": [
+        6.28,
+        5.94,
+        6.36
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 1673,
+      "automation_before_tap_ms": 58,
+      "has_frame_before_tap": 0,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 1231,
+      "fetch_ms": 79,
+      "fetch_to_screen_ms": 363,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 94,
+        "srtt": 18.702760250906067,
+        "loss": 0,
+        "bytes": 8726112,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "phase": "has",
+      "run": 1,
+      "load": [
+        7.98,
+        6.37,
+        6.23
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 943,
+      "automation_before_tap_ms": 59,
+      "has_frame_before_tap": 1,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 730,
+      "fetch_ms": 4,
+      "fetch_to_screen_ms": 209,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 436,
+        "srtt": 82.99145282137381,
+        "loss": 0,
+        "bytes": 4850754,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "phase": "has",
+      "run": 4,
+      "load": [
+        7.53,
+        7.27,
+        6.65
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 637,
+      "automation_before_tap_ms": 52,
+      "has_frame_before_tap": 1,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 441,
+      "fetch_ms": 4,
+      "fetch_to_screen_ms": 192,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 138,
+        "srtt": 17.737664232723546,
+        "loss": 0,
+        "bytes": 2084486,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "phase": "has",
+      "run": 5,
+      "load": [
+        6.56,
+        7.11,
+        6.64
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 723,
+      "automation_before_tap_ms": 41,
+      "has_frame_before_tap": 1,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 504,
+      "fetch_ms": 6,
+      "fetch_to_screen_ms": 213,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 400,
+        "srtt": 16.5051565579397,
+        "loss": 0,
+        "bytes": 687251,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "phase": "has",
+      "run": 9,
+      "load": [
+        6.81,
+        6.83,
+        7.04
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 690,
+      "automation_before_tap_ms": 40,
+      "has_frame_before_tap": 1,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 476,
+      "fetch_ms": 3,
+      "fetch_to_screen_ms": 211,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 207,
+        "srtt": 35.56259998027235,
+        "loss": 0,
+        "bytes": 4366439,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "phase": "has",
+      "run": 11,
+      "load": [
+        7.13,
+        6.74,
+        6.95
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 809,
+      "automation_before_tap_ms": 47,
+      "has_frame_before_tap": 1,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 492,
+      "fetch_ms": 4,
+      "fetch_to_screen_ms": 313,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 341,
+        "srtt": 56.947317374172826,
+        "loss": 0,
+        "bytes": 3606664,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "phase": "cold-list",
+      "run": 12,
+      "load": [
+        6.86,
+        6.1,
+        6.4
+      ],
+      "blocked_requests": 0,
+      "list_ms": 10325,
+      "controls_ms": 6596,
+      "session_wait_ms": 1722,
+      "shell_wait_ms": 15,
+      "config_wait_ms": 3786,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 320,
+        "srtt": 28.66426372528076,
+        "loss": 0,
+        "bytes": 4213949,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "phase": "cold-list",
+      "run": 13,
+      "load": [
+        6.46,
+        6.19,
+        6.42
+      ],
+      "blocked_requests": 0,
+      "list_ms": 10133,
+      "controls_ms": 6609,
+      "session_wait_ms": 1740,
+      "shell_wait_ms": 8,
+      "config_wait_ms": 3790,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 87,
+        "srtt": 10.562103271484375,
+        "loss": 0,
+        "bytes": 3904200,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "phase": "cold-list",
+      "run": 17,
+      "load": [
+        6.06,
+        6.09,
+        6.63
+      ],
+      "blocked_requests": 0,
+      "list_ms": 9037,
+      "controls_ms": 6937,
+      "session_wait_ms": 1773,
+      "shell_wait_ms": 10,
+      "config_wait_ms": 3793,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 114,
+        "srtt": 17.332012176513672,
+        "loss": 0,
+        "bytes": 1503141,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "phase": "missing",
+      "run": 3,
+      "load": [
+        7.12,
+        7.11,
+        6.57
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 1047,
+      "automation_before_tap_ms": 789,
+      "has_frame_before_tap": 0,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 591,
+      "fetch_ms": 90,
+      "fetch_to_screen_ms": 366,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 1123,
+        "srtt": 29.056116388010423,
+        "loss": 0,
+        "bytes": 6914051,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "phase": "missing",
+      "run": 4,
+      "load": [
+        7.52,
+        7.31,
+        6.68
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 934,
+      "automation_before_tap_ms": 556,
+      "has_frame_before_tap": 0,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 587,
+      "fetch_ms": 44,
+      "fetch_to_screen_ms": 303,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 189,
+        "srtt": 17.032251666373575,
+        "loss": 0,
+        "bytes": 7164932,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "phase": "missing",
+      "run": 5,
+      "load": [
+        5.93,
+        6.91,
+        6.59
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 909,
+      "automation_before_tap_ms": 509,
+      "has_frame_before_tap": 0,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 530,
+      "fetch_ms": 40,
+      "fetch_to_screen_ms": 339,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 325,
+        "srtt": 11.726524800003745,
+        "loss": 0,
+        "bytes": 7321519,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "phase": "missing",
+      "run": 9,
+      "load": [
+        5.47,
+        6.52,
+        6.93
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 1800,
+      "automation_before_tap_ms": 691,
+      "has_frame_before_tap": 0,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 1407,
+      "fetch_ms": 56,
+      "fetch_to_screen_ms": 337,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 292,
+        "srtt": 18.404187831881927,
+        "loss": 0,
+        "bytes": 7597526,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "phase": "missing",
+      "run": 10,
+      "load": [
+        6.28,
+        6.56,
+        6.9
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 942,
+      "automation_before_tap_ms": 481,
+      "has_frame_before_tap": 0,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 529,
+      "fetch_ms": 68,
+      "fetch_to_screen_ms": 345,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 1231,
+        "srtt": 36.9130311511774,
+        "loss": 0,
+        "bytes": 7917438,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "phase": "has",
+      "run": 3,
+      "load": [
+        7.19,
+        7.12,
+        6.58
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 769,
+      "automation_before_tap_ms": 45,
+      "has_frame_before_tap": 1,
+      "new_js_requests_after_tap": 0,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 149,
+        "srtt": 20.80963905778117,
+        "loss": 0,
+        "bytes": 3090954,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "phase": "has",
+      "run": 4,
+      "load": [
+        7.56,
+        7.32,
+        6.69
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 949,
+      "automation_before_tap_ms": 86,
+      "has_frame_before_tap": 1,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 673,
+      "fetch_ms": 5,
+      "fetch_to_screen_ms": 271,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 317,
+        "srtt": 39.95802670339617,
+        "loss": 0,
+        "bytes": 4054816,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "phase": "has",
+      "run": 5,
+      "load": [
+        7.3,
+        7.18,
+        6.68
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 842,
+      "automation_before_tap_ms": 57,
+      "has_frame_before_tap": 1,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 593,
+      "fetch_ms": 5,
+      "fetch_to_screen_ms": 244,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 312,
+        "srtt": 32.8817171769042,
+        "loss": 0,
+        "bytes": 4422267,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "phase": "has",
+      "run": 9,
+      "load": [
+        5.43,
+        6.5,
+        6.92
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 812,
+      "automation_before_tap_ms": 50,
+      "has_frame_before_tap": 1,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 543,
+      "fetch_ms": 8,
+      "fetch_to_screen_ms": 262,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 177,
+        "srtt": 70.92759786991519,
+        "loss": 0,
+        "bytes": 4702121,
+        "undecodable": 0
+      }
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "phase": "has",
+      "run": 10,
+      "load": [
+        6.34,
+        6.57,
+        6.9
+      ],
+      "blocked_requests": 0,
+      "tap_ms": 759,
+      "automation_before_tap_ms": 79,
+      "has_frame_before_tap": 1,
+      "new_js_requests_after_tap": 0,
+      "tap_to_fetch_ms": 526,
+      "fetch_ms": 5,
+      "fetch_to_screen_ms": 228,
+      "transport": {
+        "link": "webrtc",
+        "handshake": 445,
+        "srtt": 89.60896887630224,
+        "loss": 0,
+        "bytes": 2907059,
+        "undecodable": 0
+      }
+    }
+  ],
+  "plan1": [
+    {
+      "route": "normal",
+      "height": 874,
+      "n": 1,
+      "load": [
+        6.67,
+        6.83,
+        7.33
+      ],
+      "prompt_ms": 286,
+      "submit_ms": 140,
+      "command_ack_ms": 25,
+      "reply_ms": 3232,
+      "submit_to_reply_rpc_ms": 3056,
+      "reply_rpc_to_screen_ms": 36
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "n": 2,
+      "load": [
+        6.38,
+        6.76,
+        7.31
+      ],
+      "prompt_ms": 224,
+      "submit_ms": 120,
+      "command_ack_ms": 40,
+      "reply_ms": 3290,
+      "submit_to_reply_rpc_ms": 3124,
+      "reply_rpc_to_screen_ms": 46
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "n": 3,
+      "load": [
+        6.81,
+        6.84,
+        7.33
+      ],
+      "prompt_ms": 186,
+      "submit_ms": 108,
+      "command_ack_ms": 32,
+      "reply_ms": 3224,
+      "submit_to_reply_rpc_ms": 3080,
+      "reply_rpc_to_screen_ms": 36
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "n": 4,
+      "load": [
+        6.99,
+        6.87,
+        7.34
+      ],
+      "prompt_ms": 217,
+      "submit_ms": 120,
+      "command_ack_ms": 41,
+      "reply_ms": 4995,
+      "submit_to_reply_rpc_ms": 4807,
+      "reply_rpc_to_screen_ms": 68
+    },
+    {
+      "route": "normal",
+      "height": 874,
+      "n": 5,
+      "load": [
+        6.99,
+        6.88,
+        7.33
+      ],
+      "prompt_ms": 270,
+      "submit_ms": 144,
+      "command_ack_ms": 60,
+      "reply_ms": 4084,
+      "submit_to_reply_rpc_ms": 3898,
+      "reply_rpc_to_screen_ms": 42
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "n": 1,
+      "load": [
+        6.39,
+        6.83,
+        7.36
+      ],
+      "prompt_ms": 196,
+      "submit_ms": 136,
+      "command_ack_ms": 103,
+      "reply_ms": 3101,
+      "submit_to_reply_rpc_ms": 2898,
+      "reply_rpc_to_screen_ms": 67,
+      "object_to_rpc_ms": 3
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "n": 2,
+      "load": [
+        6.28,
+        6.8,
+        7.34
+      ],
+      "prompt_ms": 180,
+      "submit_ms": 118,
+      "command_ack_ms": 95,
+      "reply_ms": 4204,
+      "submit_to_reply_rpc_ms": 4033,
+      "reply_rpc_to_screen_ms": 53,
+      "object_to_rpc_ms": 3
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "n": 3,
+      "load": [
+        5.93,
+        6.72,
+        7.31
+      ],
+      "prompt_ms": 173,
+      "submit_ms": 119,
+      "command_ack_ms": 110,
+      "reply_ms": 3646,
+      "submit_to_reply_rpc_ms": 3481,
+      "reply_rpc_to_screen_ms": 46,
+      "object_to_rpc_ms": 2
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "n": 4,
+      "load": [
+        5.54,
+        6.63,
+        7.28
+      ],
+      "prompt_ms": 142,
+      "submit_ms": 112,
+      "command_ack_ms": 147,
+      "reply_ms": 3165,
+      "submit_to_reply_rpc_ms": 3011,
+      "reply_rpc_to_screen_ms": 42,
+      "object_to_rpc_ms": 3
+    },
+    {
+      "route": "opt",
+      "height": 681,
+      "n": 5,
+      "load": [
+        5.97,
+        6.7,
+        7.3
+      ],
+      "prompt_ms": 174,
+      "submit_ms": 126,
+      "command_ack_ms": 96,
+      "reply_ms": 3381,
+      "submit_to_reply_rpc_ms": 3156,
+      "reply_rpc_to_screen_ms": 99,
+      "object_to_rpc_ms": 2
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "n": 1,
+      "load": [
+        6.28,
+        6.71,
+        7.27
+      ],
+      "prompt_ms": 300,
+      "submit_ms": 120,
+      "command_ack_ms": 178,
+      "reply_ms": 4489,
+      "submit_to_reply_rpc_ms": 4295,
+      "reply_rpc_to_screen_ms": 74,
+      "object_to_rpc_ms": 2
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "n": 2,
+      "load": [
+        6.0,
+        6.64,
+        7.24
+      ],
+      "prompt_ms": 205,
+      "submit_ms": 152,
+      "command_ack_ms": 96,
+      "reply_ms": 2699,
+      "submit_to_reply_rpc_ms": 2506,
+      "reply_rpc_to_screen_ms": 41,
+      "object_to_rpc_ms": 2
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "n": 3,
+      "load": [
+        5.76,
+        6.58,
+        7.21
+      ],
+      "prompt_ms": 203,
+      "submit_ms": 152,
+      "command_ack_ms": 86,
+      "reply_ms": 3512,
+      "submit_to_reply_rpc_ms": 3303,
+      "reply_rpc_to_screen_ms": 57,
+      "object_to_rpc_ms": 2
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "n": 4,
+      "load": [
+        5.54,
+        6.52,
+        7.19
+      ],
+      "prompt_ms": 203,
+      "submit_ms": 140,
+      "command_ack_ms": 104,
+      "reply_ms": 2597,
+      "submit_to_reply_rpc_ms": 2398,
+      "reply_rpc_to_screen_ms": 59,
+      "object_to_rpc_ms": 3
+    },
+    {
+      "route": "opt",
+      "height": 874,
+      "n": 5,
+      "load": [
+        5.58,
+        6.51,
+        7.18
+      ],
+      "prompt_ms": 194,
+      "submit_ms": 135,
+      "command_ack_ms": 93,
+      "reply_ms": 3279,
+      "submit_to_reply_rpc_ms": 3096,
+      "reply_rpc_to_screen_ms": 48,
+      "object_to_rpc_ms": 3
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "n": 1,
+      "load": [
+        6.77,
+        6.95,
+        7.44
+      ],
+      "prompt_ms": 319,
+      "submit_ms": 137,
+      "command_ack_ms": 98,
+      "reply_ms": 2743,
+      "submit_to_reply_rpc_ms": 2564,
+      "reply_rpc_to_screen_ms": 42
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "n": 2,
+      "load": [
+        5.94,
+        6.77,
+        7.37
+      ],
+      "prompt_ms": 137,
+      "submit_ms": 108,
+      "command_ack_ms": 34,
+      "reply_ms": 2827,
+      "submit_to_reply_rpc_ms": 2671,
+      "reply_rpc_to_screen_ms": 48
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "n": 3,
+      "load": [
+        5.78,
+        6.72,
+        7.35
+      ],
+      "prompt_ms": 199,
+      "submit_ms": 108,
+      "command_ack_ms": 27,
+      "reply_ms": 3125,
+      "submit_to_reply_rpc_ms": 2986,
+      "reply_rpc_to_screen_ms": 31
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "n": 4,
+      "load": [
+        5.96,
+        6.74,
+        7.35
+      ],
+      "prompt_ms": 202,
+      "submit_ms": 110,
+      "command_ack_ms": 40,
+      "reply_ms": 4379,
+      "submit_to_reply_rpc_ms": 4230,
+      "reply_rpc_to_screen_ms": 39
+    },
+    {
+      "route": "normal",
+      "height": 681,
+      "n": 5,
+      "load": [
+        6.87,
+        6.9,
+        7.4
+      ],
+      "prompt_ms": 170,
+      "submit_ms": 138,
+      "command_ack_ms": 35,
+      "reply_ms": 3129,
+      "submit_to_reply_rpc_ms": 2934,
+      "reply_rpc_to_screen_ms": 57
+    }
+  ]
+}

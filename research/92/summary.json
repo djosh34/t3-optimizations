@@ -1,0 +1,722 @@
+{
+  "main": {
+    "normal:safari:cold": {
+      "n": 3,
+      "stats": {
+        "nav-to-list": [
+          5825,
+          6725
+        ],
+        "initial-js-to-session-start": [
+          1232,
+          1239
+        ],
+        "session-wait": [
+          27,
+          34
+        ],
+        "config-subscription-wait": [
+          53,
+          72
+        ],
+        "controls": [
+          2009,
+          2801
+        ],
+        "controls-to-list": [
+          3819,
+          3924
+        ],
+        "shell-fetch": [
+          180,
+          949
+        ],
+        "load": [
+          7.0,
+          7.4
+        ]
+      },
+      "runs": [
+        "12",
+        "13",
+        "14"
+      ],
+      "loads": [
+        "6.44, 5.93, 6.37",
+        "7.02, 6.18, 6.42",
+        "7.42, 6.43, 6.49"
+      ]
+    },
+    "normal:safari:missing": {
+      "n": 5,
+      "stats": {
+        "pointer-screen": [
+          875,
+          1086
+        ],
+        "pointer-click": [
+          50,
+          65
+        ],
+        "actionability-before-pointer": [
+          58,
+          332
+        ],
+        "pointer-fetch": [
+          432,
+          621
+        ],
+        "fetch-return": [
+          25,
+          33
+        ],
+        "fetch-return-screen": [
+          418,
+          437
+        ],
+        "js-resources-after-pointer": [
+          0,
+          0
+        ]
+      },
+      "runs": [
+        "1",
+        "4",
+        "5",
+        "6",
+        "9"
+      ],
+      "loads": [
+        "7.15, 6.07, 6.14",
+        "7.66, 7.23, 6.62",
+        "7.31, 7.28, 6.68",
+        "4.47, 6.05, 6.32",
+        "6.83, 6.84, 7.04"
+      ]
+    },
+    "normal:safari:has": {
+      "n": 5,
+      "stats": {
+        "pointer-screen": [
+          672,
+          2144
+        ],
+        "pointer-click": [
+          62,
+          70
+        ],
+        "actionability-before-pointer": [
+          53,
+          116
+        ],
+        "pointer-fetch": [
+          486,
+          1190
+        ],
+        "fetch-return": [
+          32,
+          49
+        ],
+        "fetch-return-screen": [
+          158,
+          936
+        ],
+        "js-resources-after-pointer": [
+          0,
+          0
+        ]
+      },
+      "runs": [
+        "1",
+        "5",
+        "6",
+        "9",
+        "10"
+      ],
+      "loads": [
+        "7.37, 6.14, 6.16",
+        "7.13, 7.24, 6.67",
+        "4.60, 6.05, 6.32",
+        "6.83, 6.84, 7.04",
+        "5.50, 6.47, 6.90"
+      ]
+    },
+    "normal:home-screen:cold": {
+      "n": 3,
+      "stats": {
+        "nav-to-list": [
+          5470,
+          9390
+        ],
+        "initial-js-to-session-start": [
+          1165,
+          1498
+        ],
+        "session-wait": [
+          33,
+          51
+        ],
+        "config-subscription-wait": [
+          30,
+          85
+        ],
+        "controls": [
+          1900,
+          4872
+        ],
+        "controls-to-list": [
+          3570,
+          4518
+        ],
+        "shell-fetch": [
+          169,
+          2417
+        ],
+        "load": [
+          6.7,
+          7.4
+        ]
+      },
+      "runs": [
+        "12",
+        "13",
+        "17"
+      ],
+      "loads": [
+        "6.74, 6.04, 6.39",
+        "7.37, 6.34, 6.47",
+        "5.01, 5.90, 6.58"
+      ]
+    },
+    "normal:home-screen:missing": {
+      "n": 5,
+      "stats": {
+        "pointer-screen": [
+          930,
+          2124
+        ],
+        "pointer-click": [
+          58,
+          59
+        ],
+        "actionability-before-pointer": [
+          77,
+          938
+        ],
+        "pointer-fetch": [
+          510,
+          1133
+        ],
+        "fetch-return": [
+          37,
+          62
+        ],
+        "fetch-return-screen": [
+          389,
+          934
+        ],
+        "js-resources-after-pointer": [
+          0,
+          0
+        ]
+      },
+      "runs": [
+        "3",
+        "4",
+        "5",
+        "9",
+        "10"
+      ],
+      "loads": [
+        "7.30, 7.13, 6.57",
+        "7.25, 7.22, 6.64",
+        "6.02, 6.97, 6.60",
+        "6.56, 6.77, 7.01",
+        "5.97, 6.53, 6.90"
+      ]
+    },
+    "normal:home-screen:has": {
+      "n": 5,
+      "stats": {
+        "pointer-screen": [
+          618,
+          751
+        ],
+        "pointer-click": [
+          53,
+          55
+        ],
+        "actionability-before-pointer": [
+          53,
+          62
+        ],
+        "pointer-fetch": [
+          429,
+          446
+        ],
+        "fetch-return": [
+          28,
+          72
+        ],
+        "fetch-return-screen": [
+          177,
+          268
+        ],
+        "js-resources-after-pointer": [
+          0,
+          0
+        ]
+      },
+      "runs": [
+        "3",
+        "5",
+        "9",
+        "10",
+        "11"
+      ],
+      "loads": [
+        "7.59, 7.20, 6.60",
+        "6.33, 7.03, 6.62",
+        "6.11, 6.68, 6.98",
+        "5.65, 6.46, 6.88",
+        "6.23, 6.56, 6.89"
+      ]
+    },
+    "opt:safari:cold": {
+      "n": 3,
+      "stats": {
+        "nav-to-list": [
+          10682,
+          11152
+        ],
+        "initial-js-to-session-start": [
+          1497,
+          1770
+        ],
+        "session-wait": [
+          1747,
+          1816
+        ],
+        "config-subscription-wait": [
+          3804,
+          3813
+        ],
+        "controls": [
+          6679,
+          7079
+        ],
+        "controls-to-list": [
+          4003,
+          4073
+        ],
+        "shell-fetch": [
+          11,
+          16
+        ],
+        "load": [
+          7.0,
+          7.2
+        ]
+      },
+      "runs": [
+        "12",
+        "13",
+        "14"
+      ],
+      "loads": [
+        "6.89, 6.04, 6.40",
+        "7.04, 6.22, 6.43",
+        "7.16, 6.42, 6.48"
+      ]
+    },
+    "opt:safari:missing": {
+      "n": 5,
+      "stats": {
+        "pointer-screen": [
+          1174,
+          1734
+        ],
+        "pointer-click": [
+          70,
+          92
+        ],
+        "actionability-before-pointer": [
+          399,
+          924
+        ],
+        "pointer-fetch": [
+          750,
+          1392
+        ],
+        "fetch-return": [
+          107,
+          313
+        ],
+        "fetch-return-screen": [
+          337,
+          363
+        ],
+        "js-resources-after-pointer": [
+          0,
+          0
+        ]
+      },
+      "runs": [
+        "5",
+        "9",
+        "10",
+        "11",
+        "12"
+      ],
+      "loads": [
+        "6.79, 7.16, 6.66",
+        "6.80, 6.83, 7.04",
+        "6.45, 6.64, 6.95",
+        "7.23, 6.75, 6.96",
+        "6.28, 5.94, 6.36"
+      ]
+    },
+    "opt:safari:has": {
+      "n": 5,
+      "stats": {
+        "pointer-screen": [
+          723,
+          943
+        ],
+        "pointer-click": [
+          65,
+          143
+        ],
+        "actionability-before-pointer": [
+          47,
+          59
+        ],
+        "pointer-fetch": [
+          492,
+          730
+        ],
+        "fetch-return": [
+          4,
+          6
+        ],
+        "fetch-return-screen": [
+          211,
+          313
+        ],
+        "js-resources-after-pointer": [
+          0,
+          0
+        ]
+      },
+      "runs": [
+        "1",
+        "4",
+        "5",
+        "9",
+        "11"
+      ],
+      "loads": [
+        "7.98, 6.37, 6.23",
+        "7.53, 7.27, 6.65",
+        "6.56, 7.11, 6.64",
+        "6.81, 6.83, 7.04",
+        "7.13, 6.74, 6.95"
+      ]
+    },
+    "opt:home-screen:cold": {
+      "n": 3,
+      "stats": {
+        "nav-to-list": [
+          10133,
+          10325
+        ],
+        "initial-js-to-session-start": [
+          1449,
+          1669
+        ],
+        "session-wait": [
+          1740,
+          1773
+        ],
+        "config-subscription-wait": [
+          3790,
+          3793
+        ],
+        "controls": [
+          6609,
+          6937
+        ],
+        "controls-to-list": [
+          3524,
+          3729
+        ],
+        "shell-fetch": [
+          10,
+          15
+        ],
+        "load": [
+          6.5,
+          6.9
+        ]
+      },
+      "runs": [
+        "12",
+        "13",
+        "17"
+      ],
+      "loads": [
+        "6.86, 6.10, 6.40",
+        "6.46, 6.19, 6.42",
+        "6.06, 6.09, 6.63"
+      ]
+    },
+    "opt:home-screen:missing": {
+      "n": 5,
+      "stats": {
+        "pointer-screen": [
+          942,
+          1800
+        ],
+        "pointer-click": [
+          61,
+          70
+        ],
+        "actionability-before-pointer": [
+          556,
+          789
+        ],
+        "pointer-fetch": [
+          587,
+          1407
+        ],
+        "fetch-return": [
+          56,
+          90
+        ],
+        "fetch-return-screen": [
+          339,
+          366
+        ],
+        "js-resources-after-pointer": [
+          0,
+          0
+        ]
+      },
+      "runs": [
+        "3",
+        "4",
+        "5",
+        "9",
+        "10"
+      ],
+      "loads": [
+        "7.12, 7.11, 6.57",
+        "7.52, 7.31, 6.68",
+        "5.93, 6.91, 6.59",
+        "5.47, 6.52, 6.93",
+        "6.28, 6.56, 6.90"
+      ]
+    },
+    "opt:home-screen:has": {
+      "n": 5,
+      "stats": {
+        "pointer-screen": [
+          812,
+          949
+        ],
+        "pointer-click": [
+          77,
+          95
+        ],
+        "actionability-before-pointer": [
+          57,
+          86
+        ],
+        "js-resources-after-pointer": [
+          0,
+          0
+        ],
+        "pointer-fetch": [
+          568.0,
+          673
+        ],
+        "fetch-return": [
+          5.0,
+          8
+        ],
+        "fetch-return-screen": [
+          253.0,
+          271
+        ]
+      },
+      "runs": [
+        "3",
+        "4",
+        "5",
+        "9",
+        "10"
+      ],
+      "loads": [
+        "7.19, 7.12, 6.58",
+        "7.56, 7.32, 6.69",
+        "7.30, 7.18, 6.68",
+        "5.43, 6.50, 6.92",
+        "6.34, 6.57, 6.90"
+      ]
+    }
+  },
+  "plan1": {
+    "normal:home-screen": {
+      "n": 5,
+      "stats": {
+        "enter-prompt-shown": [
+          224,
+          286
+        ],
+        "enter-command-submit": [
+          120,
+          144
+        ],
+        "submit-command-ack": [
+          40,
+          60
+        ],
+        "enter-first-reply-screen": [
+          3290,
+          4995
+        ],
+        "submit-first-reply-rpc": [
+          3124,
+          4807
+        ],
+        "first-reply-rpc-screen": [
+          42,
+          68
+        ]
+      },
+      "loads": [
+        "6.67, 6.83, 7.33",
+        "6.38, 6.76, 7.31",
+        "6.81, 6.84, 7.33",
+        "6.99, 6.87, 7.34",
+        "6.99, 6.88, 7.33"
+      ]
+    },
+    "opt:safari": {
+      "n": 5,
+      "stats": {
+        "enter-prompt-shown": [
+          174,
+          196
+        ],
+        "enter-command-submit": [
+          119,
+          136
+        ],
+        "submit-command-ack": [
+          103,
+          147
+        ],
+        "enter-first-reply-screen": [
+          3381,
+          4204
+        ],
+        "submit-first-reply-rpc": [
+          3156,
+          4033
+        ],
+        "first-reply-rpc-screen": [
+          53,
+          99
+        ],
+        "object-rpc": [
+          3,
+          3
+        ]
+      },
+      "loads": [
+        "6.39, 6.83, 7.36",
+        "6.28, 6.80, 7.34",
+        "5.93, 6.72, 7.31",
+        "5.54, 6.63, 7.28",
+        "5.97, 6.70, 7.30"
+      ]
+    },
+    "opt:home-screen": {
+      "n": 5,
+      "stats": {
+        "enter-prompt-shown": [
+          203,
+          300
+        ],
+        "enter-command-submit": [
+          140,
+          152
+        ],
+        "submit-command-ack": [
+          96,
+          178
+        ],
+        "enter-first-reply-screen": [
+          3279,
+          4489
+        ],
+        "submit-first-reply-rpc": [
+          3096,
+          4295
+        ],
+        "first-reply-rpc-screen": [
+          57,
+          74
+        ],
+        "object-rpc": [
+          2,
+          3
+        ]
+      },
+      "loads": [
+        "6.28, 6.71, 7.27",
+        "6.00, 6.64, 7.24",
+        "5.76, 6.58, 7.21",
+        "5.54, 6.52, 7.19",
+        "5.58, 6.51, 7.18"
+      ]
+    },
+    "normal:safari": {
+      "n": 5,
+      "stats": {
+        "enter-prompt-shown": [
+          199,
+          319
+        ],
+        "enter-command-submit": [
+          110,
+          138
+        ],
+        "submit-command-ack": [
+          35,
+          98
+        ],
+        "enter-first-reply-screen": [
+          3125,
+          4379
+        ],
+        "submit-first-reply-rpc": [
+          2934,
+          4230
+        ],
+        "first-reply-rpc-screen": [
+          42,
+          57
+        ]
+      },
+      "loads": [
+        "6.77, 6.95, 7.44",
+        "5.94, 6.77, 7.37",
+        "5.78, 6.72, 7.35",
+        "5.96, 6.74, 7.35",
+        "6.87, 6.90, 7.40"
+      ]
+    }
+  }
+}
