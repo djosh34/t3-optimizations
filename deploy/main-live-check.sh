@@ -52,8 +52,13 @@ rss_mb() {
   pids="$(paste -sd, "$(cgroup "$1")/cgroup.procs")"
   if [ -n "$pids" ]; then ps -o rss= -p "$pids" | awk '{s += $1} END {print int(s / 1024)}'; else echo 0; fi
 }
-oom_kills() {
-  awk '$1 == "oom_kill" {print $2}' "$(cgroup "$1")/memory.events"
+# Usage: counters <unit>: its OOM kills (of its current cgroup), restarts
+# and main process. Any change during the check fails it: a restart also
+# makes a new cgroup, whose OOM count starts at 0 again.
+counters() {
+  echo "OOM kills $(awk '$1 == "oom_kill" {print $2}' "$(cgroup "$1")/memory.events")," \
+    "restarts $(systemctl --user show -p NRestarts --value "$1")," \
+    "main process $(systemctl --user show -p MainPID --value "$1")"
 }
 
 docker image inspect "$image" >/dev/null 2>&1 || docker build -t "$image" "$here/../lab/driver"
@@ -62,8 +67,7 @@ mkdir -p "$out"
 
 side=t3opt-sidecar-main.service
 main=t3code.service
-restarts="$(systemctl --user show -p NRestarts --value "$side")"
-ooms="$(oom_kills "$side") $(oom_kills "$main")"
+before="$(counters "$side"); $(counters "$main")"
 
 echo "time,sidecar_rss_mb,sidecar_cgroup_mb,t3code_rss_mb" >"$out/memory.csv"
 (
@@ -119,10 +123,13 @@ awk -F, 'NR > 1 {
   } END {
     printf "memory, %d samples: sidecar max %d MB RSS, %d MB cgroup; t3code max %d MB RSS\n", n, max[2], max[3], max[4]
   }' "$out/memory.csv"
-read -r side_ooms main_ooms <<<"$ooms"
-side_ooms=$(($(oom_kills "$side") - side_ooms))
-main_ooms=$(($(oom_kills "$main") - main_ooms))
-restarts=$(($(systemctl --user show -p NRestarts --value "$side") - restarts))
-echo "sidecar: $side_ooms OOM kills, $restarts restarts; t3code: $main_ooms OOM kills"
-[ $((side_ooms + main_ooms + restarts)) = 0 ] || status=1
+after="$(counters "$side"); $(counters "$main")"
+if [ "$after" = "$before" ]; then
+  echo "sidecar and t3code: no OOM kill, no restart"
+else
+  # Process ids, not thread ids; this host's own.
+  echo "an OOM kill or a restart; before (sidecar; t3code): $before"
+  echo "after: $after"
+  status=1
+fi
 exit "$status"
