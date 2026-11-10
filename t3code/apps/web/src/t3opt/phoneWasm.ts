@@ -66,6 +66,7 @@ interface Exports {
   phone_object(id: bigint): number;
   phone_object_ids(): number;
   phone_stats(): number;
+  phone_hash_id(ptr: number, len: number): number;
 }
 
 class Reader {
@@ -244,6 +245,13 @@ export class PhoneWasm {
     const bytes = this.check(this.x.phone_object_ids());
     const r = new Reader(bytes);
     return Array.from({ length: bytes.length / 8 }, () => r.u64());
+  }
+
+  /** An id as the sidecar writes it in meta (sync_core::hash_id). */
+  hashId(id: string): string {
+    const bytes = new TextEncoder().encode(id);
+    const out = this.check(this.withInput(bytes, (ptr, len) => this.x.phone_hash_id(ptr, len)));
+    return new TextDecoder().decode(out);
   }
 
   stats(): PhoneStats {

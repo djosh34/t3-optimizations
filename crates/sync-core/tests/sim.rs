@@ -58,6 +58,28 @@ fn case50_newest_text_never_more_than_5_s_behind() {
 }
 
 #[test]
+fn a_large_clean_resync_probes_past_its_own_delivery_average() {
+    let link = LinkSpec {
+        delay_ms: 20,
+        ..LinkSpec::clean()
+    };
+    let s = Scenario {
+        warmup_ms: 0,
+        down: link.clone(),
+        up: link,
+        backfill_bytes: 2_000_000,
+        backfill_lead_ms: 0,
+        prompts_at: vec![0],
+        reply_len: 1,
+        duration_ms: 30_000,
+        ..Scenario::case70(1).in_webkit()
+    };
+    let o = simulate("clean-bulk", &s);
+    assert!(o.synced_ms.is_some_and(|t| t < 10_000), "{:?}", o.synced_ms);
+    assert!(o.phone_matches);
+}
+
+#[test]
 fn a_prompt_is_acked_while_a_reply_floods_the_link() {
     // A reply at 2000 characters/s on 10 kbit/s with 70% loss: the text
     // alone fills the link. A second prompt is typed in the middle of it.

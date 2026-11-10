@@ -1,19 +1,33 @@
+// @effect-diagnostics nodeBuiltinImport:off -- The test stands in for the WASM build's sync_core::hash_id with node's SHA-256.
+import * as NodeCrypto from "node:crypto";
+
 import { describe, expect, it } from "vite-plus/test";
 
 import { Objects } from "./objects";
-import { imageComing, shellSnapshot, threadSnapshot } from "./snapshots";
+import { imageBlob, imageComing, shellSnapshot, threadSnapshot } from "./snapshots";
 
 const encoder = new TextEncoder();
 
-/** Puts an object as the sync engine would: meta, and the byte ranges the phone has. */
+/** sync_core::hash_id, which the page gets from the WASM build: the first 64 bits of SHA-256. */
+const hashId = (id: string) =>
+  NodeCrypto.createHash("sha256").update(id).digest("hex").slice(0, 16);
+
+const newObjects = () => new Objects(hashId);
+
+/**
+ * Puts an object as the sync engine would: meta with its ids hashed, as the
+ * sidecar writes it, and the byte ranges the phone has.
+ */
 function put(
   objects: Objects,
   id: number,
-  meta: object,
+  plainMeta: Record<string, string>,
   content: string | object,
   ranges?: Array<[number, number]>,
   rev = 1n,
 ) {
+  const meta = { ...plainMeta };
+  for (const k of ["t", "i", "m"]) if (meta[k] !== undefined) meta[k] = hashId(meta[k]);
   const data = encoder.encode(typeof content === "string" ? content : JSON.stringify(content));
   const have = ranges ?? [[0, data.length]];
   const kept = new Uint8Array(data.length);
@@ -41,16 +55,47 @@ function item(id: string, type: string, ordinal: number, messageId: string) {
   return { id, type, ordinal, messageId, runId: "r1", nodeId: null, text: "", streaming: true };
 }
 
+describe("hashed ids in meta", () => {
+  it("are sync-core's: the same value as crates/sync-core/src/hash.rs", () => {
+    expect(newObjects().hash("t1")).toBe("628b49d96dcde97a");
+  });
+
+  it("find a thread, its texts and images only by the hash", () => {
+    const objects = newObjects();
+    const raw = (id: number, meta: object, content: string) => {
+      const data = encoder.encode(content);
+      objects.set(BigInt(id), {
+        meta: encoder.encode(JSON.stringify(meta)),
+        rev: 1n,
+        len: data.length,
+        ranges: [[0, data.length]],
+        data,
+      });
+    };
+    // Meta with plain ids, as before hashing: nothing matches.
+    raw(1, { t: "t1", c: "thread", i: "thread" }, JSON.stringify({ id: "t1" }));
+    raw(2, { c: "image", i: "img1", y: "image/png" }, "png");
+    expect(threadSnapshot(objects, "t1")).toBeNull();
+    expect(imageBlob(objects, "img1")).toBeNull();
+    // A long id (twice the longest in the main history) is 16 hex digits.
+    const long = "thread:delegated-task:" + "%25".repeat(470);
+    raw(3, { t: hashId(long), c: "thread", i: hashId("thread") }, JSON.stringify({ id: long }));
+    raw(4, { c: "image", i: hashId("img1"), y: "image/png" }, "png");
+    expect(threadSnapshot(objects, long)?.projection.thread).toEqual({ id: long });
+    expect(imageBlob(objects, "img1")?.size).toBe(3);
+  });
+});
+
 describe("threadSnapshot", () => {
   it("is null until the thread body is here", () => {
-    const objects = new Objects();
+    const objects = newObjects();
     expect(threadSnapshot(objects, "t1")).toBeNull();
     thread(objects);
     expect(threadSnapshot(objects, "t1")?.projection.visibleTurnItems).toEqual([]);
   });
 
   it("fills an assistant text in as it arrives, newest bytes first", () => {
-    const objects = new Objects();
+    const objects = newObjects();
     thread(objects);
     put(objects, 3, { t: "t1", c: "turnItems", i: "a" }, item("a", "assistant_message", 2, "m-a"));
     put(objects, 4, { t: "t1", m: "m-a", k: "assistant" }, "Hello, world. Bye.", [[14, 18]]);
@@ -61,7 +106,7 @@ describe("threadSnapshot", () => {
   });
 
   it("shows a newest text whose turn item has not arrived, in a stand-in", () => {
-    const objects = new Objects();
+    const objects = newObjects();
     thread(objects);
     put(objects, 3, { t: "t1", c: "turnItems", i: "a" }, item("a", "assistant_message", 2, "m-a"));
     put(objects, 4, { t: "t1", m: "m-a", k: "assistant" }, "Older reply.");
@@ -72,7 +117,8 @@ describe("threadSnapshot", () => {
     }>;
     expect(rows.map((r) => [r.sourceItemId, r.item.text, r.item.streaming])).toEqual([
       ["a", "Older reply.", true],
-      ["turn-item:message:m-b", "…text", true],
+      // The text's meta has only the hash of its message id.
+      [`turn-item:message:${hashId("m-b")}`, "…text", true],
     ]);
     // The real item takes its place.
     put(
@@ -92,7 +138,7 @@ describe("threadSnapshot", () => {
   });
 
   it("holds a user message back until its text is complete", () => {
-    const objects = new Objects();
+    const objects = newObjects();
     thread(objects);
     put(objects, 3, { t: "t1", c: "turnItems", i: "u" }, item("u", "user_message", 1, "m-u"));
     put(objects, 4, { t: "t1", c: "messages", i: "m-u" }, { id: "m-u", role: "user", text: "" });
@@ -109,7 +155,7 @@ describe("threadSnapshot", () => {
   });
 
   it("streams a growing text, not its shorter complete self", () => {
-    const objects = new Objects();
+    const objects = newObjects();
     thread(objects);
     put(objects, 3, { t: "t1", c: "turnItems", i: "a" }, item("a", "assistant_message", 1, "m-a"));
     put(objects, 4, { t: "t1", m: "m-a", k: "assistant" }, "Hello");
@@ -140,7 +186,7 @@ describe("threadSnapshot", () => {
   });
 
   it("orders rows by ordinal and keeps the frame's inherited rows first", () => {
-    const objects = new Objects();
+    const objects = newObjects();
     thread(objects);
     put(objects, 3, { t: "t1", c: "turnItems", i: "b" }, item("b", "assistant_message", 5, "m-b"));
     put(objects, 4, { t: "t1", c: "turnItems", i: "a" }, item("a", "assistant_message", 2, "m-a"));
@@ -172,7 +218,7 @@ describe("threadSnapshot", () => {
 
 describe("shellSnapshot", () => {
   it("leaves out a missing olderSettled and splits active from archived threads", () => {
-    const objects = new Objects();
+    const objects = newObjects();
     expect(shellSnapshot(objects)).toBeNull();
     put(objects, 1, { c: "shell" }, { schemaVersion: 2, snapshotSequence: 3, olderSettled: null });
     put(objects, 2, { c: "thread", i: "t1", l: "active" }, { id: "t1" });
@@ -189,7 +235,7 @@ describe("shellSnapshot", () => {
   });
 
   it("keeps a thread's row while its new revision arrives", () => {
-    const objects = new Objects();
+    const objects = newObjects();
     put(objects, 1, { c: "shell" }, { schemaVersion: 2, snapshotSequence: 3 });
     put(objects, 2, { c: "thread", i: "t1", l: "active" }, { id: "t1", visitedAt: "a" });
     const next = { id: "t1", visitedAt: "b" };
@@ -202,7 +248,7 @@ describe("shellSnapshot", () => {
 
 describe("imageComing", () => {
   it("is true for an image a turn item refers to, before any of its bytes", () => {
-    const objects = new Objects();
+    const objects = newObjects();
     thread(objects);
     expect(imageComing(objects, "img1")).toBe(false);
     put(

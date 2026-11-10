@@ -1188,6 +1188,7 @@ name = "sync-core"
 version = "0.1.0"
 dependencies = [
  "brotli",
+ "sha2",
 ]
 
 [[package]]

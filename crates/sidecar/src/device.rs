@@ -1,13 +1,13 @@
 //! A paired phone: its token, its sync state and its connections.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 
 use pipe::PeerId;
 use sync_core::{Class, Config, Millis, Server};
 
 use crate::app::log;
 use crate::store::DeviceRecord;
-use crate::world::{Kind, Obj, World};
+use crate::world::{Kind, Obj, World, frame_id};
 
 /// A connection to a phone.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -30,6 +30,9 @@ pub struct Device {
     pub peers: BTreeMap<u64, (PeerId, u64)>,
     /// The sync state changed since it was saved.
     pub dirty: bool,
+    /// Threads an eviction left unfinished on the phone, until it gets
+    /// them again.
+    unfinished: HashSet<String>,
 }
 
 impl Device {
@@ -42,6 +45,7 @@ impl Device {
             link: None,
             peers: BTreeMap::new(),
             dirty: true,
+            unfinished: HashSet::new(),
         }
     }
 
@@ -49,9 +53,68 @@ impl Device {
         Server::new(token, Config::server(), now)
     }
 
+    pub fn connected(&self) -> bool {
+        self.link.is_some()
+    }
+
+    /// Whether the phone gets a thread's changes: it has the thread open,
+    /// or has it from before (its frame).
+    pub fn wants(&self, thread: &str) -> bool {
+        self.focus.as_deref() == Some(thread) || self.server.has(frame_id(thread))
+    }
+
+    /// Whether the phone has the thread or gets it now: its frame is stored
+    /// or on its way. A copy an eviction left unfinished does not count.
+    pub fn has_thread(&self, thread: &str) -> bool {
+        let frame = frame_id(thread);
+        !self.unfinished.contains(thread)
+            && (self.server.stored(frame) || self.server.sending(frame))
+    }
+
+    fn wants_object(&self, world: &World, id: u64, obj: &Obj) -> bool {
+        match obj.kind {
+            Kind::Config | Kind::Shell => true,
+            Kind::Image => world.image_threads(id).any(|t| self.wants(t)),
+            Kind::Body | Kind::Text | Kind::Frame => {
+                obj.thread.as_deref().is_some_and(|t| self.wants(t))
+            }
+        }
+    }
+
+    /// Puts what changed in the world into this phone's sync state: the
+    /// thread list and config, and the threads it wants.
+    pub fn sync(&mut self, world: &World, ids: impl IntoIterator<Item = u64>) {
+        let ids: Vec<u64> = ids
+            .into_iter()
+            .filter(|&id| {
+                world
+                    .get(id)
+                    .is_some_and(|o| self.wants_object(world, id, o))
+            })
+            .collect();
+        self.set(world, ids);
+    }
+
+    /// Gives the phone a thread it did not want before.
+    pub fn give(&mut self, world: &World, thread: &str) {
+        self.unfinished.remove(thread);
+        self.set(world, world.thread_ids(thread).collect::<Vec<_>>());
+    }
+
+    /// The world evicted a thread's objects: what the phone has not stored
+    /// of them waits until they come back.
+    pub fn release(&mut self, thread: &str, ids: &[u64]) {
+        if ids.iter().any(|&id| self.server.sending(id)) {
+            self.unfinished.insert(thread.to_owned());
+        }
+        for &id in ids {
+            self.server.release(id);
+        }
+    }
+
     /// Puts objects of the world into this phone's sync state, in the
     /// class they have for this phone.
-    pub fn sync(&mut self, world: &World, ids: impl IntoIterator<Item = u64>) {
+    fn set(&mut self, world: &World, ids: Vec<u64>) {
         for id in ids {
             let Some(obj) = world.get(id) else { continue };
             let class = class_of(world, id, obj, self.focus.as_deref());
@@ -85,6 +148,9 @@ impl Device {
         if self.focus == thread {
             return;
         }
+        if let Some(t) = &thread {
+            self.unfinished.remove(t);
+        }
         let old = std::mem::replace(&mut self.focus, thread);
         self.record.focus = self.focus.clone();
         let mut ids: Vec<u64> = Vec::new();
@@ -94,7 +160,7 @@ impl Device {
         {
             ids.extend(world.thread_ids(t));
         }
-        self.sync(world, ids);
+        self.set(world, ids);
     }
 }
 

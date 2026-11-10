@@ -62,6 +62,11 @@ const PROBE_INCREASE: f64 = 1.25;
 /// A sender that had nothing waiting for this long starts again from the
 /// initial rate: what it knew about the link may be stale.
 const IDLE_RESTART: Millis = 2_000;
+/// On a path that was clean and short before the idle spell, it starts
+/// again from at most this instead: from 2 kB/s, a 7 kB thread a phone
+/// opened after a quiet spell took 1.5 s on a local link (issue #84). A path
+/// that got worse meanwhile shows in the RTT or a silence within a second.
+const CLEAN_RESTART: f64 = 256_000.0;
 /// Sending with no packet from the other side for as long as this many of
 /// its packets usually take to arrive, and at least this many smoothed RTTs
 /// and `SILENCE_MIN`, halves the rate at each decision. By chance such a
@@ -242,6 +247,13 @@ impl RateControl {
         self.tokens >= 0.0
     }
 
+    /// Loss under 10% and RTT under 200 ms, the lowest and the last.
+    fn clean_short_path(&self) -> bool {
+        self.loss < 0.1
+            && self.min_rtt().is_some_and(|r| r < 200.0)
+            && self.last_rtt.is_some_and(|r| r < 200.0)
+    }
+
     /// Notes that the sender has nothing to send.
     pub fn note_idle(&mut self, now: Millis) {
         self.idle_since.get_or_insert(now);
@@ -254,7 +266,12 @@ impl RateControl {
     /// reset every few seconds and the phone never measured the loss).
     pub fn note_limited(&mut self, now: Millis) {
         if self.idle_since.is_some_and(|t| now >= t + IDLE_RESTART) {
-            self.rate = self.rate.min(self.cfg.initial.max(self.cfg.floor));
+            let restart = if self.clean_short_path() {
+                CLEAN_RESTART
+            } else {
+                self.cfg.initial
+            };
+            self.rate = self.rate.min(restart.max(self.cfg.floor));
             self.slow_start = true;
             self.changed_at = now;
             // The delivery rate measured before the idle spell may be stale
@@ -407,6 +424,13 @@ impl RateControl {
     /// replies never got through). Lowering is safe in both cases; slow
     /// start raises it again within a few round trips of the first sample.
     pub fn decide(&mut self, now: Millis) {
+        self.decide_for_backlog(now, false);
+    }
+
+    /// Large full resyncs may probe past the lagging delivery average on a
+    /// clean short path. Small transfers keep their original warmup and
+    /// idle state: accelerating those regressed case 50 (issue #45).
+    pub fn decide_for_backlog(&mut self, now: Millis, bulk: bool) {
         if now < self.next_decision {
             return;
         }
@@ -418,10 +442,10 @@ impl RateControl {
             (Some(f), Some(b)) => f > FAR_ABOVE_FACTOR * b + FAR_ABOVE_MARGIN_MS,
             _ => false,
         };
-        // In slow start one sample decides: it only grows the rate, never
-        // above twice what the link was seen to take, and the rate must
-        // climb back fast after a path change (issue #46: 30 s at a fifth of
-        // case 50's capacity).
+        // In slow start one sample decides, with the usual capacity ceiling
+        // except for a large clean resync below. The rate must climb back
+        // fast after a path change (issue #46: 30 s at a fifth of case 50's
+        // capacity).
         let needed = if self.slow_start { 1 } else { DECISION_SAMPLES };
         if self.fresh_count < needed && !far_above {
             let silence = self.silence();
@@ -517,10 +541,16 @@ impl RateControl {
                 } else {
                     PROBE_INCREASE
                 };
-                // Never more than `up` above what the link was seen to take;
-                // a capacity below the rate (more loss) keeps the rate.
                 let mut rate = self.rate * up;
-                if let Some(c) = self.capacity() {
+                // On a clean, short path the delivery average trails our
+                // own paced rate: using it as a ceiling makes slow start
+                // grow by only about 15% a second. Keep the normal 300 ms
+                // decisions and 1.5x steps; only lift this lagging ceiling.
+                let clean_start =
+                    bulk && self.slow_start && self.delivered > 0.0 && self.clean_short_path();
+                if !clean_start && let Some(c) = self.capacity() {
+                    // Normally at most `up` above the measured capacity;
+                    // a capacity below the rate (more loss) keeps the rate.
                     rate = rate.min((c * up).max(self.rate));
                 }
                 self.rate = rate.min(self.cfg.ceiling);
@@ -711,6 +741,60 @@ mod tests {
         rc.note_limited(t);
         rc.decide(t);
         assert!(rc.rate() < before, "rate {} stayed at {before}", rc.rate());
+    }
+
+    #[test]
+    fn only_a_large_clean_short_path_lifts_the_delivery_ceiling() {
+        let run = |bulk, rtt, received: u64| {
+            let mut rc = RateControl::new(RateConfig::default(), 0);
+            for i in 0..12 {
+                let now = i * 1_000;
+                rc.on_heard(now);
+                rc.on_report(Report {
+                    time_ms: now,
+                    bytes: i * received * 100,
+                    packets: i * received,
+                    max_seq: i * 10,
+                });
+                rc.on_rtt(now, rtt, now);
+                rc.note_limited(now);
+                rc.decide_for_backlog(now, bulk);
+            }
+            rc.rate()
+        };
+        assert!(run(true, 40.0, 10) > 10.0 * run(false, 40.0, 10));
+        // Neither a long path nor measured loss gets the exception.
+        assert_eq!(run(true, 600.0, 10), run(false, 600.0, 10));
+        assert_eq!(run(true, 40.0, 8), run(false, 40.0, 8));
+    }
+
+    #[test]
+    fn after_an_idle_spell_only_a_clean_short_path_keeps_a_high_rate() {
+        let run = |rtt, received: u64| {
+            let mut rc = RateControl::new(RateConfig::default(), 0);
+            for i in 0..12 {
+                let now = i * 1_000;
+                rc.on_heard(now);
+                rc.on_report(Report {
+                    time_ms: now,
+                    bytes: i * received * 100,
+                    packets: i * received,
+                    max_seq: i * 10,
+                });
+                rc.on_rtt(now, rtt, now);
+                rc.note_limited(now);
+                rc.decide_for_backlog(now, true);
+            }
+            rc.note_idle(12_000);
+            rc.note_limited(15_000);
+            rc.rate()
+        };
+        // Clean and short: from 256 kB/s, not 2 kB/s.
+        let clean = run(40.0, 10);
+        assert!(clean > 2_000.0 && clean <= CLEAN_RESTART, "{clean}");
+        // A long path or measured loss starts from the initial rate.
+        assert_eq!(run(600.0, 10), RateConfig::default().initial);
+        assert_eq!(run(40.0, 8), RateConfig::default().initial);
     }
 
     #[test]

@@ -3,11 +3,12 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
+use std::sync::Arc;
 
 use crate::Millis;
 use crate::endpoint::{Config, Endpoint, Stats, decode};
 use crate::inbox::InObject;
-use crate::outbox::{Busy, Class, OutObject};
+use crate::outbox::{Busy, Class, OutObject, Saved};
 use crate::phone::EntryKind;
 use crate::store;
 use crate::wire::{DecodeError, Hello, Key, MAX_ID, Packet, Reader, put_varint};
@@ -28,6 +29,10 @@ pub enum Incoming {
         background: bool,
     },
 }
+
+/// The version of [`Server::save`]'s format; 2 saves objects without
+/// their bytes.
+const VERSION: u8 = 2;
 
 /// The most meta bytes an object can have: with the chunk header and the
 /// largest packet header, a chunk with its meta still fits a packet.
@@ -106,13 +111,17 @@ impl Server {
     /// Sets an object to sync. See [`Class`] for the order things go out in.
     /// `meta` is what the phone needs to show the object on its own (thread
     /// and message ids); it goes with the object's first chunks.
+    ///
+    /// The server keeps the bytes, shared with the caller, only until the
+    /// phone stored them; then it keeps their length and hash, and a set with
+    /// the same bytes changes nothing.
     pub fn set(
         &mut self,
         id: u64,
         class: Class,
         order: u64,
         meta: Vec<u8>,
-        content: Vec<u8>,
+        content: impl Into<Arc<[u8]>>,
     ) -> Result<(), Error> {
         if id > MAX_ID {
             return Err(Error::IdTooLarge(id));
@@ -131,13 +140,20 @@ impl Server {
         let Some(o) = self.ep.out.get(Key::Object(id)) else {
             return;
         };
-        if o.content.is_empty() {
+        if o.len() == 0 {
             return;
         }
         let (class, order, meta) = (o.class, o.order, o.meta.clone());
         self.ep
             .out
             .set(Key::Object(id), class, order, meta, Vec::new());
+    }
+
+    /// Lets go of an object's bytes before the phone stored them all: it
+    /// waits, unsent, until [`Server::set`] gives them again. Its revision
+    /// and what the phone stored of it stay.
+    pub fn release(&mut self, id: u64) {
+        self.ep.out.release(Key::Object(id));
     }
 
     /// The result of a command or call, for the phone.
@@ -172,8 +188,10 @@ impl Server {
         // comes again when the phone reconnects.
         self.ep.inbox.commit(batch);
         for key in acked.done {
-            if let Key::Reply(_) = key {
-                self.ep.out.remove(key);
+            match key {
+                Key::Reply(_) => self.ep.out.remove(key),
+                Key::Object(_) => self.ep.out.release(key),
+                Key::Entry(_) => {}
             }
         }
         if let Some(low) = p.log_low {
@@ -295,7 +313,7 @@ impl Server {
             .out
             .objects()
             .filter_map(|(k, o)| match k {
-                Key::Object(id) if !o.content.is_empty() => Some(*id),
+                Key::Object(id) if o.len() > 0 => Some(*id),
                 _ => None,
             })
             .collect()
@@ -304,6 +322,32 @@ impl Server {
     /// Whether an object with this id was set.
     pub fn has(&self, id: u64) -> bool {
         self.ep.out.get(Key::Object(id)).is_some()
+    }
+
+    /// Whether this object has bytes waiting to go to the phone.
+    pub fn sending(&self, id: u64) -> bool {
+        self.ep
+            .out
+            .get(Key::Object(id))
+            .is_some_and(|o| o.content.is_some() && !o.done())
+    }
+
+    /// Whether the phone stored this object's current revision whole.
+    pub fn stored(&self, id: u64) -> bool {
+        self.ep.out.get(Key::Object(id)).is_some_and(|o| o.done())
+    }
+
+    /// The objects set, with their meta, also deleted ones.
+    pub fn metas(&self) -> impl Iterator<Item = (u64, &[u8])> {
+        self.ep.out.objects().filter_map(|(k, o)| match k {
+            Key::Object(id) => Some((*id, o.meta.as_slice())),
+            _ => None,
+        })
+    }
+
+    /// Bytes that wait to go to the phone; cheaper than [`Server::stats`].
+    pub fn unsynced_bytes(&self) -> u64 {
+        self.ep.out.unsynced_bytes()
     }
 
     /// Whether the phone has stored everything.
@@ -327,8 +371,12 @@ impl Server {
     /// sends them again, which it does on every new connection. A command can
     /// so reach t3 twice across a sidecar crash; t3 keeps a receipt per
     /// `commandId` and applies it once.
+    ///
+    /// Objects are saved without their bytes: their length and hash. A
+    /// restarted sidecar sets them again from the t3 server; what the phone
+    /// has not stored of one waits until then.
     pub fn save(&self) -> Vec<u8> {
-        let mut out = vec![store::VERSION];
+        let mut out = vec![VERSION];
         out.extend_from_slice(&self.token);
         match self.epoch {
             Some(e) => {
@@ -356,7 +404,18 @@ impl Server {
             put_varint(&mut out, o.order);
             store::put_bytes(&mut out, &o.meta);
             put_varint(&mut out, o.rev);
-            store::put_bytes(&mut out, &o.content);
+            match key {
+                // A reply has no other source than this.
+                Key::Reply(_) => {
+                    out.push(1);
+                    store::put_bytes(&mut out, o.bytes());
+                }
+                _ => {
+                    out.push(0);
+                    put_varint(&mut out, o.len());
+                    out.extend_from_slice(&o.hash.to_be_bytes());
+                }
+            }
             store::put_ranges(&mut out, &o.acked);
             out.push(u8::from(o.rev_acked));
             put_varint(&mut out, o.keep);
@@ -366,7 +425,11 @@ impl Server {
 
     pub fn load(bytes: &[u8], cfg: Config, now: Millis) -> Result<Server, DecodeError> {
         let mut r = Reader::new(bytes);
-        store::version(&mut r)?;
+        // Version 1 saved every object's bytes.
+        let version = r.u8()?;
+        if version != 1 && version != VERSION {
+            return Err(DecodeError::Version(version));
+        }
         let token = store::token(&mut r)?;
         let mut s = Server::new(token, cfg, now);
         s.epoch = match r.u8()? {
@@ -385,7 +448,19 @@ impl Server {
             let order = r.varint()?;
             let meta = store::bytes(&mut r)?;
             let rev = r.varint()?;
-            let content = store::bytes(&mut r)?;
+            let tag = if version == 1 { 1 } else { r.u8()? };
+            let content = match tag {
+                0 => {
+                    let len = r.varint()?;
+                    let hash = r.bytes(8)?.try_into().map_err(|_| DecodeError::Truncated)?;
+                    Saved::Released {
+                        len,
+                        hash: u64::from_be_bytes(hash),
+                    }
+                }
+                1 => Saved::Bytes(store::bytes(&mut r)?),
+                _ => return Err(DecodeError::Invalid("saved content")),
+            };
             let acked = store::ranges(&mut r)?;
             let rev_acked = r.u8()? != 0;
             let keep = r.varint()?;
@@ -393,6 +468,9 @@ impl Server {
                 key,
                 OutObject::restored(class, order, meta, rev, content, acked, rev_acked, keep),
             );
+            if let Key::Object(_) = key {
+                s.ep.out.release(key);
+            }
         }
         Ok(s)
     }

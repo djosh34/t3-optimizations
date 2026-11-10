@@ -16,7 +16,13 @@ pub const USAGE: &str = "usage: sidecar [--config <file.toml>] [flags]
   --http <addr>           HTTP listen address, such as 127.0.0.1:12480
   --udp <addr>            UDP address of the data channel, such as 0.0.0.0:12444
   --udp-advertise <ip>    the address phones send UDP to, when --udp binds 0.0.0.0
-  --web-dir <dir>         the web app's files (optional)";
+  --web-dir <dir>         the web app's files (optional)
+  --cache-mb <n>          the threads and images held in memory, in MB (default 256)
+  --preload <n>           how many of the newest threads phones get ahead of time; 0 is off (default 50)";
+
+/// Defaults of the settings that have one (issue #81).
+const CACHE_MB: usize = 256;
+const PRELOAD: usize = 50;
 
 #[derive(Debug, Clone, Deserialize, Default)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
@@ -29,6 +35,8 @@ struct File {
     udp: Option<SocketAddr>,
     udp_advertise: Option<IpAddr>,
     web_dir: Option<PathBuf>,
+    cache_mb: Option<usize>,
+    preload: Option<usize>,
 }
 
 #[derive(Debug, Clone)]
@@ -41,6 +49,8 @@ pub struct Config {
     pub udp: SocketAddr,
     pub udp_advertise: Option<IpAddr>,
     pub web_dir: Option<PathBuf>,
+    pub cache_mb: usize,
+    pub preload: usize,
 }
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -64,6 +74,8 @@ impl Config {
                 "--udp" => flags.udp = Some(value.parse()?),
                 "--udp-advertise" => flags.udp_advertise = Some(value.parse()?),
                 "--web-dir" => flags.web_dir = Some(value.into()),
+                "--cache-mb" => flags.cache_mb = Some(value.parse()?),
+                "--preload" => flags.preload = Some(value.parse()?),
                 _ => return Err(format!("unknown flag {flag}\n{USAGE}").into()),
             }
         }
@@ -98,6 +110,8 @@ impl Config {
             udp: flags.udp.or(file.udp).ok_or_else(|| missing("udp"))?,
             udp_advertise: flags.udp_advertise.or(file.udp_advertise),
             web_dir: flags.web_dir.or(file.web_dir),
+            cache_mb: flags.cache_mb.or(file.cache_mb).unwrap_or(CACHE_MB),
+            preload: flags.preload.or(file.preload).unwrap_or(PRELOAD),
         })
     }
 }
@@ -135,6 +149,7 @@ udp = "0.0.0.0:3"
         assert_eq!(c.t3_command, ["node", "bin.ts"]);
         assert_eq!(c.udp.port(), 4);
         assert_eq!(c.web_dir, None);
+        assert_eq!((c.cache_mb, c.preload), (CACHE_MB, PRELOAD));
         Ok(())
     }
 

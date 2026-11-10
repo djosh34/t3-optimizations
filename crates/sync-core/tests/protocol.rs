@@ -166,38 +166,126 @@ fn the_newest_tail_shows_on_a_fresh_phone_without_older_packets() {
 #[test]
 fn a_change_in_the_middle_sends_only_the_bytes_after_it() {
     let mut p = Pair::new();
-    let mut content = text(3_000);
+    let mut content = text(200_000);
     p.server
-        .set(TAIL, Class::Tail, 0, Vec::new(), content.clone())
+        .set(5, Class::Background, 0, Vec::new(), content.clone())
         .expect("set");
-    p.run(3_000);
-    assert!(p.server.is_synced());
-    content.truncate(2_900);
+    // Part of it stored: the server still has the bytes to compare.
+    while !p.phone.object(5).is_some_and(|o| o.have.covers(0..20_000)) {
+        p.run(1);
+    }
+    assert!(!p.server.stored(5));
+    content.truncate(10_000);
     content.extend_from_slice(b" and then a new ending.");
     p.server
-        .set(TAIL, Class::Tail, 0, Vec::new(), content.clone())
+        .set(5, Class::Background, 0, Vec::new(), content.clone())
         .expect("set");
     let sent = p.run(3_000);
-    let o = p.phone.object(TAIL).expect("tail");
+    let o = p.phone.object(5).expect("object");
     assert_eq!(o.rev, 2);
     assert!(o.data == content);
-    // Only bytes after the change went out (some more than once, while
-    // their ack was on its way).
+    // Only bytes after the change went out.
     let ranges = chunk_ranges(&sent);
     assert!(!ranges.is_empty());
     assert!(
-        ranges.iter().all(|(_, r)| r.start >= 2_900 || r.is_empty()),
+        ranges
+            .iter()
+            .all(|(_, r)| r.start >= 10_000 || r.is_empty()),
         "{ranges:?}"
     );
 
     // Shorter, with nothing new to send: the revision alone goes out.
     content.truncate(1_000);
     p.server
+        .set(5, Class::Background, 0, Vec::new(), content.clone())
+        .expect("set");
+    p.run(3_000);
+    let o = p.phone.object(5).expect("object");
+    assert_eq!((o.rev, o.len, o.complete()), (3, 1_000, true));
+}
+
+#[test]
+fn a_stored_object_is_compared_by_its_hash() {
+    let mut p = Pair::new();
+    let mut content = text(3_000);
+    p.server
         .set(TAIL, Class::Tail, 0, Vec::new(), content.clone())
         .expect("set");
     p.run(3_000);
-    let o = p.phone.object(TAIL).expect("tail");
-    assert_eq!((o.rev, o.len, o.complete()), (3, 1_000, true));
+    assert!(p.server.stored(TAIL));
+    // The same bytes again: nothing goes out.
+    p.server
+        .set(TAIL, Class::Tail, 0, Vec::new(), content.clone())
+        .expect("set");
+    let sent = p.run(1_000);
+    assert!(
+        chunk_ranges(&sent)
+            .iter()
+            .all(|(k, _)| *k != Key::Object(TAIL))
+    );
+    // Growth keeps the revision and sends only the new bytes.
+    content.extend_from_slice(b" and more.");
+    p.server
+        .set(TAIL, Class::Tail, 0, Vec::new(), content.clone())
+        .expect("set");
+    let sent = p.run(1_000);
+    let ranges = chunk_ranges(&sent);
+    assert!(!ranges.is_empty());
+    assert!(ranges.iter().all(|(_, r)| r.start >= 3_000), "{ranges:?}");
+    assert_eq!(
+        p.phone.object(TAIL).map(|o| (o.rev, o.data == content)),
+        Some((1, true))
+    );
+    // A change in the middle: the bytes before it are gone from the server,
+    // so the new revision goes whole.
+    content[10] = b'X';
+    p.server
+        .set(TAIL, Class::Tail, 0, Vec::new(), content.clone())
+        .expect("set");
+    p.run(3_000);
+    assert_eq!(
+        p.phone.object(TAIL).map(|o| (o.rev, o.data == content)),
+        Some((2, true))
+    );
+}
+
+#[test]
+fn a_released_object_waits_for_its_bytes_and_keeps_its_revision() {
+    let mut p = Pair::new();
+    let content = text(30_000);
+    p.server
+        .set(5, Class::Background, 0, Vec::new(), content.clone())
+        .expect("set");
+    p.run(5);
+    // Evicted before the phone stored it all: nothing more goes out.
+    p.server.release(5);
+    p.run(2_000);
+    assert!(p.server.is_synced());
+    assert!(!p.server.stored(5));
+    let partial = p.phone.object(5).map(|o| o.complete());
+    assert_eq!(partial, Some(false));
+    // Loaded again, changed: a new revision, never revision 1 again.
+    let mut changed = content.clone();
+    changed.extend_from_slice(b" grew while evicted");
+    changed[0] = b'X';
+    p.server
+        .set(5, Class::Background, 0, Vec::new(), changed.clone())
+        .expect("set");
+    p.run(3_000);
+    let o = p.phone.object(5).expect("object");
+    assert_eq!((o.rev, o.complete(), o.data == changed), (2, true, true));
+    // Evicted once stored, then loaded again unchanged: nothing new.
+    p.server.release(5);
+    p.server
+        .set(5, Class::Background, 0, Vec::new(), changed.clone())
+        .expect("set");
+    let sent = p.run(1_000);
+    assert!(
+        chunk_ranges(&sent)
+            .iter()
+            .all(|(k, _)| *k != Key::Object(5))
+    );
+    assert_eq!(p.phone.object(5).map(|o| o.rev), Some(2));
 }
 
 #[test]
@@ -309,11 +397,17 @@ fn a_phone_that_lost_its_cache_gets_everything_again() {
     assert!(p.server.is_synced());
     assert!(p.incoming.is_empty());
 
-    // Same token, empty cache: a new epoch.
+    // Same token, empty cache: a new epoch. The server kept only the hash
+    // of what the phone stored, so the caller sets it again.
     p.phone = Phone::new(TOKEN, 8, Config::phone(), p.now);
     p.server.connected();
-    p.run(3_000);
+    p.run(100);
     assert_eq!(p.incoming, vec![Incoming::Reset]);
+    assert!(!p.server.has(5));
+    p.server
+        .set(5, Class::History, 0, Vec::new(), text(5_000))
+        .expect("set");
+    p.run(3_000);
     assert_eq!(p.phone.object(5).map(|o| o.complete()), Some(true));
 }
 
@@ -330,6 +424,8 @@ fn a_restarted_server_does_not_send_again_what_the_phone_has() {
     assert!(p.server.is_synced());
 
     let saved = p.server.save();
+    // What the phone stored is saved as its length and hash, not its bytes.
+    assert!(saved.len() < 1_000, "{} bytes", saved.len());
     p.server = Server::load(&saved, Config::server(), p.now).expect("loads");
     p.server.connected();
     p.phone.connected();

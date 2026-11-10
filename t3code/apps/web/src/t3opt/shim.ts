@@ -115,6 +115,17 @@ async function imageUrl(engine: Engine, attachment: string): Promise<string | nu
   return url;
 }
 
+/**
+ * Asks the sidecar for a thread and sends it first (`sidecar.focus`): at once,
+ * before the page waits for the thread's objects, which a thread the phone does
+ * not have yet only gets this way.
+ */
+function openThread(engine: Engine, threadId: string) {
+  engine
+    .request("call", { tag: "sidecar.focus", payload: { threadId } })
+    .catch((error: unknown) => trace(`focus failed: ${String(error)}`));
+}
+
 /** Resolves once `ready` returns a value; it is checked again on every change of synced state. */
 function whenReady<T>(engine: Engine, ready: () => T | null): Promise<T> {
   const now = ready();
@@ -178,6 +189,8 @@ interface Stream {
 
 export class RpcServer {
   private readonly streams = new Map<string, Stream>();
+  /** Thread subscriptions of the client, by thread. */
+  private readonly openThreads = new Map<string, number>();
 
   constructor(
     private readonly engine: Engine,
@@ -249,7 +262,7 @@ export class RpcServer {
    * sent and rendered for every packet, it kept WebKit's main thread busy for
    * half a minute at a time on case 50 (issue #46).
    */
-  private follow(id: RequestId, values: (first: boolean) => unknown[] | null) {
+  private follow(id: RequestId, values: (first: boolean) => unknown[] | null, onStop?: () => void) {
     let first = true;
     let last = "";
     let lastRun = -Infinity;
@@ -286,6 +299,7 @@ export class RpcServer {
     const stop = () => {
       unsubscribe();
       if (timer !== null) clearTimeout(timer);
+      onStop?.();
     };
     this.streams.set(String(id), { pending: null, awaitingAck: false, replaces: true, stop });
     update();
@@ -320,14 +334,31 @@ export class RpcServer {
         return;
       case "orchestration.subscribeThread": {
         const threadId = String((payload as Json | null)?.threadId ?? "");
-        // The sidecar sends the open thread first.
-        void this.engine.request("call", { tag: "sidecar.focus", payload: { threadId } });
-        this.follow(id, (first) => {
-          const snapshot = threadSnapshot(objects, threadId);
-          if (snapshot === null) return null;
-          const item = { kind: "snapshot", ...snapshot };
-          return first ? [item, { kind: "synchronized" }] : [item];
-        });
+        openThread(this.engine, threadId);
+        this.openThreads.set(threadId, (this.openThreads.get(threadId) ?? 0) + 1);
+        // The client's last subscription to the thread ended: the sidecar
+        // stops its live one, unless the phone opened another thread since.
+        const closed = () => {
+          const left = (this.openThreads.get(threadId) ?? 1) - 1;
+          if (left > 0) {
+            this.openThreads.set(threadId, left);
+            return;
+          }
+          this.openThreads.delete(threadId);
+          this.engine
+            .request("call", { tag: "sidecar.close", payload: { threadId } })
+            .catch((error: unknown) => trace(`close failed: ${String(error)}`));
+        };
+        this.follow(
+          id,
+          (first) => {
+            const snapshot = threadSnapshot(objects, threadId);
+            if (snapshot === null) return null;
+            const item = { kind: "snapshot", ...snapshot };
+            return first ? [item, { kind: "synchronized" }] : [item];
+          },
+          closed,
+        );
         return;
       }
       case "assets.createUrl": {
@@ -514,7 +545,7 @@ interface FetchContext {
   readonly pair: (code: string) => Promise<void>;
 }
 
-async function handleFetch(ctx: FetchContext, request: Request): Promise<Response> {
+export async function handleFetch(ctx: FetchContext, request: Request): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
   trace(`fetch ${request.method} ${path}`);
@@ -566,6 +597,8 @@ async function handleFetch(ctx: FetchContext, request: Request): Promise<Respons
   const thread = /^\/api\/orchestration\/threads\/([^/]+)(?:\/bounded)?$/.exec(path);
   if (thread && request.method === "GET") {
     const threadId = decodeURIComponent(thread[1] ?? "");
+    // The client waits for this snapshot before it subscribes.
+    openThread(engine, threadId);
     // The bounded snapshot's fields are the full one's and more.
     return json(200, await whenReady(engine, () => threadSnapshot(objects, threadId)));
   }

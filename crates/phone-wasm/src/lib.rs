@@ -456,6 +456,27 @@ pub extern "C" fn phone_object_ids() -> i32 {
     })
 }
 
+/// `sync_core::hash_id` of a UTF-8 id: 16 hex digits in the output, as the
+/// sidecar writes ids in meta. Needs no phone.
+///
+/// # Safety
+/// `ptr` must point at `len` bytes from [`phone_alloc`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn phone_hash_id(ptr: *const u8, len: usize) -> i32 {
+    // SAFETY: the caller wrote `len` bytes at `ptr`.
+    let id = unsafe { input(ptr, len) };
+    match std::str::from_utf8(id) {
+        Ok(id) => {
+            set_out(sync_core::hash_id(id).into_bytes());
+            0
+        }
+        Err(e) => {
+            set_out(e.to_string().into_bytes());
+            -1
+        }
+    }
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn phone_stats() -> i32 {
     with_phone(|p| {
