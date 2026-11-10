@@ -19,7 +19,7 @@ export interface Meta {
   readonly l?: string;
   /** Image MIME type. */
   readonly y?: string;
-  /** The thread that first showed an image. */
+  /** A thread that shows an image. */
   readonly o?: string;
 }
 

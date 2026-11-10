@@ -190,8 +190,8 @@ pub struct App {
     subscribed: bool,
     /// Threads with a live subscription, by request.
     thread_subs: HashMap<String, u64>,
-    /// Subscribed threads whose snapshot has not come yet.
-    snapshot_pending: HashSet<String>,
+    /// Subscribed threads whose snapshot has not come yet, and since when.
+    snapshot_pending: HashMap<String, Instant>,
     /// Threads with a history page being fetched.
     paging: HashSet<String>,
     /// The thread being preloaded: one at a time.
@@ -333,7 +333,7 @@ impl App {
             pending: HashMap::new(),
             subscribed: false,
             thread_subs: HashMap::new(),
-            snapshot_pending: HashSet::new(),
+            snapshot_pending: HashMap::new(),
             paging: HashSet::new(),
             preloading: None,
             fresh: HashMap::new(),
@@ -993,7 +993,13 @@ impl App {
                 for v in &values {
                     match v["kind"].as_str() {
                         Some("snapshot") => {
-                            self.snapshot_pending.remove(&t);
+                            if let Some(at) = self.snapshot_pending.remove(&t) {
+                                log(format!(
+                                    "open thread: its snapshot came in {} ms, {} kB",
+                                    at.elapsed().as_millis(),
+                                    v.to_string().len() >> 10
+                                ));
+                            }
                             self.thread_snapshot(&t, v);
                         }
                         Some("event") => stale |= self.world.apply_event(&t, v) == After::Refetch,
@@ -1102,7 +1108,7 @@ impl App {
                     json!({"threadId": t, "acceptBoundedSnapshot": true}),
                     Pending::Thread(t.clone()),
                 );
-                self.snapshot_pending.insert(t.clone());
+                self.snapshot_pending.insert(t.clone(), Instant::now());
                 self.thread_subs.insert(t, id);
             }
         }
@@ -1214,7 +1220,7 @@ impl App {
         let opening = self
             .thread_subs
             .keys()
-            .any(|t| self.snapshot_pending.contains(t) || self.paging.contains(t));
+            .any(|t| self.snapshot_pending.contains_key(t) || self.paging.contains(t));
         if opening {
             return;
         }
@@ -1282,7 +1288,7 @@ impl App {
             .thread_subs
             .keys()
             .chain(&self.paging)
-            .chain(&self.snapshot_pending)
+            .chain(self.snapshot_pending.keys())
             .chain(&self.preloading)
             .collect();
         let gone = self
@@ -1408,8 +1414,8 @@ impl App {
     /// Deletes on phones the objects of threads that left the thread list,
     /// and, once the config is here, other objects the world no longer has
     /// (a project removed while the sidecar was down). Evicted threads stay
-    /// on phones: they are still listed. Images go with the thread that
-    /// first showed them.
+    /// on phones: they are still listed. Images go with the thread their
+    /// meta names (`o`).
     fn prune(&mut self) {
         if !self.world.shell_loaded() {
             return;

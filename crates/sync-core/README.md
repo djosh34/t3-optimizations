@@ -29,7 +29,7 @@ phone.committed(r.batch);                        // only now is it acked
 let seq = phone.command(dispatch_command_json);  // stays in the log until its reply is stored
 ```
 
-`Phone::load` rebuilds the phone from what it saved. `Server::save` and `Server::load` let a restarted sidecar go on without a full resync.
+`Phone::load` rebuilds the phone from what it saved. `Server::save` and `Server::load` let a restarted sidecar go on without a full resync. The server's saved state holds each object's revision, length and hash, not its bytes: the restarted sidecar sets them again from its source.
 
 ## Objects and revisions
 
@@ -38,6 +38,10 @@ An object is bytes with an id, a class, an order within the class, a revision, a
 - Content that only grows keeps its revision. The phone gets the new bytes.
 - Any other change (an edit in the middle, a shorter text, new meta) is a new revision. Its chunks say how many leading bytes of an older revision stay valid (`keep`). The phone cuts its copy to those bytes and fills in the rest.
 - The phone ignores chunks of a revision older than the one it holds.
+
+The server shares an object's bytes with the caller (`Arc<[u8]>`) and keeps them only until the phone stored them all ([issue #84](https://github.com/djosh34/t3-optimizations/issues/84)). Then it keeps the length and a hash (`sync_core::hash`, SHA-256 cut to 64 bits). A set with the same bytes changes nothing; bytes that start with the stored ones are growth; other bytes are a new revision that keeps nothing, as the server no longer has the old bytes to compare. `Server::release` lets go of bytes the phone has not stored all of yet, when the caller evicts them: the object keeps its revision and what the phone stored, and waits, unsent, until a set gives the bytes again. A phone that lost its cache loses the released objects from the server too; the caller sets them anew.
+
+`sync_core::hash_id` is the hash of an id as 16 hex digits. The sidecar writes every id in meta that way, and the web app gets the same function through `phone-wasm`.
 
 The server tracks per object which bytes of the current revision the phone has stored. Those are never sent again. It remembers what each unacked packet carried for the newest 20,000 packets, not for a time: an ack that arrives after a gap of minutes still marks its bytes stored. Forgetting after 60 s sent stored bytes again after every longer gap (story seeds 18 and 69, issue #58). Bytes in flight go out again after the retransmit timeout; with spare room in a packet, unacked bytes go out again early, so the sender never idles until the phone has everything.
 
@@ -68,11 +72,11 @@ The tail chunk carries the meta and is compressed with Brotli's built-in diction
 The sender paces packets at a send rate in wire bytes per second, counting 93 bytes of IP, UDP, DTLS and SCTP headers per packet ([issue #25](https://github.com/djosh34/t3-optimizations/issues/25)).
 
 - What arrived (from the phone's cumulative reports) is kept apart from what the sender may send. Loss never lowers the send rate.
-- About once per round trip, on RTT samples of packets sent after the last change: if RTT grew (25% above the base, plus 150 ms or three times the measured jitter), the rate drops to 75% of the lower of itself and the measured send capacity, but never below half. Otherwise, with data waiting, it grows by half (at the start) or a quarter, at most that much above the measured capacity.
+- About once per round trip, on RTT samples of packets sent after the last change: if RTT grew (25% above the base, plus 150 ms or three times the measured jitter), the rate drops to 75% of the lower of itself and the measured send capacity, but never below half. Otherwise, with data waiting, it grows by half (at the start) or a quarter, at most that much above the measured capacity. At the start, with over 1 MB waiting on a clean short path (loss under 10%, RTT under 200 ms), it grows by half without that ceiling: the delivery average trails the paced rate there, and 200 MB took 64 s instead of 36 s in the simulator ([issue #69](https://github.com/djosh34/t3-optimizations/issues/69)).
 - One fresh sample above twice the base plus a second counts as RTT growth on its own: at heavy loss samples are rare, and waiting for three more lets the queue grow.
 - The base is the lowest RTT of the last 60 s. If draining to 30% of the rate does not bring the RTT down, the path itself got slower: its RTT becomes the base, and the rate goes back to where the drains started, but not above the measured capacity.
 - Sending with nothing at all heard from the other side for as long as seven of its packets usually take to arrive (and at least four smoothed RTTs and 1 s) halves the rate at each decision, but not below the initial 2 kB/s, and the next RTT samples start a new base in slow start. By chance such a silence comes in about one of 1,000 spells. Either the link went down, or the rate is far above a link that just got slower. In the lab, after a switch from the clean link to case 70, the sidecar kept its clean-link rate for 20 s: its queue held back the SCTP acks of WebKit's sender, which then sent next to nothing, and the prompt took 34 to 52 s (issues #45, #46). Now the silence is found within a second or two. Lower than 2 kB/s a silent sender hears too little to find the rate again: in the simulator both sides fell to the floor and stayed there. At 70% loss before a 10 kbit/s queue, 2 kB/s does not fill the queue.
-- After 2 s with nothing to send, the rate starts again from 2 kB/s. A side that had data but was not asked for packets (the browser's SCTP held them back) was not idle and keeps what it measured. The rate never goes below 150 B/s.
+- After 2 s with nothing to send, the rate starts again from 2 kB/s, or from at most 256 kB/s on a path that was clean and short (loss under 10%, RTT under 200 ms): from 2 kB/s, a 7 kB thread a phone opened after a quiet spell took 1.5 s on a local link ([issue #84](https://github.com/djosh34/t3-optimizations/issues/84)). A side that had data but was not asked for packets (the browser's SCTP held them back) was not idle and keeps what it measured. The rate never goes below 150 B/s.
 - Packets hold about 100 ms of what the link delivers, between 200 and 1100 bytes, so a queue that counts packets stays short on a slow link. A command, a call or a reply grows its packet to go out whole: it is of use only whole, and in pieces every piece must arrive.
 
 ## Commands and calls

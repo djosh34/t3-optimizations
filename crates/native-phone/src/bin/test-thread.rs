@@ -4,7 +4,8 @@
 //! reply-only prompt. Waits until the reply is complete.
 //!
 //! ```sh
-//! test-thread --origin http://127.0.0.1:12491 --pairing phone.json --project t3-optimizations \
+//! test-thread --origin http://127.0.0.1:12491 --pairing phone.json [--code <t3 pair code>] \
+//!   --project t3-optimizations \
 //!   --title "t3opt test 84 safari" [--model openai-codex/gpt-6-luna]
 //! ```
 //!
@@ -15,7 +16,7 @@ use std::net::{IpAddr, Ipv4Addr};
 use std::process::ExitCode;
 use std::time::{Duration, Instant};
 
-use native_phone::{Error, NativePhone, Pairing, Via, new_id, prompt_command, succeeded};
+use native_phone::{Error, NativePhone, Pairing, Via, new_id, pair, prompt_command, succeeded};
 use serde_json::{Value, json};
 
 const PROMPT: &str = "Reply with the single word ready. Use no tools.";
@@ -38,18 +39,31 @@ fn run() -> Result<(), Error> {
         a.insert(name, it.next().ok_or("a flag needs a value")?);
     }
     let get = |k: &str| a.get(k).cloned().ok_or_else(|| format!("missing --{k}"));
-    let v: Value = serde_json::from_str(&std::fs::read_to_string(get("pairing")?)?)?;
-    let hex = v["token"].as_str().ok_or("pairing file: no token")?;
-    let mut token = [0u8; 16];
-    for (i, b) in token.iter_mut().enumerate() {
-        *b = u8::from_str_radix(hex.get(2 * i..2 * i + 2).ok_or("bad token")?, 16)?;
-    }
-    let pairing = Pairing {
-        device: v["device"]
-            .as_str()
-            .ok_or("pairing file: no device")?
-            .to_owned(),
-        token,
+    let file = get("pairing")?;
+    let pairing = match std::fs::read_to_string(&file) {
+        Ok(text) => {
+            let v: Value = serde_json::from_str(&text)?;
+            let hex = v["token"].as_str().ok_or("pairing file: no token")?;
+            let mut token = [0u8; 16];
+            for (i, b) in token.iter_mut().enumerate() {
+                *b = u8::from_str_radix(hex.get(2 * i..2 * i + 2).ok_or("bad token")?, 16)?;
+            }
+            let device = v["device"].as_str().ok_or("pairing file: no device")?;
+            Pairing {
+                device: device.to_owned(),
+                token,
+            }
+        }
+        // A new device, paired with `--code`.
+        Err(_) => {
+            let p = pair(&get("origin")?, &get("code")?)?;
+            let token: String = p.token.iter().map(|b| format!("{b:02x}")).collect();
+            std::fs::write(
+                &file,
+                json!({"device": p.device, "token": token}).to_string(),
+            )?;
+            p
+        }
     };
     let model = a
         .get("model")
