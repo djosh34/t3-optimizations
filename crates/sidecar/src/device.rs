@@ -211,6 +211,26 @@ mod tests {
     use crate::world::object_id;
 
     #[test]
+    fn newest_reasoning_of_the_open_thread_precedes_bulk_config() {
+        let mut w = World::default();
+        w.set_config(&json!({"environment": {}}));
+        w.set_thread("t1", &json!({"projection": {"turnItems": [
+            {"id":"u1", "messageId":"u1", "type":"user_message", "ordinal":1, "status":"completed", "text":"question"},
+            {"id":"r1", "messageId":"r1", "type":"reasoning", "ordinal":2, "status":"completed", "text":"newest"}
+        ]}}));
+        let newest = object_id(&["text", "t1", "r1"]);
+        let config = object_id(&["config"]);
+        let n = w.get(newest).expect("newest reasoning");
+        let c = w.get(config).expect("config");
+        let nc = class_of(&w, newest, n, Some("t1"));
+        let cc = class_of(&w, config, c, Some("t1"));
+        assert!(
+            nc < cc || (nc == cc && n.order > c.order),
+            "newest item is behind bulk config"
+        );
+    }
+
+    #[test]
     fn what_the_web_app_needs_first_goes_before_the_open_threads_older_messages() {
         let mut w = World::default();
         w.set_shell(&json!({"kind": "snapshot", "snapshot": {"schemaVersion": 2,

@@ -23,6 +23,13 @@ use tungstenite::{Message, WebSocket};
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
 /// One clock for every phone of the process.
+fn wall_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64
+}
+
 fn now_ms() -> Millis {
     static START: OnceLock<Instant> = OnceLock::new();
     START.get_or_init(Instant::now).elapsed().as_millis() as Millis
@@ -136,6 +143,7 @@ pub struct NativePhone {
     /// Packets the phone could not read, and the last error.
     pub undecodable: u64,
     pub last_error: Option<String>,
+    trace_target: Option<u64>,
 }
 
 impl NativePhone {
@@ -177,6 +185,7 @@ impl NativePhone {
             phone,
             storage,
             replies: BTreeMap::new(),
+            trace_target: None,
             closed: None,
             last_data: Instant::now(),
             last_restart: None,
@@ -231,6 +240,7 @@ impl NativePhone {
             phone,
             storage: self.storage.clone(),
             replies: self.replies.clone(),
+            trace_target: None,
             closed: None,
             last_data: Instant::now(),
             last_restart: None,
@@ -374,7 +384,15 @@ impl NativePhone {
             match &mut self.transport {
                 // A full buffer is loss.
                 Transport::Rtc(c) => {
-                    c.send(&packet)?;
+                    let sent = c.send(&packet)?;
+                    if let Ok(p) = sync_core::wire::Packet::decode(&packet) {
+                        for chunk in p.chunks.iter().filter(|c| matches!(c.key, Key::Entry(_))) {
+                            eprintln!(
+                                "R91 {}",
+                                json!({"at": wall_ms(), "event": "phone_send", "key": format!("{:?}", chunk.key), "packet": p.seq, "sent": sent, "rate": self.phone.stats().send_rate})
+                            );
+                        }
+                    }
                 }
                 Transport::Ws(ws) => {
                     if let Err(e) = ws.send(Message::binary(packet)) {
@@ -389,6 +407,16 @@ impl NativePhone {
 
     /// Stores what a packet brought, then acks it.
     fn receive(&mut self, data: &[u8]) {
+        if let Some(id) = self.trace_target {
+            if let Ok(p) = sync_core::wire::Packet::decode(data) {
+                for c in p.chunks.iter().filter(|c| c.key == Key::Object(id)) {
+                    eprintln!(
+                        "R91 {}",
+                        json!({"at": wall_ms(), "event": "phone_receive", "packet": p.seq, "offset": c.offset, "len": c.body.raw_len(), "rev": c.rev, "total": c.total_len})
+                    );
+                }
+            }
+        }
         let r = match self.phone.receive(now_ms(), data) {
             Ok(r) => r,
             Err(e) => {
@@ -413,6 +441,10 @@ impl NativePhone {
             self.storage.state = self.phone.save_state();
         }
         self.phone.committed(r.batch);
+    }
+
+    pub fn set_trace_target(&mut self, id: Option<u64>) {
+        self.trace_target = id;
     }
 
     /// Queues an `orchestration.dispatchCommand`. Returns its number.

@@ -359,6 +359,14 @@ impl Server {
         self.ep.stats()
     }
 
+    pub fn trace_rate(&self) -> f64 {
+        self.ep.rate.rate()
+    }
+
+    pub fn trace_info(&self, key: Key) -> Option<(Class, u64)> {
+        self.ep.out.get(key).map(|o| (o.class, o.order))
+    }
+
     /// The `n` objects that took the most packet bytes since the last call.
     pub fn take_busiest(&mut self, n: usize) -> Vec<Busy> {
         self.ep.out.take_busiest(n)

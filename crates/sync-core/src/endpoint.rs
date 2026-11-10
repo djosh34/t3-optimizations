@@ -88,7 +88,7 @@ pub struct Stats {
 pub(crate) struct Endpoint {
     pub out: Outbox,
     pub inbox: Inbox,
-    rate: RateControl,
+    pub(crate) rate: RateControl,
     cfg: Config,
     next_seq: u64,
     last_sent: Option<Millis>,

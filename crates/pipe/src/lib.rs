@@ -136,6 +136,37 @@ impl From<RtcError> for Error {
 }
 
 /// A new self-signed DTLS certificate.
+fn r91_poll(which: usize) {
+    use std::sync::{
+        OnceLock,
+        atomic::{AtomicU64, Ordering},
+    };
+    static ENABLED: OnceLock<bool> = OnceLock::new();
+    if !*ENABLED.get_or_init(|| std::env::var_os("R91_TRACE").is_some()) {
+        return;
+    }
+    static COUNTS: [AtomicU64; 3] = [AtomicU64::new(0), AtomicU64::new(0), AtomicU64::new(0)];
+    static LAST: AtomicU64 = AtomicU64::new(0);
+    COUNTS[which].fetch_add(1, Ordering::Relaxed);
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64;
+    let last = LAST.load(Ordering::Relaxed);
+    if now >= last + 100
+        && LAST
+            .compare_exchange(last, now, Ordering::Relaxed, Ordering::Relaxed)
+            .is_ok()
+    {
+        eprintln!(
+            "R91 {{\"at\":{now},\"event\":\"pipe_poll\",\"v\":{{\"calls\":{},\"expired\":{},\"reads\":{}}}}}",
+            COUNTS[0].load(Ordering::Relaxed),
+            COUNTS[1].load(Ordering::Relaxed),
+            COUNTS[2].load(Ordering::Relaxed)
+        );
+    }
+}
+
 pub fn generate_cert() -> Result<DtlsCert, Error> {
     str0m::crypto::from_feature_flags()
         .dtls_provider
@@ -386,6 +417,7 @@ impl Pipe {
     /// Sends what is due and reads the socket until `until`, or until there
     /// are new events, which it appends to `events`.
     pub fn poll(&mut self, until: Instant, events: &mut Vec<PipeEvent>) -> Result<(), Error> {
+        r91_poll(0);
         let before = events.len();
         events.append(&mut self.held);
         self.replay_unknown(events);
@@ -402,6 +434,32 @@ impl Pipe {
                     peer.check(result, events);
                 }
                 if until <= now {
+                    r91_poll(1);
+                    if std::env::var_os("R91_FAIR_POLL").is_some() {
+                        self.socket.set_nonblocking(true)?;
+                        let mut failed = None;
+                        for _ in 0..64 {
+                            match self.socket.recv_from(&mut self.buf) {
+                                Ok((n, source)) => {
+                                    r91_poll(2);
+                                    let data = self.buf[..n].to_vec();
+                                    if !self.deliver(source, &data, events) {
+                                        self.keep_unknown(source, data, events);
+                                    }
+                                    self.drain(events)?;
+                                }
+                                Err(e) if e.kind() == io::ErrorKind::WouldBlock => break,
+                                Err(e) => {
+                                    failed = Some(e);
+                                    break;
+                                }
+                            }
+                        }
+                        self.socket.set_nonblocking(false)?;
+                        if let Some(e) = failed {
+                            return Err(e.into());
+                        }
+                    }
                     // Sends what the timeouts made due and reports a peer
                     // that failed on them as closed too.
                     self.drain(events)?;
@@ -422,6 +480,7 @@ impl Pipe {
                 }
                 Err(e) => return Err(e.into()),
             };
+            r91_poll(2);
             let data = self.buf[..n].to_vec();
             if !self.deliver(source, &data, events) {
                 self.keep_unknown(source, data, events);

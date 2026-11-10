@@ -21,7 +21,14 @@
 use std::collections::HashMap;
 use std::net::{IpAddr, Ipv4Addr};
 use std::process::ExitCode;
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+
+fn wall_ms() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64
+}
 
 use native_phone::{Error, NativePhone, Pairing, Via, pair};
 use serde_json::{Value, json};
@@ -149,9 +156,13 @@ fn run() -> Result<(), Error> {
     let mut phone = NativePhone::connect(
         &origin,
         pairing,
-        Via::Rtc {
-            local: IpAddr::V4(Ipv4Addr::LOCALHOST),
-            server: None,
+        if a.get("via").is_some_and(|v| v == "ws") {
+            Via::Ws
+        } else {
+            Via::Rtc {
+                local: IpAddr::V4(Ipv4Addr::LOCALHOST),
+                server: None,
+            }
         },
     )?;
     // Connected once a call comes back.
@@ -177,17 +188,34 @@ fn run() -> Result<(), Error> {
         let (label, thread) = line
             .split_once('\t')
             .ok_or("a line is label<TAB>thread id")?;
+        let load = std::process::Command::new("uptime").output()?;
+        let http_at = wall_ms();
+        let preflight = Instant::now();
         let expect = newest(&t3, &token, thread)?;
+        let http_ms = preflight.elapsed().as_secs_f64() * 1000.0;
         let frame = object_id(&["frame", thread]);
         let text = expect;
+        phone.set_trace_target(text.map(|(id, _)| id));
+        let request_at = wall_ms();
+        let stats_before = phone.stats();
         let t0 = Instant::now();
-        phone.call("sidecar.focus", json!({"threadId": thread}));
+        let seq = phone.call("sidecar.focus", json!({"threadId": thread}));
         let (mut frame_ms, mut newest_ms) = (None, None);
+        let (mut first_ms, mut reply_ms) = (None, None);
+        let mut max_step_ms = 0.0f64;
         while t0.elapsed() < timeout
             && (frame_ms.is_none() || (text.is_some() && newest_ms.is_none()))
         {
+            let step_at = Instant::now();
             phone.step(Duration::from_millis(1))?;
+            max_step_ms = max_step_ms.max(step_at.elapsed().as_secs_f64() * 1000.0);
             let ms = t0.elapsed().as_secs_f64() * 1000.0;
+            if reply_ms.is_none() && phone.reply(seq).is_some() {
+                reply_ms = Some(ms);
+            }
+            if first_ms.is_none() && text.is_some_and(|(id, _)| phone.object(id).is_some()) {
+                first_ms = Some(ms);
+            }
             if frame_ms.is_none() && phone.object(frame).is_some_and(|o| o.complete()) {
                 frame_ms = Some(ms);
             }
@@ -212,6 +240,20 @@ fn run() -> Result<(), Error> {
             "{}",
             json!({
                 "label": label,
+                "device": phone.pairing().device,
+                "request_at": request_at,
+                "call_seq": seq,
+                "http_at": http_at,
+                "http_ms": http_ms,
+                "target": text.map(|(id,_)| id),
+                "frame_id": frame,
+                "first_ms": first_ms,
+                "reply_ms": reply_ms,
+                "max_step_ms": max_step_ms,
+                "uptime": String::from_utf8_lossy(&load.stdout).trim(),
+                "packets_before": stats_before.received_packets,
+                "packets_after": stats.received_packets,
+                "undecodable": phone.undecodable,
                 "frame_ms": frame_ms.map(|m| (m * 10.0).round() / 10.0),
                 "newest_ms": newest_ms.map(|m| (m * 10.0).round() / 10.0),
                 "newest_bytes": text.map(|(_, len)| len),

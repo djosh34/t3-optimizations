@@ -395,6 +395,10 @@ fn handle_frame(
                 Value::Array(v) => v.clone(),
                 _ => Vec::new(),
             };
+            crate::app::r91(
+                "t3_chunk",
+                json!({"request": id, "bytes": frame.to_string().len()}),
+            );
             to_main.send(Msg::T3(In::Chunk { id, values }))?;
         }
         "Exit" => {
@@ -428,6 +432,7 @@ fn drain_out(
         let frame = match msg {
             Out::Request { id, tag, payload } => {
                 let frame = request(id, &tag, &payload);
+                crate::app::r91("t3_request", json!({"request": id, "tag": tag}));
                 open.insert(id, (tag, payload));
                 frame
             }

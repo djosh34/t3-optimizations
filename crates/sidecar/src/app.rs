@@ -410,15 +410,36 @@ impl App {
         for ev in events {
             self.pipe_event(ev)?;
         }
+        let at = Instant::now();
+        let mut count = 0;
         while let Ok(msg) = self.rx.try_recv() {
             self.message(msg)?;
+            count += 1;
         }
+        if at.elapsed().as_millis() > 20 {
+            r91(
+                "slow_drain",
+                json!({"ms": at.elapsed().as_millis(), "count": count}),
+            );
+        }
+        let at = Instant::now();
         self.sync_world();
+        if at.elapsed().as_millis() > 20 {
+            r91("slow_sync", json!({"ms": at.elapsed().as_millis()}));
+        }
         self.evict_due();
         self.resubscribe_due();
         self.preload_due();
+        let at = Instant::now();
         self.send_packets()?;
+        if at.elapsed().as_millis() > 20 {
+            r91("slow_send", json!({"ms": at.elapsed().as_millis()}));
+        }
+        let at = Instant::now();
         self.save_due()?;
+        if at.elapsed().as_millis() > 20 {
+            r91("slow_save", json!({"ms": at.elapsed().as_millis()}));
+        }
         self.log_stats();
         Ok(())
     }
@@ -775,6 +796,11 @@ impl App {
                 }
                 if tag == "sidecar.focus" || tag == "sidecar.close" {
                     let thread = args["threadId"].as_str().map(str::to_owned);
+                    r91(
+                        "focus",
+                        json!({"device": device, "thread": thread, "seq": seq}),
+                    );
+                    let focus_at = Instant::now();
                     if let Some(d) = self.devices.get_mut(device) {
                         // Closing a thread that is no longer the open one
                         // changes nothing.
@@ -792,6 +818,10 @@ impl App {
                         }
                     }
                     self.update_subscriptions();
+                    r91(
+                        "focus_done",
+                        json!({"device": device, "seq": seq, "ms": focus_at.elapsed().as_millis()}),
+                    );
                     self.reply(
                         device,
                         seq,
@@ -824,12 +854,29 @@ impl App {
         let now = self.now();
         for d in self.devices.values_mut() {
             let Some(link) = d.link else { continue };
+            let at = Instant::now();
             while let Some(packet) = d.server.poll(now) {
+                if std::env::var_os("R91_TRACE").is_some() {
+                    if let Ok(p) = sync_core::wire::Packet::decode(&packet) {
+                        for c in &p.chunks {
+                            r91(
+                                "packet",
+                                json!({"device": d.record.id, "key": format!("{:?}", c.key), "rev": c.rev, "offset": c.offset, "len": c.body.raw_len(), "seq": p.seq, "info": format!("{:?}", d.server.trace_info(c.key)), "rate": d.server.trace_rate(), "buffered": match link { Link::Rtc(peer) => self.pipe.buffered(peer).unwrap_or(0), _ => 0 }}),
+                            );
+                        }
+                    }
+                }
                 match link {
                     Link::Rtc(peer) => match self.pipe.send(peer, &packet) {
                         Ok(true) => {}
                         // A full send buffer is loss, which sync-core handles.
-                        Ok(false) => self.dropped += 1,
+                        Ok(false) => {
+                            self.dropped += 1;
+                            r91(
+                                "sctp_drop",
+                                json!({"device": d.record.id, "seq": sync_core::wire::Packet::decode(&packet).ok().map(|p| p.seq)}),
+                            );
+                        }
                         Err(pipe::Error::NoPeer(_)) => break,
                         Err(e) => return Err(e.into()),
                     },
@@ -843,6 +890,12 @@ impl App {
                         }
                     }
                 }
+            }
+            if at.elapsed().as_millis() > 20 {
+                r91(
+                    "slow_device_send",
+                    json!({"device": d.record.id, "ms": at.elapsed().as_millis()}),
+                );
             }
         }
         Ok(())
@@ -1008,7 +1061,13 @@ impl App {
                                     v.to_string().len() >> 10
                                 ));
                             }
+                            r91("snapshot", json!({"thread": t, "request": id}));
+                            let at = Instant::now();
                             self.thread_snapshot(&t, v);
+                            r91(
+                                "snapshot_done",
+                                json!({"thread": t, "request": id, "ms": at.elapsed().as_millis()}),
+                            );
                         }
                         Some("event") => stale |= self.world.apply_event(&t, v) == After::Refetch,
                         _ => {}
@@ -1116,6 +1175,7 @@ impl App {
                     json!({"threadId": t, "acceptBoundedSnapshot": true}),
                     Pending::Thread(t.clone()),
                 );
+                r91("subscribe", json!({"thread": t, "request": id}));
                 self.snapshot_pending.insert(t.clone(), Instant::now());
                 self.thread_subs.insert(t, id);
             }
@@ -1443,7 +1503,12 @@ impl App {
             return;
         }
         for d in self.devices.values_mut() {
+            let at = Instant::now();
             d.sync(&self.world, changed.iter().copied());
+            r91(
+                "queued",
+                json!({"device": d.record.id, "focus": d.focus, "count": changed.len(), "ms": at.elapsed().as_millis()}),
+            );
         }
     }
 }
@@ -1525,6 +1590,15 @@ fn http_request(args: &Value) -> Result<HttpRequest, String> {
         content_type: args["contentType"].as_str().map(str::to_owned),
         body,
     })
+}
+
+pub(crate) fn r91(event: &str, value: Value) {
+    if std::env::var_os("R91_TRACE").is_some() {
+        eprintln!(
+            "R91 {}",
+            json!({"at": unix_ms(), "event": event, "v": value})
+        );
+    }
 }
 
 fn unix_ms() -> u64 {
