@@ -412,6 +412,8 @@ fn a_restarted_server_does_not_send_again_what_the_phone_has() {
     assert!(p.server.is_synced());
 
     let saved = p.server.save();
+    // What the phone stored is saved as its length and hash, not its bytes.
+    assert!(saved.len() < 1_000, "{} bytes", saved.len());
     p.server = Server::load(&saved, Config::server(), p.now).expect("loads");
     p.server.connected();
     p.phone.connected();
