@@ -1,0 +1,42 @@
+safari-final 13:37:29 up 8 days,  5:28,  0 user,  load average: 5.42, 5.92, 6.56
+safari-final safari cold-history 13:37:46 up 8 days,  5:28,  0 user,  load average: 5.93, 6.02, 6.58
+safari-final safari cold-hold 13:37:47 up 8 days,  5:28,  0 user,  load average: 6.10, 6.06, 6.59
+safari-final safari cold-fling 13:37:51 up 8 days,  5:28,  0 user,  load average: 6.10, 6.06, 6.59
+safari-final safari settle 13:37:57 up 8 days,  5:29,  0 user,  load average: 9.36, 6.76, 6.81
+safari-final safari native-load-history 13:38:17 up 8 days,  5:29,  0 user,  load average: 9.58, 7.01, 6.90
+safari-final safari cached-scroll 13:38:26 up 8 days,  5:29,  0 user,  load average: 9.05, 6.94, 6.88
+safari-final safari cached-fling 13:38:35 up 8 days,  5:29,  0 user,  load average: 9.32, 7.06, 6.91
+safari-final safari hold 13:38:42 up 8 days,  5:29,  0 user,  load average: 9.81, 7.26, 6.98
+safari-final safari stream-scroll 13:38:45 up 8 days,  5:29,  0 user,  load average: 9.81, 7.26, 6.98
+safari-final safari stream-hold 13:38:59 up 8 days,  5:30,  0 user,  load average: 13.24, 8.13, 7.27
+safari-final safari stream-fling 13:39:09 up 8 days,  5:30,  0 user,  load average: 12.84, 8.21, 7.30
+home 13:42:01 up 8 days,  5:33,  0 user,  load average: 8.29, 9.85, 8.22
+home home cold-history 13:42:18 up 8 days,  5:33,  0 user,  load average: 8.35, 9.76, 8.22
+home home cold-hold 13:42:19 up 8 days,  5:33,  0 user,  load average: 8.35, 9.76, 8.22
+home home cold-fling 13:42:22 up 8 days,  5:33,  0 user,  load average: 7.92, 9.64, 8.19
+home home settle 13:42:28 up 8 days,  5:33,  0 user,  load average: 8.49, 9.73, 8.23
+home home native-load-history 13:42:48 up 8 days,  5:33,  0 user,  load average: 6.68, 9.25, 8.10
+home home cached-scroll 13:42:58 up 8 days,  5:34,  0 user,  load average: 7.16, 9.27, 8.12
+home home cached-fling 13:43:06 up 8 days,  5:34,  0 user,  load average: 7.54, 9.32, 8.14
+home home hold 13:43:13 up 8 days,  5:34,  0 user,  load average: 7.22, 9.19, 8.11
+home home stream-scroll 13:43:16 up 8 days,  5:34,  0 user,  load average: 7.22, 9.19, 8.11
+home home stream-hold 13:43:22 up 8 days,  5:34,  0 user,  load average: 7.57, 9.20, 8.13
+home home stream-fling 13:43:32 up 8 days,  5:34,  0 user,  load average: 8.26, 9.29, 8.17
+no-standins 13:46:35 up 8 days,  5:37,  0 user,  load average: 5.28, 7.69, 7.76
+no-standins home cold-history 13:46:52 up 8 days,  5:37,  0 user,  load average: 4.99, 7.51, 7.70
+no-standins home cold-hold 13:46:53 up 8 days,  5:37,  0 user,  load average: 5.47, 7.57, 7.72
+no-standins home cold-fling 13:46:57 up 8 days,  5:37,  0 user,  load average: 5.47, 7.57, 7.72
+no-standins home settle 13:47:04 up 8 days,  5:38,  0 user,  load average: 6.13, 7.65, 7.74
+no-standins home native-load-history 13:47:24 up 8 days,  5:38,  0 user,  load average: 5.83, 7.48, 7.68
+no-standins home cached-scroll 13:47:33 up 8 days,  5:38,  0 user,  load average: 6.41, 7.54, 7.70
+no-standins home cached-fling 13:47:43 up 8 days,  5:38,  0 user,  load average: 6.79, 7.59, 7.72
+no-standins home hold 13:47:51 up 8 days,  5:38,  0 user,  load average: 6.64, 7.55, 7.70
+atomic 13:50:10 up 8 days,  5:41,  0 user,  load average: 4.61, 6.55, 7.32
+atomic home cold-history 13:50:29 up 8 days,  5:41,  0 user,  load average: 7.66, 7.13, 7.50
+atomic home cold-hold 13:50:30 up 8 days,  5:41,  0 user,  load average: 7.66, 7.13, 7.50
+atomic home cold-fling 13:50:33 up 8 days,  5:41,  0 user,  load average: 7.20, 7.05, 7.47
+atomic home settle 13:50:39 up 8 days,  5:41,  0 user,  load average: 7.03, 7.01, 7.45
+atomic home native-load-history 13:50:59 up 8 days,  5:42,  0 user,  load average: 5.78, 6.72, 7.35
+atomic home cached-scroll 13:51:08 up 8 days,  5:42,  0 user,  load average: 5.72, 6.68, 7.33
+atomic home cached-fling 13:51:17 up 8 days,  5:42,  0 user,  load average: 6.87, 6.90, 7.40
+atomic home hold 13:51:25 up 8 days,  5:42,  0 user,  load average: 7.60, 7.07, 7.44
