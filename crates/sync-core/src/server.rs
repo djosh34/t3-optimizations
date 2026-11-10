@@ -450,7 +450,8 @@ impl Server {
                         hash: u64::from_be_bytes(hash),
                     }
                 }
-                _ => Saved::Bytes(store::bytes(&mut r)?),
+                1 => Saved::Bytes(store::bytes(&mut r)?),
+                _ => return Err(DecodeError::Invalid("saved content")),
             };
             let acked = store::ranges(&mut r)?;
             let rev_acked = r.u8()? != 0;

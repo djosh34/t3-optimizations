@@ -28,10 +28,11 @@ pub type Error = Box<dyn std::error::Error + Send + Sync>;
 /// A result from the fetch threads.
 #[derive(Debug)]
 pub enum Fetched {
-    /// A thread's bounded snapshot, or with `page`, a page of its history.
+    /// A thread's bounded snapshot, or with `page` (its cursor), a page of
+    /// its history.
     Thread {
         thread: String,
-        page: bool,
+        page: Option<String>,
         result: Result<Value, String>,
     },
     Image {
@@ -169,6 +170,9 @@ const IDLE_BYTES: u64 = 1 << 20;
 /// How often a preload may start: finding one scans every phone's sync
 /// state.
 const PRELOAD_EVERY: Duration = Duration::from_millis(250);
+/// A history page of an open thread whose fetch failed is fetched again
+/// after this long.
+const PAGE_RETRY: Duration = Duration::from_secs(5);
 /// Sync state is saved this often while it changes.
 const SAVE_EVERY: Duration = Duration::from_secs(2);
 /// The loop wakes at least this often to take messages from other threads.
@@ -194,6 +198,9 @@ pub struct App {
     snapshot_pending: HashMap<String, Instant>,
     /// Threads with a history page being fetched.
     paging: HashSet<String>,
+    /// Open threads' pages whose fetch failed: the cursor, and when to try
+    /// again.
+    page_retries: HashMap<String, (String, Instant)>,
     /// The thread being preloaded: one at a time.
     preloading: Option<String>,
     /// The thread list's `updatedAt` of each thread when the world last had
@@ -335,6 +342,7 @@ impl App {
             thread_subs: HashMap::new(),
             snapshot_pending: HashMap::new(),
             paging: HashSet::new(),
+            page_retries: HashMap::new(),
             preloading: None,
             fresh: HashMap::new(),
             failed: HashMap::new(),
@@ -1130,6 +1138,19 @@ impl App {
                 sub => self.subscribe(sub),
             }
         }
+        let now = Instant::now();
+        let due: Vec<(String, String)> = self
+            .page_retries
+            .iter()
+            .filter(|(_, (_, at))| *at <= now)
+            .map(|(t, (cursor, _))| (t.clone(), cursor.clone()))
+            .collect();
+        for (thread, cursor) in due {
+            self.page_retries.remove(&thread);
+            if self.thread_subs.contains_key(&thread) {
+                self.fetch_page(&thread, &cursor);
+            }
+        }
     }
 
     /// Subscribes to the threads connected phones have open, and only
@@ -1347,12 +1368,17 @@ impl App {
         }
     }
 
-    fn fetched_thread(&mut self, thread: &str, page: bool, result: Result<Value, String>) {
-        if page {
+    fn fetched_thread(
+        &mut self,
+        thread: &str,
+        page: Option<String>,
+        result: Result<Value, String>,
+    ) {
+        if page.is_some() {
             self.paging.remove(thread);
         }
         match result {
-            Ok(v) if page => {
+            Ok(v) if page.is_some() => {
                 let more = self.world.add_history(thread, &v);
                 if more && let Some(cursor) = v["nextCursor"].as_str() {
                     self.fetch_page(thread, cursor);
@@ -1379,6 +1405,12 @@ impl App {
                 self.paging.remove(thread);
                 if self.preloading.as_deref() == Some(thread) {
                     self.preloading = None;
+                }
+                if let Some(cursor) = page
+                    && self.thread_subs.contains_key(thread)
+                {
+                    self.page_retries
+                        .insert(thread.to_owned(), (cursor, Instant::now() + PAGE_RETRY));
                 }
             }
         }
@@ -1430,8 +1462,10 @@ impl App {
                     let Ok(m) = serde_json::from_slice::<Value>(meta) else {
                         return false;
                     };
+                    // An image another thread still shows is in the world.
                     let thread = match m["c"].as_str() {
                         Some("thread") => m["i"].as_str(),
+                        Some("image") if self.world.get(id).is_some() => return false,
                         Some("image") => m["o"].as_str(),
                         _ => m["t"].as_str(),
                     };
@@ -1510,7 +1544,7 @@ fn spawn_fetcher(auth: Arc<Auth>, queue: Arc<Queue>, to_main: Sender<Msg>) {
                     Fetched::Thread {
                         result: get_json(&path),
                         thread,
-                        page: false,
+                        page: None,
                     }
                 }
                 Job::History { thread, cursor } => {
@@ -1522,7 +1556,7 @@ fn spawn_fetcher(auth: Arc<Auth>, queue: Arc<Queue>, to_main: Sender<Msg>) {
                     Fetched::Thread {
                         result: get_json(&path),
                         thread,
-                        page: true,
+                        page: Some(cursor),
                     }
                 }
                 Job::Image { id, mime, url } => {
@@ -1721,7 +1755,7 @@ mod tests {
         fn fetched(&mut self, thread: &str, page: bool, v: Value) {
             self.app.fetched(Fetched::Thread {
                 thread: thread.to_owned(),
-                page,
+                page: page.then(|| "c1".to_owned()),
                 result: Ok(v),
             });
             self.app.sync_world();
@@ -1858,6 +1892,19 @@ mod tests {
         t.fetched("t1", false, snapshot("t1", "one", false));
         t.preload();
         assert!(t.queued().is_empty());
+        // A failed page of the open thread is fetched again a little later.
+        t.app.fetched(Fetched::Thread {
+            thread: "old".into(),
+            page: Some("c1".into()),
+            result: Err("t3 was busy".into()),
+        });
+        t.app.resubscribe_due();
+        assert!(t.queued().is_empty());
+        if let Some((_, at)) = t.app.page_retries.get_mut("old") {
+            *at = Instant::now();
+        }
+        t.app.resubscribe_due();
+        assert_eq!(t.take_queued(), ["0 history old c1"]);
         t.fetched("old", true, json!({"items": [], "hasMoreHistory": false}));
         t.preload();
         assert_eq!(t.queued(), ["2 bounded t2"]);
@@ -1916,6 +1963,32 @@ mod tests {
         // not hold it.
         t.shell(&[("t1", "active", "2")]);
         assert!(!has(&t, "t2") && has(&t, "t1"));
+        Ok(())
+    }
+
+    #[test]
+    fn a_shared_image_stays_while_another_thread_shows_it() -> Result<(), Error> {
+        let mut t = start(0)?;
+        t.phone("a", Some("b"), true);
+        t.app.update_subscriptions();
+        t.shell(&[("a", "active", "2"), ("b", "active", "1")]);
+        let with_image = |thread: &str| {
+            json!({"kind": "snapshot", "snapshotSequence": 1, "hasMoreHistory": false,
+                "projection": {"thread": {"id": thread}, "visibleTurnItems": [], "updatedAt": "1",
+                "turnItems": [{"id": "u", "type": "user_message", "messageId": "m", "ordinal": 1, "text": "look",
+                    "attachments": [{"type": "image", "id": "img", "mimeType": "image/png"}]}]}})
+        };
+        // Both threads show it; its meta names "a", the first in order.
+        t.app.world.set_thread("a", &with_image("a"));
+        t.subscription_snapshot("b", with_image("b"));
+        t.app.world.set_image("img", "image/png", vec![1, 2, 3]);
+        t.app.sync_world();
+        let image = crate::world::object_id(&["image", "img"]);
+        let has = |t: &Test| t.app.devices["a"].server.object_ids().contains(&image);
+        assert!(has(&t));
+        // "a" leaves the list; "b" still shows the image.
+        t.shell(&[("b", "active", "1")]);
+        assert!(has(&t));
         Ok(())
     }
 

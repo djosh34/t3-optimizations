@@ -146,8 +146,6 @@ struct ThreadState {
     history_complete: bool,
     /// Attachments its turn items show.
     images: BTreeSet<String>,
-    /// Bytes of its objects in the cache.
-    bytes: usize,
     /// When it was last used, on the world's clock.
     used: u64,
 }
@@ -328,15 +326,6 @@ impl World {
             self.bytes += cost;
         } else {
             self.bytes = self.bytes.saturating_sub(cost);
-        }
-        if let Some(t) = Self::owner(obj)
-            && let Some(s) = self.threads.get_mut(t)
-        {
-            s.bytes = if add {
-                s.bytes + cost
-            } else {
-                s.bytes.saturating_sub(cost)
-            };
         }
     }
 
@@ -650,6 +639,20 @@ impl World {
             return;
         };
         self.touch(thread);
+        // A window with none of the items the world has leaves a gap
+        // between them: the pages are fetched again (`App::thread_snapshot`).
+        let overlaps = self.threads.get(thread).is_some_and(|s| {
+            fields["turnItems"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .any(|i| {
+                    i["id"].as_str().is_some_and(|id| {
+                        s.entities
+                            .contains_key(&("turnItems".to_owned(), id.to_owned()))
+                    })
+                })
+        });
         let mut seen: HashSet<(String, String)> = HashSet::new();
         for (coll, value) in fields {
             if coll == "visibleTurnItems" {
@@ -685,6 +688,10 @@ impl World {
             }
             let state = self.threads.entry(thread.to_owned()).or_default();
             state.history_complete = true;
+            state.older_rows.clear();
+        } else if !overlaps {
+            let state = self.threads.entry(thread.to_owned()).or_default();
+            state.history_complete = false;
             state.older_rows.clear();
         }
         self.set_frame(thread, snapshot);
@@ -1447,13 +1454,18 @@ mod tests {
         let frame: Value = serde_json::from_str(&content(&w, frame_id("t1"))).unwrap();
         assert_eq!(frame["visibleTurnItems"][0]["sourceItemId"], "x");
         assert_eq!(frame["hasMoreHistory"], true);
-        // A newer window keeps the older items.
-        w.set_thread(
-            "t1",
-            &snap("t1", json!([item("d", 4, "newer", false, "1")]), true),
-        );
+        // A newer window that reaches back to what the world has keeps it all.
+        let newer = json!([
+            item("c", 3, "newest", false, "1"),
+            item("d", 4, "newer", false, "1")
+        ]);
+        w.set_thread("t1", &snap("t1", newer, true));
         assert_eq!(content(&w, object_id(&["text", "t1", "m-a"])), "oldest");
         assert!(w.history_complete("t1"));
+        // One that does not leaves a gap: its pages are fetched again.
+        let far = json!([item("z", 99, "much newer", false, "1")]);
+        w.set_thread("t1", &snap("t1", far, true));
+        assert!(!w.history_complete("t1"));
     }
 
     #[test]

@@ -31,10 +31,10 @@ The sidecar cuts t3's state into sync-core objects. Each has a JSON `meta`:
 | Entity of a thread | `{"t":thread,"c":collection,"i":id}` | one entity of the thread projection (`thread`, `runs`, `turnItems`, `messages`, ...), as t3's JSON, `"text":""` for messages and turn items |
 | Text | `{"t":thread,"m":key,"k":kind}` | the text of a message (key: message id, the same for the message and its turn item) or of a reasoning item (key: item id); `k` is `assistant`, `user`, `reasoning`, ... |
 | Frame | `{"t":thread,"c":"frame"}` | the snapshot fields (`snapshotSequence`, `historyCursor`, `hasMoreHistory`, `latestLocalTurnOrdinal`, `updatedAt`) and `visibleTurnItems`, local rows without their `item`; rows of history pages that come from other threads (a fork's) go first |
-| Image | `{"c":"image","i":attachment,"y":mime,"o":thread}` | the bytes; `o` is one of the threads that show it, and phones delete the image when that thread leaves the list |
+| Image | `{"c":"image","i":attachment,"y":mime,"o":thread}` | the bytes; `o` is one of the threads that show it: once that thread left the list and the sidecar holds the image no more, phones delete it |
+| Config | `{"c":"config"}`, `{"c":"descriptor"}`, `{"c":"session"}` | the server's config, its environment descriptor, the sidecar's session: what the web app needs before it shows anything |
 
 Every id in meta (`t`, `i`, `m`, `o`) is `sync_core::hash_id` of the id: 16 hex digits, however long t3's id is, so every meta fits sync-core's 512 bytes. The content has the real ids; the web app hashes the id it looks up ([issue #72](https://github.com/djosh34/t3-optimizations/issues/72)).
-| Config | `{"c":"config"}`, `{"c":"descriptor"}`, `{"c":"session"}` | the server's config, its environment descriptor, the sidecar's session: what the web app needs before it shows anything |
 
 An object with empty content is deleted. A body is not sent again when only its `updatedAt` changed, because streaming bumps it on every update.
 
