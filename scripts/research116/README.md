@@ -18,7 +18,7 @@ The native checks pass. Both sidecar checks and the source regression fail on v0
 
 The scroll check measures the same visible message after the driver stops sending input. It skips the first 300 ms, then requires at least one second of observations. The message must remain visible and its screen position must stay within four CSS pixels. Changing `scrollTop` alone is not a failure because prepending history should change it.
 
-The diagnostic recordings use the same test. `home-no-standins-sidecar.json.gz` still fails. `home-atomic-history-sidecar.json.gz` passes. The latter freezes the first subscription snapshot until all 600 fixture history messages have both their bodies and texts. These are browser-boundary experiments, not proposed production fixes.
+The diagnostic recordings use the same test. `home-no-standins-sidecar.json.gz` still fails. `home-atomic-history-sidecar.json.gz` passes. The latter freezes the first subscription snapshot until all 600 historical turn items and their corresponding messages are present with their fixture text prefixes. It batches publication, but does not check complete byte ranges. These are browser-boundary experiments, not proposed production fixes.
 
 ## Make a new recording
 
