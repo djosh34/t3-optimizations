@@ -1,6 +1,6 @@
 # deploy
 
-How t3opt runs on a host, beside an official t3code that it never touches ([issue #48](https://github.com/djosh34/t3-optimizations/issues/48)).
+How t3opt runs on a host, beside an official t3code that it does not change ([issue #48](https://github.com/djosh34/t3-optimizations/issues/48); the main sidecar, [issue #85](https://github.com/djosh34/t3-optimizations/issues/85), is its client).
 
 | What | Where |
 |---|---|
@@ -13,7 +13,7 @@ How t3opt runs on a host, beside an official t3code that it never touches ([issu
 | Settings | `~/.config/t3opt/env`: the tailnet address and the `PATH` the agents' CLIs are found on |
 | Data | `~/.t3opt` (t3's), `~/.t3opt-sidecar` (the sidecar's), `~/.t3opt-sidecar-main` (the main sidecar's) |
 
-Both are user services, enabled, restarted on failure, and running after a reboot when lingering is on (`loginctl enable-linger`). `t3opt-server` does not read `~/.t3/service.env`; the agents log in with their own files in the home directory, as they do for any t3. The sidecar pairs itself with `t3opt-server` (`t3 pair --base-dir ~/.t3opt`).
+All are user services, enabled, restarted on failure, and running after a reboot when lingering is on (`loginctl enable-linger`). `t3opt-server` does not read `~/.t3/service.env`; the agents log in with their own files in the home directory, as they do for any t3. The sidecar pairs itself with `t3opt-server` (`t3 pair --base-dir ~/.t3opt`).
 
 ## Install
 
@@ -26,7 +26,7 @@ bash install.sh
 
 It downloads t3 v0.1.7 from [t3code's release](https://github.com/pingdotgg/t3code/releases/tag/v0.1.7) and the sidecar and web app from this repo's release, checks them against each release's `SHA256SUMS`, writes and starts both services, and adds the 12443 route. `T3OPT_RELEASE=v0.2.0 bash install.sh` picks a release; `install.sh --assets <dir>` takes the files from a folder instead (the `release` artifact of a run of `.github/workflows/release.yml`). Running it again upgrades in place.
 
-`bash install.sh --main` also installs and starts `t3opt-sidecar-main` and adds the 14443 route. That sidecar is a client of the t3code already on the host (`~/.t3`, port 3773) and changes nothing in it: it pairs itself with `t3 pair --base-dir ~/.t3`, loads a thread when a phone opens it, and keeps at most 256 MB of threads and images (`--cache-mb`). Run the upgrade with `--main` too, or the main sidecar keeps running the old binary.
+`bash install.sh --main` also installs and starts `t3opt-sidecar-main` and adds the 14443 route. That sidecar is a client of the t3code already on the host (`~/.t3`, port 3773). The only thing it adds to `~/.t3` is its own login session: it pairs itself with `t3 pair --base-dir ~/.t3`, loads a thread when a phone opens it, and keeps at most 256 MB of threads and images (`--cache-mb`). Run the upgrade with `--main` too, or the main sidecar keeps running the old binary.
 
 ## Pair a phone
 

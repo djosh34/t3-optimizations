@@ -6,8 +6,8 @@
 // reply. Runs in the lab's phone image; see deploy/main-live-check.sh,
 // which starts it.
 //
-// The page never sends `thread.visit`: an init script answers those
-// commands itself, so no thread's read mark changes, whatever the app opens.
+// The page never sends `thread.visit` (no-visits.mjs), so no thread's read
+// mark changes, whatever the app opens.
 // stdout names no thread, project or message, only steps and times.
 //
 // Usage: node main-live-check.mjs <origin> <pairing code> <safari|home-screen> <project> <title>
@@ -15,6 +15,7 @@
 //   home-screen: the same at 402x874, the home-screen app; opens the thread.
 // Screenshots go to /out/<size>-<step>.png, for a local look only.
 import { devices, webkit } from "/opt/driver/node_modules/playwright/index.mjs";
+import { noVisits } from "./no-visits.mjs";
 
 const [origin, code, size, project, title] = process.argv.slice(2);
 if (!origin || !code || !["safari", "home-screen"].includes(size) || !project || !title) {
@@ -22,6 +23,7 @@ if (!origin || !code || !["safari", "home-screen"].includes(size) || !project ||
   process.exit(2);
 }
 
+// deploy/main-live-check.sh looks for this prompt, so a thread is made once.
 const prompt = "Reply with the words: t3opt live check ok";
 const model = /^GPT-6 Luna , Pi openai-codex\b/;
 const reply = /^\s*t3opt live check ok\.?\s*$/i;
@@ -31,43 +33,7 @@ const viewport = size === "safari" ? device.viewport : { width: 402, height: 874
 const browser = await webkit.launch();
 const context = await browser.newContext({ ...device, viewport });
 
-await context.addInitScript(() => {
-  // The shim puts its WebSocket on window; each one it makes is wrapped so a
-  // visit is answered here and never reaches the sidecar.
-  let current = window.WebSocket;
-  Object.defineProperty(window, "WebSocket", {
-    configurable: true,
-    get: () => current,
-    set: (Base) => {
-      current = new Proxy(Base, {
-        construct(target, args) {
-          const ws = Reflect.construct(target, args);
-          const send = ws.send.bind(ws);
-          ws.send = (data) => {
-            if (typeof data !== "string" || !data.includes("thread.visit")) return send(data);
-            const parsed = JSON.parse(data);
-            const frames = Array.isArray(parsed) ? parsed : [parsed];
-            const isVisit = (f) =>
-              f?._tag === "Request" &&
-              f.tag === "orchestration.dispatchCommand" &&
-              f.payload?.type === "thread.visit";
-            for (const f of frames.filter(isVisit)) {
-              const exit = { _tag: "Exit", requestId: f.id, exit: { _tag: "Success", value: { sequence: 0 } } };
-              setTimeout(() => {
-                const e = new MessageEvent("message", { data: JSON.stringify(exit) });
-                ws.dispatchEvent(e);
-                if (typeof ws.onmessage === "function") ws.onmessage(e);
-              }, 0);
-            }
-            const kept = frames.filter((f) => !isVisit(f));
-            if (kept.length > 0) send(JSON.stringify(Array.isArray(parsed) ? kept : kept[0]));
-          };
-          return ws;
-        },
-      });
-    },
-  });
-});
+await context.addInitScript(noVisits);
 
 const page = await context.newPage();
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -101,8 +67,8 @@ async function closeWelcome(timeout) {
   return "no welcome";
 }
 
-// Times until a leaf element of the conversation shows text that `test`
-// accepts, on screen (in the viewport and fully opaque), polled each 16 ms.
+// Times until a leaf element of the conversation shows text that matches
+// the regular expression `source`, on screen (in the viewport and fully opaque), polled each 16 ms.
 async function shown(source, timeout) {
   const t = performance.now();
   await page.waitForFunction(

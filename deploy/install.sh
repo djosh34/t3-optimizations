@@ -7,16 +7,17 @@
 # - t3opt-sidecar: serves the home-screen web app on localhost port 12480 and
 #   syncs to phones over WebRTC on UDP 12444 of the tailnet address.
 #
-# and one `tailscale serve` route, https port 12443 to the sidecar. It never
-# touches ~/.t3 or other tailscale serve routes. Running it again upgrades in
-# place. See deploy/README.md.
+# and one `tailscale serve` route, https port 12443 to the sidecar. Without
+# --main it never touches ~/.t3 or other tailscale serve routes. Running it
+# again upgrades in place. See deploy/README.md.
 #
 # With --main, also:
 #
 # - t3opt-sidecar-main: a second sidecar for the host's own t3code
 #   (127.0.0.1:3773, ~/.t3), on localhost port 12481 and UDP 12445, with
-#   one more route, https port 14443 to it. It is a client of that t3code
-#   and changes nothing in it.
+#   one more route, https port 14443 to it. It is a client of that t3code:
+#   the only thing it adds to ~/.t3 is its own login session, from
+#   `t3 pair --base-dir ~/.t3`.
 #
 # Usage: install.sh [--main] [--assets <dir>]
 #   Takes the t3opt files from the GitHub release named by $T3OPT_RELEASE

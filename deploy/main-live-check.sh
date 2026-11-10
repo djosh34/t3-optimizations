@@ -10,8 +10,9 @@
 # 2. deploy/main-live-check.mjs in Playwright WebKit (the lab's phone image):
 #    as the Safari tab it starts the one `t3opt live check` thread in the
 #    existing t3-optimizations project, with GPT-6 Luna at low thinking, and
-#    times the reply; as the home-screen app it opens that thread. A thread
-#    with that title already there is not made again.
+#    times the reply; as the home-screen app it opens that thread. Once any
+#    thread has the check's prompt, even from a run that failed after the
+#    send, no thread is made again.
 #
 # Meanwhile it samples the memory of both services every 5 s into
 # <out dir>/memory.csv. Each client pairs with its own code from
@@ -33,6 +34,7 @@ base="$HOME/.t3"
 data="$HOME/.t3opt-sidecar-main"
 project="t3-optimizations"
 title="t3opt live check"
+prompt="Reply with the words: t3opt live check ok"
 
 code() {
   "$t3" pair --base-dir "$base" --label "$1" | sed -n 's/^Token: //p'
@@ -72,7 +74,7 @@ echo "time,sidecar_rss_mb,sidecar_cgroup_mb,t3code_rss_mb" >"$out/memory.csv"
   done
 ) &
 sampler=$!
-trap 'kill "$sampler" 2>/dev/null' EXIT
+trap 'kill "$sampler" 2>/dev/null || true' EXIT
 
 status=0
 
@@ -98,8 +100,9 @@ status=0
 # 2. The check's own thread, in WebKit.
 for size in safari home-screen; do
   if [ "$size" = safari ] &&
-    [ "$(sql "select count(*) from orchestration_v2_projection_threads where title = '$title'")" != 0 ]; then
-    echo "safari: the thread is there already; not made again"
+    [ "$(sql "select count(*) from orchestration_v2_projection_messages where role = 'user'
+      and payload_json like '%t3opt live check ok%' and json_extract(payload_json, '\$.text') = '$prompt'")" != 0 ]; then
+    echo "safari: a thread has the prompt already; not made again"
     continue
   fi
   docker run --rm --network host --init --shm-size 512m \
@@ -117,5 +120,9 @@ awk -F, 'NR > 1 {
     printf "memory, %d samples: sidecar max %d MB RSS, %d MB cgroup; t3code max %d MB RSS\n", n, max[2], max[3], max[4]
   }' "$out/memory.csv"
 read -r side_ooms main_ooms <<<"$ooms"
-echo "sidecar: $(($(oom_kills "$side") - side_ooms)) OOM kills, $(($(systemctl --user show -p NRestarts --value "$side") - restarts)) restarts; t3code: $(($(oom_kills "$main") - main_ooms)) OOM kills"
+side_ooms=$(($(oom_kills "$side") - side_ooms))
+main_ooms=$(($(oom_kills "$main") - main_ooms))
+restarts=$(($(systemctl --user show -p NRestarts --value "$side") - restarts))
+echo "sidecar: $side_ooms OOM kills, $restarts restarts; t3code: $main_ooms OOM kills"
+[ $((side_ooms + main_ooms + restarts)) = 0 ] || status=1
 exit "$status"
