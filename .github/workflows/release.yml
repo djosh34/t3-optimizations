@@ -98,7 +98,7 @@ jobs:
           path: out
           merge-multiple: true
       - run: |
-          cp deploy/install.sh deploy/t3opt-server.service deploy/t3opt-sidecar.service out/
+          cp deploy/install.sh deploy/t3opt-*.service out/
           cd out
           sha256sum t3opt-* install.sh >SHA256SUMS
           cat SHA256SUMS
