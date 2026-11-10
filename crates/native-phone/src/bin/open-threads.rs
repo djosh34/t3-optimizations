@@ -15,7 +15,8 @@
 //! bounded snapshot; then it times, from the focus call, until the phone
 //! stored the thread's frame and that item (its text, if it has one).
 //! stdout: one JSON line per thread with its label and the times, never an
-//! id or a title.
+//! id or a title. It fails when a thread's frame or newest item did not
+//! arrive within `--timeout-s` (default 60).
 
 use std::collections::HashMap;
 use std::net::{IpAddr, Ipv4Addr};
@@ -171,6 +172,7 @@ fn run() -> Result<(), Error> {
     while Instant::now() < end {
         phone.step(Duration::from_millis(5))?;
     }
+    let mut missed = 0;
     for line in list.lines().filter(|l| !l.trim().is_empty()) {
         let (label, thread) = line
             .split_once('\t')
@@ -198,6 +200,9 @@ fn run() -> Result<(), Error> {
                 newest_ms = Some(ms);
             }
         }
+        if frame_ms.is_none() || (text.is_some() && newest_ms.is_none()) {
+            missed += 1;
+        }
         let end = Instant::now() + dwell;
         while Instant::now() < end {
             phone.step(Duration::from_millis(5))?;
@@ -213,6 +218,9 @@ fn run() -> Result<(), Error> {
                 "received_wire_bytes": stats.received_wire_bytes,
             })
         );
+    }
+    if missed > 0 {
+        return Err(format!("{missed} threads did not arrive in time").into());
     }
     Ok(())
 }

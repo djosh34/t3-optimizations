@@ -7,13 +7,21 @@
 # - t3opt-sidecar: serves the home-screen web app on localhost port 12480 and
 #   syncs to phones over WebRTC on UDP 12444 of the tailnet address.
 #
-# and one `tailscale serve` route, https port 12443 to the sidecar. It never
-# touches ~/.t3 or other tailscale serve routes. Running it again upgrades in
-# place. See deploy/README.md.
+# and one `tailscale serve` route, https port 12443 to the sidecar. Without
+# --main it never touches ~/.t3 or other tailscale serve routes. Running it
+# again upgrades in place. See deploy/README.md.
 #
-# Usage: install.sh [--assets <dir>]
+# With --main, also:
+#
+# - t3opt-sidecar-main: a second sidecar for the host's own t3code
+#   (127.0.0.1:3773, ~/.t3), on localhost port 12481 and UDP 12445, with
+#   one more route, https port 14443 to it. It is a client of that t3code:
+#   the only thing it adds to ~/.t3 is its own login session, from
+#   `t3 pair --base-dir ~/.t3`.
+#
+# Usage: install.sh [--main] [--assets <dir>]
 #   Takes the t3opt files from the GitHub release named by $T3OPT_RELEASE
-#   (a tag such as v0.1.0, default the latest release), or from <dir>, which
+#   (a tag such as v0.2.0, default the latest release), or from <dir>, which
 #   holds the same files as a release.
 set -euo pipefail
 
@@ -25,11 +33,16 @@ config="$HOME/.config"
 units="$config/systemd/user"
 
 assets=""
-case "${1:-}" in
-  "") ;;
-  --assets) assets="$(realpath "${2:?--assets needs a directory}")" ;;
-  *) echo "usage: install.sh [--assets <dir>]" >&2; exit 2 ;;
-esac
+main=no
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --main) main=yes; shift ;;
+    --assets) assets="$(realpath "${2:?--assets needs a directory}")"; shift 2 ;;
+    *) echo "usage: install.sh [--main] [--assets <dir>]" >&2; exit 2 ;;
+  esac
+done
+services=(t3opt-server.service t3opt-sidecar.service)
+[ "$main" = no ] || services+=(t3opt-sidecar-main.service)
 
 say() { echo "install: $*" >&2; }
 die() { say "$*"; exit 1; }
@@ -98,7 +111,7 @@ fi
 
 # 2. The sidecar, the web app and the unit files.
 say "fetching the t3opt files"
-fetch "t3opt-sidecar-linux-$arch" t3opt-web.tar.gz t3opt-server.service t3opt-sidecar.service
+fetch "t3opt-sidecar-linux-$arch" t3opt-web.tar.gz "${services[@]}"
 mkdir -p "$share" "$units" "$config/t3opt"
 install -m 755 "$tmp/t3opt-sidecar-linux-$arch" "$share/sidecar.new"
 mv "$share/sidecar.new" "$share/sidecar"
@@ -107,7 +120,9 @@ mkdir "$share/web.new"
 tar -xzf "$tmp/t3opt-web.tar.gz" -C "$share/web.new"
 rm -rf "$share/web"
 mv "$share/web.new" "$share/web"
-install -m 644 "$tmp/t3opt-server.service" "$tmp/t3opt-sidecar.service" "$units/"
+for unit in "${services[@]}"; do
+  install -m 644 "$tmp/$unit" "$units/"
+done
 
 # The services get this PATH, so t3 finds the agents' CLIs as this shell does.
 cat >"$config/t3opt/env" <<EOF
@@ -115,27 +130,33 @@ PATH=$PATH
 T3OPT_TAILNET_IP=$tailnet_ip
 EOF
 
-# 3. Start both, now and after every boot.
+# 3. Start them, now and after every boot.
 if [ "$(loginctl show-user "$USER" -p Linger --value 2>/dev/null)" != yes ]; then
   say "turning on lingering, so the services run without a login"
   loginctl enable-linger "$USER" ||
     die "could not; run: sudo loginctl enable-linger $USER, then this script again"
 fi
 systemctl --user daemon-reload
-systemctl --user enable t3opt-server.service t3opt-sidecar.service
-systemctl --user restart t3opt-server.service t3opt-sidecar.service
+systemctl --user enable "${services[@]}"
+systemctl --user restart "${services[@]}"
 
-# 4. HTTPS on the tailnet. Leaves every other route as it is.
-tailscale serve --bg --https=12443 http://127.0.0.1:12480 >/dev/null ||
-  die "tailscale serve failed; this user may need to be the operator: sudo tailscale set --operator=$USER"
-
-say "waiting for the sidecar"
-for _ in $(seq 60); do
-  if curl -fsS -o /dev/null http://127.0.0.1:12480/ 2>/dev/null; then
-    say "done: https://${host:-<this host>}:12443"
-    say "pair a phone with a code from: $t3 pair --base-dir ~/.t3opt"
-    exit 0
-  fi
-  sleep 2
-done
-die "the sidecar did not answer in 2 minutes; see journalctl --user -u t3opt-sidecar -u t3opt-server"
+# 4. HTTPS on the tailnet, one route per sidecar. Leaves every other route
+# as it is.
+# Usage: serve <https port> <sidecar's local port> <unit> <t3 base dir>
+serve() {
+  tailscale serve --bg --https="$1" "http://127.0.0.1:$2" >/dev/null ||
+    die "tailscale serve failed; this user may need to be the operator: sudo tailscale set --operator=$USER"
+  say "waiting for $3"
+  for _ in $(seq 60); do
+    if curl -fsS -o /dev/null "http://127.0.0.1:$2/" 2>/dev/null; then
+      say "$3: https://${host:-<this host>}:$1"
+      say "pair a phone with a code from: $t3 pair --base-dir $4"
+      return
+    fi
+    sleep 2
+  done
+  die "$3 did not answer in 2 minutes; see journalctl --user -u $3"
+}
+serve 12443 12480 t3opt-sidecar "$HOME/.t3opt"
+[ "$main" = no ] || serve 14443 12481 t3opt-sidecar-main "$HOME/.t3"
+say "all services are up"

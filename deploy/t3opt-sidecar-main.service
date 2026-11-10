@@ -1,0 +1,31 @@
+# A second t3opt sidecar, for the host's own t3code (127.0.0.1:3773, ~/.t3):
+# serves the home-screen web app on localhost (tailscale serve puts it on
+# https://<host>:14443) and syncs that t3code to phones over WebRTC on UDP
+# 12445 of the tailnet address. It is a client of that t3code and changes
+# nothing in it. It loads a thread when a phone opens it and keeps at most
+# 256 MB of threads and images; MemoryMax is a backstop so it never starves
+# the t3code. Installed by deploy/install.sh --main; see deploy/README.md.
+[Unit]
+Description=t3opt sidecar for the main t3code (3773, ~/.t3)
+Documentation=https://github.com/djosh34/t3-optimizations/tree/main/deploy
+StartLimitIntervalSec=0
+
+[Service]
+# T3OPT_TAILNET_IP, and PATH.
+EnvironmentFile=%h/.config/t3opt/env
+ExecStart=%h/.local/share/t3opt/sidecar \
+  --t3-url http://127.0.0.1:3773 \
+  --t3-base-dir %h/.t3 \
+  --t3-command %h/.local/share/t3opt/t3-0.1.7/t3 \
+  --data-dir %h/.t3opt-sidecar-main \
+  --http 127.0.0.1:12481 \
+  --udp ${T3OPT_TAILNET_IP}:12445 \
+  --web-dir %h/.local/share/t3opt/web
+MemoryMax=768M
+MemorySwapMax=0
+# Also when the tailnet address is not up yet after a boot.
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
