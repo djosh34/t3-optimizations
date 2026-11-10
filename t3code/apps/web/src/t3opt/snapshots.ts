@@ -63,7 +63,7 @@ export function shellSnapshot(objects: Objects): Json | null {
   return snapshot;
 }
 
-/** Text objects of a thread by their key (message or item id). */
+/** Text objects of a thread by the hash of their key (message or item id). */
 function textsByKey(objs: ReadonlyArray<Obj>): Map<string, Obj> {
   const out = new Map<string, Obj>();
   for (const o of objs) if (o.metaJson.m !== undefined) out.set(o.metaJson.m, o);
@@ -95,13 +95,14 @@ function isStreamedText(c: string, entity: Json): boolean {
  * the client would keep the row it first showed.
  */
 function withText(
+  objects: Objects,
   c: string,
   entity: Json,
   key: string | undefined,
   texts: Map<string, Obj>,
 ): Json | null {
   if (key === undefined || typeof entity.text !== "string") return entity;
-  const t = texts.get(key);
+  const t = texts.get(objects.hash(key));
   if (!isStreamedText(c, entity) && !t?.complete) return null;
   const text = t ? textOf(t) : "";
   const cached = filled.get(entity);
@@ -142,13 +143,13 @@ export function threadSnapshot(objects: Objects, threadId: string): ThreadSnapsh
           : c === "turnItems"
             ? ((v.messageId as string | undefined) ?? (v.id as string | undefined))
             : undefined;
-      const filledIn = withText(c, v, key, texts);
+      const filledIn = withText(objects, c, v, key, texts);
       if (filledIn !== null) lists.get(c)?.push(filledIn);
     }
   }
   if (thread === null) return null;
   const turnItems = lists.get("turnItems") ?? [];
-  turnItems.push(...standIns(objs, turnItems, lists.get("runs") ?? []));
+  turnItems.push(...standIns(objects, objs, turnItems, lists.get("runs") ?? []));
   turnItems.sort((a, b) => Number(a.ordinal ?? 0) - Number(b.ordinal ?? 0));
   const projection: Json = { thread, ...Object.fromEntries(lists) };
   projection.visibleTurnItems = visibleRows(threadId, frame ?? {}, projection);
@@ -168,14 +169,16 @@ const standInCache = new WeakMap<Obj, Json>();
 /**
  * Rows for assistant texts whose turn item (a kilobyte of JSON queued behind the
  * thread's status) has not arrived: copies of the newest complete assistant item.
- * The real item has the same id and takes the stand-in's place (README.md).
+ * A text's meta has only the hash of its message id, so the stand-in carries the
+ * hash; the real item, matched by that hash, takes its place (README.md).
  */
 function standIns(
+  objects: Objects,
   objs: ReadonlyArray<Obj>,
   items: ReadonlyArray<Json>,
   runs: ReadonlyArray<Json>,
 ): Json[] {
-  const shown = new Set(items.map((i) => i.messageId ?? i.id));
+  const shown = new Set(items.map((i) => objects.hash(String(i.messageId ?? i.id))));
   const assistant = items.filter((i) => i.type === "assistant_message");
   const template = assistant.reduce<Json | null>(
     (best, i) => (best === null || Number(i.ordinal) > Number(best.ordinal) ? i : best),
@@ -269,7 +272,8 @@ function localRow(threadId: string, item: Json): Json {
  * a turn item it knows refers to, so the phone gets it, perhaps later.
  */
 export function imageComing(objects: Objects, attachmentId: string): boolean {
-  if (objects.ofKind("image").some((i) => i.metaJson.i === attachmentId)) return true;
+  const hashed = objects.hash(attachmentId);
+  if (objects.ofKind("image").some((i) => i.metaJson.i === hashed)) return true;
   for (const id of objects.ids()) {
     const o = objects.get(id);
     if (o?.metaJson.c !== "turnItems") continue;
@@ -282,7 +286,8 @@ export function imageComing(objects: Objects, attachmentId: string): boolean {
 
 /** An image object's bytes as a blob, by attachment id. */
 export function imageBlob(objects: Objects, attachmentId: string): Blob | null {
-  const o = objects.ofKind("image").find((i) => i.metaJson.i === attachmentId);
+  const hashed = objects.hash(attachmentId);
+  const o = objects.ofKind("image").find((i) => i.metaJson.i === hashed);
   if (!o?.complete) return null;
   return new Blob([o.data.slice()], { type: o.metaJson.y ?? "application/octet-stream" });
 }

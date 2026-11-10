@@ -1,8 +1,10 @@
+import * as NodeCrypto from "node:crypto";
+
 import { describe, expect, it, vi } from "vite-plus/test";
 
 import type { Engine } from "./engine";
 import { Objects } from "./objects";
-import { isBackgroundCall, RpcServer } from "./shim";
+import { handleFetch, isBackgroundCall, RpcServer } from "./shim";
 
 describe("isBackgroundCall", () => {
   it.each([
@@ -52,7 +54,9 @@ function fakeEngine(replies: unknown[]) {
   const request = vi.fn((_kind: string, _payload: unknown, _background?: boolean) =>
     Promise.resolve({ seq: 1n, reply: Promise.resolve(replies.shift()) }),
   );
-  return { engine: { objects: new Objects(), request } as unknown as Engine, request };
+  const hashId = (id: string) =>
+    NodeCrypto.createHash("sha256").update(id).digest("hex").slice(0, 16);
+  return { engine: { objects: new Objects(hashId), request } as unknown as Engine, request };
 }
 
 function server(engine: Engine) {
@@ -169,5 +173,71 @@ describe("server.refreshProviders", () => {
     // Let the failed call's promise chain run, then count the replies.
     for (let step = 0; step < 5; step++) await Promise.resolve();
     expect(exitsFor(sent, 2)).toEqual(["ok"]);
+  });
+});
+
+describe("opening a thread", () => {
+  const calls = (request: ReturnType<typeof fakeEngine>["request"]) =>
+    request.mock.calls.filter((c) => c[0] === "call").map((c) => c[1]);
+
+  it("asks the sidecar for a thread the phone lacks as soon as its snapshot is fetched", async () => {
+    // Nothing preloaded: the phone has no object of t9.
+    const { engine, request } = fakeEngine([]);
+    const ctx = {
+      realFetch: fetch,
+      pairing: null,
+      engine: Promise.resolve(engine),
+      pair: () => Promise.resolve(),
+    };
+    let answered = false;
+    const response = handleFetch(
+      ctx,
+      new Request("https://phone.test/api/orchestration/threads/t9/bounded"),
+    ).then((r) => {
+      answered = true;
+      return r;
+    });
+    await vi.waitFor(() =>
+      expect(calls(request)).toEqual([{ tag: "sidecar.focus", payload: { threadId: "t9" } }]),
+    );
+    expect(answered).toBe(false);
+    // The sidecar sends it; the snapshot follows.
+    const body = encoder.encode(JSON.stringify({ id: "t9" }));
+    engine.objects.set(9n, {
+      meta: encoder.encode(
+        JSON.stringify({
+          t: engine.objects.hash("t9"),
+          c: "thread",
+          i: engine.objects.hash("thread"),
+        }),
+      ),
+      rev: 1n,
+      len: body.length,
+      ranges: [[0, body.length]],
+      data: body,
+    });
+    engine.objects.notify(new Set([9n]));
+    expect((await response).status).toBe(200);
+  });
+
+  it("closes a thread on the sidecar once the client's last subscription to it ends", () => {
+    const { engine, request } = fakeEngine([]);
+    const { rpc } = server(engine);
+    const subscribe = (id: number) =>
+      rpc.handle({
+        _tag: "Request",
+        id,
+        tag: "orchestration.subscribeThread",
+        payload: { threadId: "t1" },
+      });
+    subscribe(1);
+    subscribe(2);
+    rpc.handle({ _tag: "Interrupt", requestId: 1 });
+    const close = { tag: "sidecar.close", payload: { threadId: "t1" } };
+    expect(calls(request)).not.toContainEqual(close);
+    rpc.handle({ _tag: "Interrupt", requestId: 2 });
+    expect(calls(request).filter((c) => JSON.stringify(c) === JSON.stringify(close))).toHaveLength(
+      1,
+    );
   });
 });

@@ -32,7 +32,7 @@ export interface EngineStatus {
 }
 
 export class Engine {
-  readonly objects = new Objects();
+  readonly objects: Objects;
   private link!: Link;
   private readonly put = new Map<string, Uint8Array>();
   private readonly remove = new Set<string>();
@@ -54,7 +54,9 @@ export class Engine {
   private constructor(
     private readonly phone: PhoneWasm,
     private readonly store: Store,
-  ) {}
+  ) {
+    this.objects = new Objects((id) => phone.hashId(id));
+  }
 
   static async start(input: {
     readonly wasmUrl: string;

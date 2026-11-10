@@ -3,6 +3,7 @@
 
 import type { ObjectView } from "./phoneWasm";
 
+/** What an object is. Every id in it is hashed (`Objects.hash`). */
 export interface Meta {
   /** Thread id, for a thread's objects. */
   readonly t?: string;
@@ -18,6 +19,8 @@ export interface Meta {
   readonly l?: string;
   /** Image MIME type. */
   readonly y?: string;
+  /** The thread that first showed an image. */
+  readonly o?: string;
 }
 
 export interface Obj extends ObjectView {
@@ -72,10 +75,24 @@ export function jsonOf(o: Obj | undefined): unknown {
 }
 
 export class Objects {
+  private readonly hashes = new Map<string, string>();
   private readonly byId = new Map<bigint, Obj>();
   private readonly byThread = new Map<string, Set<bigint>>();
   private readonly byKind = new Map<string, Set<bigint>>();
   private readonly listeners = new Set<(changed: ReadonlySet<bigint>) => void>();
+
+  /** @param hashId sync-core's hash of ids in meta, from the WASM module. */
+  constructor(private readonly hashId: (id: string) => string) {}
+
+  /** An id as meta has it. */
+  hash(id: string): string {
+    let h = this.hashes.get(id);
+    if (h === undefined) {
+      h = this.hashId(id);
+      this.hashes.set(id, h);
+    }
+    return h;
+  }
 
   ids(): IterableIterator<bigint> {
     return this.byId.keys();
@@ -87,7 +104,7 @@ export class Objects {
 
   /** Objects of a thread that are not deleted. */
   ofThread(thread: string): Obj[] {
-    return this.collect(this.byThread.get(thread));
+    return this.collect(this.byThread.get(this.hash(thread)));
   }
 
   /** Objects whose meta `c` is `kind`, outside threads. */
